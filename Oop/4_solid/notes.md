@@ -1,5 +1,11 @@
 # Принципы SOLID
 
+[SRP](#s---single-responsibility-problem)
+[OCP](#o---openclosed-principle)
+[LSP](#l---liskov-substitution-principle)
+[ISP](#i---interface-segregation-principle)
+[DIP](#d---dependency-inversion-principle)
+
 Рассмотрим ещё пять принципов проектирования, которые известны как SOLID. SOLID - это акроним от первых букв пяти основных принципов ООП, изложенных Робертом Мартином в начале 2000-х: сокр. от англ. single responsibility, open–closed, Liskov substitution, interface segregation и dependency inversion. 
 
 SOLID:
