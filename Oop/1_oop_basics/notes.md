@@ -1625,9 +1625,9 @@ Console.WriteLine($"Point2: ({point2.X}, {point2.Y})"); // (15, 25)
 - Предсказуемость: объект всегда в корректном состоянии
 - Упрощение: не нужно отслеживать изменения
 
-### Record-типы в C# 9+
+### Record-типы в современном C#
 
-С C# 9 появились **record-типы**, которые по умолчанию иммутабельны:
+**Record-типы (Record Types)** — специальный вид типов в C#, предназначенный для создания иммутабельных объектов со значением по умолчанию. Появились в C# 9 и были усовершенствованы в последующих версиях.
 
 ```csharp
 // Record — иммутабельный по умолчанию
@@ -2905,7 +2905,8 @@ public readonly struct Email
                 nameof(email));
         }
 
-        if (!email.Contains('.', email.IndexOf('@')))
+        var atIndex = email.IndexOf('@');
+        if (atIndex == -1 || email.IndexOf('.', atIndex) == -1)
         {
             throw new ArgumentException(
                 $"Email '{email}' должен содержать домен с точкой",
@@ -2984,7 +2985,7 @@ public readonly struct Email
 
         // Проверка: домен с точкой
         var atIndex = email.IndexOf('@');
-        if (!email.Contains('.', atIndex))
+        if (atIndex == -1 || email.IndexOf('.', atIndex) == -1)
         {
             return new EmailCreationResult.InvalidDomain(email);
         }
