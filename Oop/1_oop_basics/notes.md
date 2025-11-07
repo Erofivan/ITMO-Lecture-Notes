@@ -2899,7 +2899,7 @@ public readonly struct Email
         }
 
         var atIndex = email.IndexOf('@');
-        if (atIndex == -1 || email.IndexOf('.', atIndex) == -1)
+        if (email.IndexOf('.', atIndex) == -1)
         {
             throw new ArgumentException(
                 $"Email '{email}' должен содержать домен с точкой",
@@ -3580,8 +3580,6 @@ if (firstOrDefault != default)
 `FirstOrDefault` выполняет роль `TryFind`: пытается найти элемент, возвращает `default` при неудаче. Дополнительный метод `TryFind` был бы избыточен.
 
 **Однако**: Для reference types `FirstOrDefault` возвращает `null`, что идеально. Для value types возвращает `default` (например, `0` для `int`), что может быть неоднозначно (0 — это отсутствие элемента или найденное значение?).
-
-В таких случаях можно использовать **nullable value types** (`int?`):
 
 В таких случаях лучше использовать собственный метод расширения `TryFind`:
 
