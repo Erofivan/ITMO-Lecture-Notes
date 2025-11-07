@@ -407,7 +407,8 @@ public class ZipCompressionStrategy : ICompressionStrategy
         using var output = new MemoryStream();
         using (var gzip = new GZipStream(output, CompressionMode.Compress))
         {
-            // Использование современного перегруженного метода Write с ReadOnlySpan
+            // Современный API: byte[] неявно преобразуется в ReadOnlySpan<byte>
+            // Вызывается перегрузка Write(ReadOnlySpan<byte>) вместо устаревшей Write(byte[], int, int)
             gzip.Write(data);
         }
         return output.ToArray();
@@ -445,7 +446,8 @@ var compressor = new ModernFileCompressor(data =>
     using var output = new MemoryStream();
     using (var gzip = new GZipStream(output, CompressionMode.Compress))
     {
-        // .NET 9.0: современный способ записи с ReadOnlySpan
+        // .NET 9.0: byte[] неявно преобразуется в ReadOnlySpan<byte>
+        // Компилятор автоматически выбирает современную перегрузку Write(ReadOnlySpan<byte>)
         gzip.Write(data);
     }
     return output.ToArray();
