@@ -807,8 +807,9 @@ public class DataProvider
     // Получение данных через HTTP (внешний источник)
     public (double Value, DateTime Timestamp) GetTemperatureData()
     {
-        var response = _httpClient.GetAsync("https://sensor-api.com/temperature").Result;
-        var value = response.Content.ReadFromJsonAsync<double>().Result;
+        // Упрощённый пример для демонстрации (в реальном коде используйте async/await)
+        var response = _httpClient.GetAsync("https://sensor-api.com/temperature").GetAwaiter().GetResult();
+        var value = response.Content.ReadFromJsonAsync<double>().GetAwaiter().GetResult();
         return (value, DateTime.Now);
     }
 
@@ -889,8 +890,9 @@ public class TemperatureDataProvider : IChronologicalDataProvider
     // Этот класс отвечает только за получение температуры
     public (double Value, DateTime Timestamp) GetData()
     {
-        var response = _httpClient.GetAsync("https://sensor-api.com/temperature").Result;
-        var value = response.Content.ReadFromJsonAsync<double>().Result;
+        // Упрощённый пример для демонстрации (в реальном коде используйте async/await)
+        var response = _httpClient.GetAsync("https://sensor-api.com/temperature").GetAwaiter().GetResult();
+        var value = response.Content.ReadFromJsonAsync<double>().GetAwaiter().GetResult();
         return (value, DateTime.Now);
     }
 }
@@ -1579,9 +1581,9 @@ public class ApiDataProvider : IDataProvider
     
     public string GetData()
     {
-        // Получение данных через HTTP
-        var response = _apiClient.GetAsync(_apiUrl).Result;
-        return response.Content.ReadAsStringAsync().Result;
+        // Получение данных через HTTP (упрощённый пример)
+        var response = _apiClient.GetAsync(_apiUrl).GetAwaiter().GetResult();
+        return response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
     }
 }
 
