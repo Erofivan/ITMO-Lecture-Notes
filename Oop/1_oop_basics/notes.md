@@ -11,6 +11,10 @@
 5. [Конвенции Find/Get](#конвенции-findget)
 6. [Обработка исключений и Result Pattern](#обработка-исключений-и-result-pattern)
 7. [Value Objects](#value-objects)
+   - [Перегрузка операторов: когда и почему нельзя](#перегрузка-операторов-когда-и-почему-нельзя)
+   - [Сложные операции: когда операторы неуместны](#сложные-операции-когда-операторы-неуместны)
+   - [Паттерны Create и TryCreate](#паттерны-create-и-trycreate)
+   - [Конвенция TryGet и TryXxx в .NET](#конвенция-tryget-и-tryxxx-в-net)
 8. [Файловая структура проекта](#файловая-структура-проекта)
 
 ---
@@ -2408,6 +2412,1247 @@ Console.WriteLine(usd1 == new Money(100, "USD")); // True — равенство
 - Примитивов без бизнес-правил (простые `int`, `string` для имён переменных)
 
 **Принцип**: Value Object — это типы, которые поддерживают для нас определённый инвариант и имеют бизнес-смысл в предметной области.
+
+---
+
+### Перегрузка операторов: когда и почему нельзя
+
+Перегрузка операторов (Operator Overloading) — мощный инструмент C#, позволяющий определять собственное поведение стандартных операторов (`+`, `-`, `*`, `/`, `==`, и т.д.) для пользовательских типов. Однако этот инструмент требует осторожности и соблюдения принципов.
+
+#### Правило: Value Object + Value Object, но не Value Object + Primitive
+
+**Ключевое правило**: Операторы должны работать только между **Value Object одного типа**, но **не между Value Object и примитивом**.
+
+**Правильно**:
+```csharp
+public static Money operator +(Money left, Money right) // ✅ Money + Money
+public static Distance operator -(Distance left, Distance right) // ✅ Distance - Distance
+```
+
+**Неправильно**:
+```csharp
+public static Money operator +(Money left, int right) // ❌ Money + int
+public static Money operator *(Money left, decimal right) // ❌ Money * decimal
+```
+
+#### Антипаттерн: смешивание Value Object с примитивами
+
+Рассмотрим пример **неправильной** реализации `Money`:
+
+```csharp
+// ❌ АНТИПАТТЕРН: Перегрузка оператора для комбинации с примитивом
+public readonly struct Money
+{
+    public Money(decimal value)
+    {
+        if (value < 0)
+            throw new ArgumentException("Сумма не может быть отрицательной");
+        
+        Value = value;
+    }
+
+    public decimal Value { get; }
+
+    // ❌ ПЛОХО: Оператор сложения Money + int
+    public static Money operator +(Money money, int amount)
+    {
+        return new Money(money.Value + amount);
+    }
+
+    // ❌ ПЛОХО: Оператор умножения Money * decimal
+    public static Money operator *(Money money, decimal multiplier)
+    {
+        return new Money(money.Value * multiplier);
+    }
+}
+
+// Использование
+var money = new Money(100);
+var result1 = money + 50;        // Money + int — компилируется, но это плохо
+var result2 = money * 1.5m;      // Money * decimal — компилируется, но это плохо
+```
+
+**Почему это антипаттерн?**
+
+1. **Нарушение инкапсуляции**: Примитив `int` или `decimal` не знает о бизнес-правилах `Money`. Операция `money + 50` создаёт иллюзию, что `50` — это деньги, хотя это просто число. Что если `50` — это не доллары, а рубли? Или это не деньги, а количество товаров?
+
+2. **Потеря смысла**: `Money` должен работать только с `Money`. Число `50` само по себе не имеет денежного смысла — это просто число. Если нужно добавить деньги, создайте явно `new Money(50)`.
+
+3. **Неявные преобразования опасны**: Разрешая `money + 50`, мы размываем типобезопасность. Код становится похож на работу с примитивами, но с ложным ощущением защищённости.
+
+4. **Нарушение единообразия**: Если есть `Money + int`, программисты начнут ожидать `int + Money`. Придётся определять оба оператора, что приводит к ещё большей путанице.
+
+5. **Сложность расширения**: Что если добавится валюта? `money + 50` — это 50 долларов, рублей, евро? Примитив не несёт этой информации.
+
+#### Правильная реализация: явное создание Value Object
+
+```csharp
+// ✅ ПРАВИЛЬНО: Операторы только между Value Object одного типа
+public readonly struct Money
+{
+    public Money(decimal value)
+    {
+        if (value < 0)
+            throw new ArgumentException("Сумма не может быть отрицательной");
+        
+        Value = value;
+    }
+
+    public decimal Value { get; }
+
+    // ✅ ХОРОШО: Money + Money
+    public static Money operator +(Money left, Money right)
+    {
+        return new Money(left.Value + right.Value);
+    }
+
+    // ✅ ХОРОШО: Money - Money
+    public static Money operator -(Money left, Money right)
+    {
+        return new Money(left.Value - right.Value);
+    }
+
+    // ❌ НЕТ operator +(Money, int)
+    // ❌ НЕТ operator *(Money, decimal)
+}
+
+// Использование
+var money = new Money(100);
+
+// ✅ ПРАВИЛЬНО: явно создаём Money
+var result1 = money + new Money(50);
+
+// ✅ ПРАВИЛЬНО: явное создание из примитива
+var amount = new Money(50);
+var result2 = money + amount;
+
+// ❌ НЕ КОМПИЛИРУЕТСЯ (и это хорошо!)
+// var result3 = money + 50; // Ошибка компиляции: нет оператора Money + int
+```
+
+#### Прямой доступ к внутреннему значению — ещё один антипаттерн
+
+Другая распространённая ошибка — предоставление публичного сеттера или изменяемого поля:
+
+```csharp
+// ❌ АНТИПАТТЕРН: Прямой доступ к внутреннему значению
+public class Money
+{
+    // ❌ ПЛОХО: публичный сеттер позволяет обойти валидацию
+    public decimal Value { get; set; }
+
+    public Money(decimal value)
+    {
+        if (value < 0)
+            throw new ArgumentException("Сумма не может быть отрицательной");
+        
+        Value = value;
+    }
+}
+
+// Использование
+var money = new Money(100); // Валидация в конструкторе прошла
+
+// ❌ ПРОБЛЕМА: Обход валидации через сеттер
+money.Value = -500; // Инвариант нарушен! Money теперь отрицательный!
+```
+
+**Почему это плохо?**
+
+1. **Обход инварианта**: Value Object должен **всегда** находиться в валидном состоянии. Публичный сеттер позволяет установить некорректное значение в обход конструктора.
+
+2. **Нарушение неизменяемости**: Value Object должен быть иммутабельным. Сеттер делает его изменяемым, что ведёт к проблемам с многопоточностью и предсказуемостью.
+
+3. **Потеря гарантий**: Если `Value` можно изменить, мы не можем доверять `Money` — нужно проверять его валидность перед каждым использованием, что делает Value Object бесполезным.
+
+**Правильная реализация**:
+
+```csharp
+// ✅ ПРАВИЛЬНО: Только геттер, сеттер приватный или отсутствует
+public readonly struct Money
+{
+    public Money(decimal value)
+    {
+        if (value < 0)
+            throw new ArgumentException("Сумма не может быть отрицательной");
+        
+        Value = value;
+    }
+
+    // ✅ ХОРОШО: Только getter, изменить нельзя
+    public decimal Value { get; }
+
+    // ✅ ХОРОШО: "Изменение" возвращает новый объект
+    public Money Add(Money other)
+    {
+        return new Money(Value + other.Value);
+    }
+}
+```
+
+Использование `readonly struct` в C# дополнительно гарантирует неизменяемость на уровне компилятора.
+
+#### Сравнение: правильный и неправильный подходы
+
+| Аспект | ❌ Антипаттерн | ✅ Правильный подход |
+|--------|--------------|-------------------|
+| **Операторы** | `Money + int`, `Money * decimal` | `Money + Money`, `Money - Money` |
+| **Доступ к значению** | `public decimal Value { get; set; }` | `public decimal Value { get; }` |
+| **Создание из примитива** | Неявно через оператор | Явно через конструктор |
+| **Изменяемость** | Изменяемый (`class` с сеттером) | Неизменяемый (`readonly struct`) |
+| **Гарантии** | Инвариант можно нарушить | Инвариант всегда соблюдён |
+
+#### Принцип «Pit of Success»
+
+Правильный дизайн Value Object следует принципу **«Pit of Success» (яма успеха)** — делает правильный код простым, а неправильный — невозможным или очевидно плохим.
+
+**С антипаттерном** (неявные операции с примитивами):
+```csharp
+var money = new Money(100);
+var bad = money + 50; // Компилируется, но неправильно
+```
+
+**С правильным подходом**:
+```csharp
+var money = new Money(100);
+// var bad = money + 50; // Ошибка компиляции — программист вынужден исправиться
+var good = money + new Money(50); // Единственный правильный способ
+```
+
+Компилятор **помогает** избежать ошибок, не позволяя писать некорректный код.
+
+---
+
+### Сложные операции: когда операторы неуместны
+
+Не все операции между Value Object имеет смысл реализовывать через перегрузку операторов. Операторы должны быть **интуитивно понятными** и **соответствовать математической семантике**.
+
+#### Принцип: операторы только для простых и очевидных операций
+
+Перегружайте операторы только тогда, когда операция:
+1. **Интуитивно понятна**: `Distance + Distance` → понятно, что получится большее расстояние
+2. **Математически естественна**: Складывать, вычитать расстояния — логично
+3. **Не требует дополнительного контекста**: Результат операции однозначен
+
+#### Пример 1: Когда операторы уместны
+
+```csharp
+// ✅ ХОРОШО: Простые математические операции
+public readonly struct Distance
+{
+    public Distance(double meters)
+    {
+        if (meters < 0)
+            throw new ArgumentException("Расстояние не может быть отрицательным");
+        
+        Meters = meters;
+    }
+
+    public double Meters { get; }
+
+    // ✅ Интуитивно понятно: расстояние + расстояние = расстояние
+    public static Distance operator +(Distance left, Distance right)
+    {
+        return new Distance(left.Meters + right.Meters);
+    }
+
+    // ✅ Интуитивно понятно: расстояние - расстояние = расстояние
+    public static Distance operator -(Distance left, Distance right)
+    {
+        return new Distance(left.Meters - right.Meters);
+    }
+}
+
+// Использование
+var distance1 = new Distance(100);
+var distance2 = new Distance(50);
+var total = distance1 + distance2; // Понятно: 150 метров
+```
+
+#### Пример 2: Когда операторы НЕуместны (антипаттерн)
+
+Рассмотрим физическую задачу: у нас есть `Mass` (масса) и `Acceleration` (ускорение). По второму закону Ньютона: `F = m * a` (сила равна массе, умноженной на ускорение).
+
+**Неправильный подход** — перегрузка операторов:
+
+```csharp
+// ❌ АНТИПАТТЕРН: Перегрузка оператора для сложной операции
+public readonly struct Mass
+{
+    public Mass(double kilograms)
+    {
+        if (kilograms <= 0)
+            throw new ArgumentException("Масса должна быть положительной");
+        
+        Kilograms = kilograms;
+    }
+
+    public double Kilograms { get; }
+
+    // ❌ ПЛОХО: Не очевидно, что Mass / Acceleration → Force
+    public static Force operator /(Mass mass, Acceleration acceleration)
+    {
+        return new Force(mass.Kilograms / acceleration.MetersPerSecondSquared);
+    }
+
+    // ❌ ПЛОХО: Не очевидно, что Mass * Acceleration → Force
+    public static Force operator *(Mass mass, Acceleration acceleration)
+    {
+        return new Force(mass.Kilograms * acceleration.MetersPerSecondSquared);
+    }
+}
+
+public readonly struct Acceleration
+{
+    public double MetersPerSecondSquared { get; }
+    // ...
+}
+
+public readonly struct Force
+{
+    public double Newtons { get; }
+    // ...
+}
+
+// Использование
+var mass = new Mass(10);           // 10 кг
+var acceleration = new Acceleration(5); // 5 м/с²
+
+// ❌ ПРОБЛЕМА: Не интуитивно
+var force1 = mass * acceleration;  // Что это? Откуда Force?
+var force2 = mass / acceleration;  // Ещё менее понятно!
+```
+
+**Почему это плохо?**
+
+1. **Не интуитивно**: `Mass * Acceleration` не очевидно даёт `Force` без знания физики. Оператор `*` скрывает сложную бизнес-логику.
+
+2. **Требуется контекст**: Чтобы понять, что `mass / acceleration` даёт силу, нужно знать физическую формулу. Это нарушает принцип «самодокументируемого кода».
+
+3. **Неоднозначность**: Что делать, если нужно реализовать другую операцию с массой? Например, `mass / volume` → `density`. Операторов не хватит на все комбинации.
+
+4. **Обратная операция неочевидна**: Если `mass * acceleration → force`, то что делает `force / mass`? `Acceleration`? А `force / acceleration`? `Mass`? Быстро запутаться.
+
+**Правильный подход** — явные методы `Create` или обычные методы:
+
+```csharp
+// ✅ ПРАВИЛЬНО: Явный статический метод
+public readonly struct Force
+{
+    private Force(double newtons)
+    {
+        if (newtons < 0)
+            throw new ArgumentException("Сила не может быть отрицательной");
+        
+        Newtons = newtons;
+    }
+
+    public double Newtons { get; }
+
+    // ✅ ХОРОШО: Явный метод с понятным названием
+    public static Force FromMassAndAcceleration(Mass mass, Acceleration acceleration)
+    {
+        return new Force(mass.Kilograms * acceleration.MetersPerSecondSquared);
+    }
+
+    // Альтернатива: метод в классе Mass
+    // public Force CalculateForce(Acceleration acceleration) { ... }
+}
+
+// Использование
+var mass = new Mass(10);
+var acceleration = new Acceleration(5);
+
+// ✅ ПОНЯТНО: явно вызываем метод расчёта силы
+var force = Force.FromMassAndAcceleration(mass, acceleration);
+
+// Или:
+// var force = mass.CalculateForce(acceleration);
+```
+
+**Преимущества явного метода**:
+- Название метода объясняет, что происходит
+- Понятно без знания физики: «сила из массы и ускорения»
+- Легко добавить другие методы для других физических величин
+- Самодокументируемый код
+
+#### Пример 3: Сравнение с нестандартной семантикой
+
+```csharp
+// ❌ АНТИПАТТЕРН: Оператор сравнения с нестандартной семантикой
+public readonly struct Temperature
+{
+    public Temperature(double celsius)
+    {
+        Celsius = celsius;
+    }
+
+    public double Celsius { get; }
+
+    // ❌ ПЛОХО: Оператор < имеет нестандартную семантику
+    // Возвращает разность температур, а не bool!
+    public static Temperature operator <(Temperature left, Temperature right)
+    {
+        return new Temperature(right.Celsius - left.Celsius);
+    }
+
+    // ❌ ПЛОХО: Оператор > также возвращает Temperature
+    public static Temperature operator >(Temperature left, Temperature right)
+    {
+        return new Temperature(left.Celsius - right.Celsius);
+    }
+}
+
+// Использование — полная путаница!
+var temp1 = new Temperature(20);
+var temp2 = new Temperature(30);
+
+var result = temp1 < temp2; // Ожидаем bool, получаем Temperature!
+```
+
+Это **катастрофически плохо**: операторы сравнения по соглашению **всегда должны возвращать `bool`**. Нарушение этого соглашения сделает код абсолютно нечитаемым.
+
+**Правильно**:
+```csharp
+// ✅ ПРАВИЛЬНО: Операторы сравнения возвращают bool
+public readonly struct Temperature
+{
+    public Temperature(double celsius)
+    {
+        Celsius = celsius;
+    }
+
+    public double Celsius { get; }
+
+    // ✅ ХОРОШО: Стандартное сравнение
+    public static bool operator <(Temperature left, Temperature right)
+    {
+        return left.Celsius < right.Celsius;
+    }
+
+    public static bool operator >(Temperature left, Temperature right)
+    {
+        return left.Celsius > right.Celsius;
+    }
+
+    // ✅ ХОРОШО: Разность — явный метод
+    public Temperature GetDifference(Temperature other)
+    {
+        return new Temperature(Math.Abs(Celsius - other.Celsius));
+    }
+}
+```
+
+#### Правила перегрузки операторов для Value Objects
+
+✅ **Перегружайте операторы, если**:
+- Операция интуитивно понятна (`Money + Money`, `Distance - Distance`)
+- Семантика соответствует стандартной (`<` возвращает `bool`)
+- Результат операции очевиден и однозначен
+- Не требуется дополнительный контекст для понимания
+
+❌ **НЕ перегружайте операторы, если**:
+- Операция сложная или требует знания предметной области
+- Семантика нестандартна (например, `<` возвращает не `bool`)
+- Нужно передать дополнительные параметры или контекст
+- Результат операции не очевиден (`Mass / Acceleration` → `Force`?)
+
+**Альтернатива операторам**: Используйте **статические методы-фабрики** (`Create`, `FromXxx`) или **обычные методы** с понятными названиями.
+
+---
+
+### Паттерны Create и TryCreate
+
+При создании Value Object возникает вопрос: как обрабатывать ситуации, когда входные данные могут быть невалидными? Для этого существуют паттерны **Create** и **TryCreate**.
+
+#### Зачем нужны Create/TryCreate?
+
+**Проблема**: Конструктор выбрасывает исключение при невалидных данных. Но что, если источник данных — пользовательский ввод, API, база данных? Исключения для таких сценариев могут быть избыточны.
+
+**Решение**: Паттерны `Create` и `TryCreate` предоставляют альтернативные способы создания Value Object с явной обработкой ошибок.
+
+#### Паттерн Create: исключения для программных ошибок
+
+`Create` — статический метод, который **выбрасывает исключения** при невалидных данных, как и конструктор.
+
+**Когда использовать**:
+- Данные приходят из **доверенного источника** (другой код, конфигурация)
+- Невалидные данные — это **баг** в программе
+- Нужна более информативная обработка ошибки, чем в конструкторе
+
+```csharp
+public readonly struct Email
+{
+    private Email(string value)
+    {
+        Value = value;
+    }
+
+    public string Value { get; }
+
+    // Статический метод Create с валидацией
+    public static Email Create(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("Email не может быть пустым", nameof(email));
+        }
+
+        if (!email.Contains('@'))
+        {
+            throw new ArgumentException(
+                $"Email '{email}' должен содержать символ '@'",
+                nameof(email));
+        }
+
+        if (!email.Contains('.', email.IndexOf('@')))
+        {
+            throw new ArgumentException(
+                $"Email '{email}' должен содержать домен с точкой",
+                nameof(email));
+        }
+
+        return new Email(email.ToLowerInvariant());
+    }
+
+    public override string ToString() => Value;
+}
+
+// Использование
+try
+{
+    var email = Email.Create("user@example.com"); // OK
+    Console.WriteLine($"Email: {email}");
+
+    var invalid = Email.Create("invalid-email"); // ArgumentException
+}
+catch (ArgumentException ex)
+{
+    Console.WriteLine($"Ошибка создания Email: {ex.Message}");
+}
+```
+
+**Преимущества `Create`**:
+- Более детальные сообщения об ошибках
+- Можно выполнить дополнительную обработку (логирование, нормализация)
+- Явное API: понятно, что это фабричный метод
+
+#### Паттерн TryCreate: Result для пользовательского ввода
+
+`TryCreate` — статический метод, который **возвращает Result** вместо выброса исключения.
+
+**Когда использовать**:
+- Данные приходят из **недоверенного источника** (пользователь, внешний API)
+- Невалидные данные — это **предсказуемый сценарий**, а не ошибка
+- Нужна явная обработка успеха/неудачи без исключений
+
+```csharp
+// Result-тип для Email
+public abstract record EmailCreationResult
+{
+    private EmailCreationResult() { }
+
+    public sealed record Success(Email Email) : EmailCreationResult;
+    public sealed record EmptyValue : EmailCreationResult;
+    public sealed record MissingAtSymbol(string ProvidedValue) : EmailCreationResult;
+    public sealed record InvalidDomain(string ProvidedValue) : EmailCreationResult;
+}
+
+public readonly struct Email
+{
+    private Email(string value)
+    {
+        Value = value;
+    }
+
+    public string Value { get; }
+
+    // TryCreate возвращает Result вместо выброса исключения
+    public static EmailCreationResult TryCreate(string? email)
+    {
+        // Проверка: пустое значение
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return new EmailCreationResult.EmptyValue();
+        }
+
+        // Проверка: наличие @
+        if (!email.Contains('@'))
+        {
+            return new EmailCreationResult.MissingAtSymbol(email);
+        }
+
+        // Проверка: домен с точкой
+        var atIndex = email.IndexOf('@');
+        if (!email.Contains('.', atIndex))
+        {
+            return new EmailCreationResult.InvalidDomain(email);
+        }
+
+        // Успех: создаём Email
+        var normalizedEmail = email.ToLowerInvariant();
+        return new EmailCreationResult.Success(new Email(normalizedEmail));
+    }
+
+    // Create для внутреннего использования (выбрасывает исключения)
+    public static Email Create(string email)
+    {
+        var result = TryCreate(email);
+
+        return result switch
+        {
+            EmailCreationResult.Success success => success.Email,
+            EmailCreationResult.EmptyValue => 
+                throw new ArgumentException("Email не может быть пустым"),
+            EmailCreationResult.MissingAtSymbol(var value) => 
+                throw new ArgumentException($"Email '{value}' должен содержать '@'"),
+            EmailCreationResult.InvalidDomain(var value) => 
+                throw new ArgumentException($"Email '{value}' должен содержать домен с точкой"),
+            _ => throw new InvalidOperationException("Неожиданный результат")
+        };
+    }
+
+    public override string ToString() => Value;
+}
+
+// Использование TryCreate
+Console.Write("Введите email: ");
+var input = Console.ReadLine();
+
+var result = Email.TryCreate(input);
+
+switch (result)
+{
+    case EmailCreationResult.Success success:
+        Console.WriteLine($"✅ Email создан: {success.Email}");
+        break;
+
+    case EmailCreationResult.EmptyValue:
+        Console.WriteLine("❌ Email не может быть пустым");
+        break;
+
+    case EmailCreationResult.MissingAtSymbol(var value):
+        Console.WriteLine($"❌ Email '{value}' должен содержать '@'");
+        break;
+
+    case EmailCreationResult.InvalidDomain(var value):
+        Console.WriteLine($"❌ Email '{value}' должен содержать корректный домен");
+        break;
+}
+```
+
+**Преимущества `TryCreate`**:
+- Нет исключений — быстрее и понятнее для предсказуемых сценариев
+- Явная обработка всех возможных ошибок
+- Удобно для валидации пользовательского ввода
+- Компилятор помогает не забыть обработать случаи через pattern matching
+
+#### Важно: каждому Value Object — свой Result-тип
+
+**Антипаттерн**: Использовать один универсальный `Result<T>` для всех типов.
+
+```csharp
+// ❌ АНТИПАТТЕРН: Универсальный Result для всех
+public class Result<T>
+{
+    public bool IsSuccess { get; }
+    public T? Value { get; }
+    public string? ErrorMessage { get; }
+
+    // ...
+}
+
+// Использование — теряется семантика ошибок
+var emailResult = Email.TryCreate("invalid");
+if (!emailResult.IsSuccess)
+{
+    // Что за ошибка? Нужно парсить строку ErrorMessage — плохо!
+    Console.WriteLine(emailResult.ErrorMessage);
+}
+```
+
+**Почему плохо**:
+- Теряется **типизированная информация** об ошибке
+- Невозможно использовать **pattern matching** для разных типов ошибок
+- Строка `ErrorMessage` требует парсинга или проверки вручную
+- Компилятор не поможет обработать все случаи
+
+**Правильно**: Каждому Value Object — свой Result-тип с конкретными случаями ошибок.
+
+```csharp
+// ✅ ПРАВИЛЬНО: Специализированный Result для Email
+public abstract record EmailCreationResult
+{
+    private EmailCreationResult() { }
+
+    public sealed record Success(Email Email) : EmailCreationResult;
+    public sealed record EmptyValue : EmailCreationResult;
+    public sealed record MissingAtSymbol(string ProvidedValue) : EmailCreationResult;
+    public sealed record InvalidDomain(string ProvidedValue) : EmailCreationResult;
+}
+
+// ✅ ПРАВИЛЬНО: Специализированный Result для Money
+public abstract record MoneyCreationResult
+{
+    private MoneyCreationResult() { }
+
+    public sealed record Success(Money Money) : MoneyCreationResult;
+    public sealed record NegativeAmount(decimal ProvidedAmount) : MoneyCreationResult;
+    public sealed record InvalidCurrency(string ProvidedCurrency) : MoneyCreationResult;
+}
+```
+
+**Преимущества специализированных Result-типов**:
+- **Типобезопасность**: Компилятор знает все возможные результаты
+- **Pattern matching**: Явная обработка каждого случая
+- **Самодокументирование**: По типу Result понятны все возможные ошибки
+- **Расширяемость**: Легко добавить новые типы ошибок
+
+#### Сравнение: Конструктор vs Create vs TryCreate
+
+| Подход | Поведение при ошибке | Когда использовать |
+|--------|---------------------|-------------------|
+| **Конструктор** | Выбрасывает исключение | Простые случаи, доверенные данные |
+| **Create** | Выбрасывает исключение | Сложная валидация, доверенные данные, нужны детальные сообщения |
+| **TryCreate** | Возвращает Result | Пользовательский ввод, недоверенные данные, предсказуемые ошибки |
+
+```csharp
+// Конструктор — простая валидация
+public Money(decimal value)
+{
+    if (value < 0)
+        throw new ArgumentException("Сумма не может быть отрицательной");
+    Value = value;
+}
+
+// Create — детальная валидация с исключениями
+public static Email Create(string email)
+{
+    // Детальные проверки с информативными исключениями
+    // ...
+}
+
+// TryCreate — Result для пользовательского ввода
+public static EmailCreationResult TryCreate(string? email)
+{
+    // Проверки, возвращающие типизированные ошибки
+    // ...
+}
+```
+
+#### Пример: Money с Create и TryCreate
+
+```csharp
+public readonly struct Money
+{
+    private Money(decimal amount, string currency)
+    {
+        Amount = amount;
+        Currency = currency;
+    }
+
+    public decimal Amount { get; }
+    public string Currency { get; }
+
+    // Create для внутреннего использования (с исключениями)
+    public static Money Create(decimal amount, string currency)
+    {
+        if (amount < 0)
+        {
+            throw new ArgumentException(
+                $"Сумма не может быть отрицательной: {amount}",
+                nameof(amount));
+        }
+
+        if (string.IsNullOrWhiteSpace(currency))
+        {
+            throw new ArgumentException(
+                "Валюта обязательна",
+                nameof(currency));
+        }
+
+        var normalizedCurrency = currency.ToUpperInvariant();
+        var validCurrencies = new[] { "USD", "EUR", "RUB", "GBP" };
+
+        if (!validCurrencies.Contains(normalizedCurrency))
+        {
+            throw new ArgumentException(
+                $"Неподдерживаемая валюта: {currency}. " +
+                $"Допустимые валюты: {string.Join(", ", validCurrencies)}",
+                nameof(currency));
+        }
+
+        return new Money(amount, normalizedCurrency);
+    }
+
+    // TryCreate для пользовательского ввода (с Result)
+    public static MoneyCreationResult TryCreate(decimal amount, string? currency)
+    {
+        if (amount < 0)
+        {
+            return new MoneyCreationResult.NegativeAmount(amount);
+        }
+
+        if (string.IsNullOrWhiteSpace(currency))
+        {
+            return new MoneyCreationResult.EmptyCurrency();
+        }
+
+        var normalizedCurrency = currency.ToUpperInvariant();
+        var validCurrencies = new[] { "USD", "EUR", "RUB", "GBP" };
+
+        if (!validCurrencies.Contains(normalizedCurrency))
+        {
+            return new MoneyCreationResult.InvalidCurrency(currency, validCurrencies);
+        }
+
+        return new MoneyCreationResult.Success(new Money(amount, normalizedCurrency));
+    }
+
+    public override string ToString() => $"{Amount:F2} {Currency}";
+}
+
+// Result-тип для Money
+public abstract record MoneyCreationResult
+{
+    private MoneyCreationResult() { }
+
+    public sealed record Success(Money Money) : MoneyCreationResult;
+    public sealed record NegativeAmount(decimal ProvidedAmount) : MoneyCreationResult;
+    public sealed record EmptyCurrency : MoneyCreationResult;
+    public sealed record InvalidCurrency(
+        string ProvidedCurrency,
+        string[] ValidCurrencies) : MoneyCreationResult;
+}
+
+// Использование Create (для доверенных данных)
+var money1 = Money.Create(100, "USD"); // OK
+// var money2 = Money.Create(-10, "USD"); // ArgumentException
+
+// Использование TryCreate (для пользовательского ввода)
+Console.Write("Введите сумму: ");
+var amountInput = decimal.Parse(Console.ReadLine()!);
+
+Console.Write("Введите валюту: ");
+var currencyInput = Console.ReadLine();
+
+var result = Money.TryCreate(amountInput, currencyInput);
+
+switch (result)
+{
+    case MoneyCreationResult.Success success:
+        Console.WriteLine($"✅ Создано: {success.Money}");
+        break;
+
+    case MoneyCreationResult.NegativeAmount negative:
+        Console.WriteLine($"❌ Сумма не может быть отрицательной: {negative.ProvidedAmount}");
+        break;
+
+    case MoneyCreationResult.EmptyCurrency:
+        Console.WriteLine("❌ Валюта обязательна");
+        break;
+
+    case MoneyCreationResult.InvalidCurrency invalid:
+        Console.WriteLine($"❌ Неподдерживаемая валюта: {invalid.ProvidedCurrency}");
+        Console.WriteLine($"   Допустимые валюты: {string.Join(", ", invalid.ValidCurrencies)}");
+        break;
+}
+```
+
+#### Рекомендации по использованию
+
+✅ **Используйте конструктор**:
+- Для простой валидации (1-2 проверки)
+- Когда данные всегда должны быть валидными
+- Для внутреннего использования в библиотеке
+
+✅ **Используйте Create**:
+- Для сложной валидации с детальными сообщениями
+- Когда нужна нормализация данных (например, `ToUpperInvariant()`)
+- Для доверенных данных (конфигурация, другой код)
+
+✅ **Используйте TryCreate**:
+- Для пользовательского ввода
+- Для данных из внешних источников (API, файлы)
+- Когда ошибки предсказуемы и должны обрабатываться без исключений
+
+**Принцип**: `Create` и `TryCreate` — не замена конструктору, а дополнительные инструменты для разных сценариев.
+
+---
+
+### Конвенция TryGet и TryXxx в .NET
+
+В .NET существует устоявшаяся конвенция для методов, которые **пытаются** выполнить операцию, но могут не успешно завершиться. Эта конвенция называется **TryXxx pattern**.
+
+#### Суть конвенции TryXxx
+
+Методы с префиксом `Try` используются, когда операция **может не успешно завершиться**, и это — **нормальный сценарий**, а не исключительная ситуация.
+
+**Ключевые характеристики**:
+1. **Возвращаемый тип**: `bool` — успех (`true`) или неудача (`false`)
+2. **Параметр `out`**: Результат операции передаётся через `out`-параметр
+3. **Без исключений**: Метод не выбрасывает исключения при неудаче
+
+**Сигнатура**:
+```csharp
+public bool TryXxx(TInput input, out TResult result)
+```
+
+#### Примеры из стандартной библиотеки .NET
+
+**1. `int.TryParse` — парсинг строки в число**
+
+```csharp
+string input = "123";
+
+// Старый подход — исключение при ошибке
+try
+{
+    int value = int.Parse(input); // Бросает FormatException, если не число
+    Console.WriteLine($"Значение: {value}");
+}
+catch (FormatException)
+{
+    Console.WriteLine("Не удалось распарсить");
+}
+
+// Новый подход — TryParse
+if (int.TryParse(input, out int value))
+{
+    Console.WriteLine($"Значение: {value}");
+}
+else
+{
+    Console.WriteLine("Не удалось распарсить");
+}
+```
+
+**2. `Dictionary.TryGetValue` — получение значения по ключу**
+
+```csharp
+var dictionary = new Dictionary<string, int>
+{
+    ["apple"] = 5,
+    ["banana"] = 3
+};
+
+// Старый подход — проверка наличия ключа
+if (dictionary.ContainsKey("apple"))
+{
+    int value = dictionary["apple"];
+    Console.WriteLine($"Яблок: {value}");
+}
+
+// Новый подход — TryGetValue
+if (dictionary.TryGetValue("apple", out int value))
+{
+    Console.WriteLine($"Яблок: {value}");
+}
+else
+{
+    Console.WriteLine("Яблок нет");
+}
+```
+
+**3. `Enum.TryParse` — парсинг строки в enum**
+
+```csharp
+enum Color { Red, Green, Blue }
+
+string input = "Green";
+
+if (Enum.TryParse<Color>(input, out Color color))
+{
+    Console.WriteLine($"Цвет: {color}");
+}
+else
+{
+    Console.WriteLine("Неизвестный цвет");
+}
+```
+
+#### Почему результат должен быть bool?
+
+**1. Единообразие с .NET Framework**
+
+В стандартной библиотеке .NET **все** методы `TryXxx` возвращают `bool`. Соблюдение этого соглашения делает ваш API интуитивно понятным для разработчиков, знакомых с .NET.
+
+**2. Простота использования в условиях**
+
+`bool` идеально подходит для использования в `if`-выражениях:
+
+```csharp
+if (int.TryParse(input, out var value))
+{
+    // Используем value
+}
+```
+
+Если бы метод возвращал что-то другое, синтаксис усложнился бы.
+
+**3. Явная семантика успеха/неудачи**
+
+`bool` однозначно сообщает: операция успешна (`true`) или неудачна (`false`). Никаких дополнительных проверок не требуется.
+
+#### Почему TryGet, а не TryFind?
+
+**Вопрос**: В некоторых языках и библиотеках встречается `TryFind`. Почему в .NET используется `TryGet`?
+
+**Ответ**: В .NET существует семантическое разделение между `Get` и `Find`:
+
+| Метод | Семантика | Поведение при отсутствии |
+|-------|-----------|-------------------------|
+| **Get** | Доступ к элементу по ключу/индексу | Выбрасывает исключение |
+| **Find** | Поиск элемента по условию | Возвращает `null` или `default` |
+
+**`TryGet`** используется как безопасная версия `Get`:
+- `dictionary[key]` → бросает исключение, если ключ отсутствует
+- `dictionary.TryGetValue(key, out value)` → возвращает `false`, если ключ отсутствует
+
+**`TryFind`** в .NET не распространён, потому что:
+- Методы `Find` в LINQ уже возвращают `null` при отсутствии элемента
+- `TryFind` добавил бы избыточность
+
+Однако в некоторых контекстах (например, коллекции) может встретиться `TryFind`, если нужна явная обработка неудачи без `null`.
+
+#### Реализация TryGet для Value Object
+
+Рассмотрим пример: у нас есть репозиторий пользователей, и мы хотим безопасно получить пользователя по ID.
+
+```csharp
+public record UserId(long Value);
+public record User(UserId Id, string Name, string Email);
+
+public class UserRepository
+{
+    private readonly Dictionary<UserId, User> _users = new();
+
+    public UserRepository()
+    {
+        // Инициализация тестовыми данными
+        var user1 = new User(new UserId(1), "Иван", "ivan@example.com");
+        var user2 = new User(new UserId(2), "Мария", "maria@example.com");
+        
+        _users[user1.Id] = user1;
+        _users[user2.Id] = user2;
+    }
+
+    // Get — гарантирует наличие или выбрасывает исключение
+    public User GetUser(UserId id)
+    {
+        if (_users.TryGetValue(id, out var user))
+        {
+            return user;
+        }
+
+        throw new KeyNotFoundException($"Пользователь с ID {id.Value} не найден");
+    }
+
+    // Find — возвращает null при отсутствии
+    public User? FindUser(UserId id)
+    {
+        return _users.GetValueOrDefault(id);
+    }
+
+    // TryGet — возвращает bool и результат через out
+    public bool TryGetUser(UserId id, out User? user)
+    {
+        return _users.TryGetValue(id, out user);
+    }
+}
+
+// Использование
+var repository = new UserRepository();
+
+// Get — ожидаем наличие пользователя
+try
+{
+    var user = repository.GetUser(new UserId(1));
+    Console.WriteLine($"Пользователь: {user.Name}");
+}
+catch (KeyNotFoundException ex)
+{
+    Console.WriteLine(ex.Message);
+}
+
+// Find — пользователь может отсутствовать
+var foundUser = repository.FindUser(new UserId(999));
+if (foundUser is not null)
+{
+    Console.WriteLine($"Найден: {foundUser.Name}");
+}
+else
+{
+    Console.WriteLine("Пользователь не найден");
+}
+
+// TryGet — безопасный доступ
+if (repository.TryGetUser(new UserId(2), out var user2))
+{
+    Console.WriteLine($"Получен: {user2.Name}");
+}
+else
+{
+    Console.WriteLine("Пользователь не найден");
+}
+```
+
+#### Сравнение подходов
+
+| Подход | Возвращаемый тип | Поведение при отсутствии | Использование |
+|--------|-----------------|-------------------------|---------------|
+| **Get** | `T` | Исключение | Элемент должен существовать |
+| **Find** | `T?` | `null` | Элемент может отсутствовать |
+| **TryGet** | `bool` + `out T?` | `false` | Безопасный доступ без исключений |
+
+**Когда использовать каждый**:
+
+✅ **Get**: Когда отсутствие элемента — ошибка программы
+```csharp
+var user = repository.GetUser(userId); // Должен быть
+```
+
+✅ **Find**: Когда отсутствие элемента — нормальный сценарий, удобен pattern matching
+```csharp
+if (repository.FindUser(userId) is { } user)
+{
+    Console.WriteLine(user.Name);
+}
+```
+
+✅ **TryGet**: Когда нужна явная обработка успеха/неудачи, соответствие .NET-конвенциям
+```csharp
+if (repository.TryGetUser(userId, out var user))
+{
+    Console.WriteLine(user.Name);
+}
+```
+
+#### Антипаттерн: TryGet возвращает не bool
+
+```csharp
+// ❌ АНТИПАТТЕРН: TryGet возвращает Result вместо bool
+public GetUserResult TryGetUser(UserId id)
+{
+    if (_users.TryGetValue(id, out var user))
+    {
+        return new GetUserResult.Success(user);
+    }
+
+    return new GetUserResult.NotFound(id);
+}
+
+// Использование — нарушение конвенции
+var result = repository.TryGetUser(userId);
+if (result is GetUserResult.Success success)
+{
+    // Используем success.User
+}
+```
+
+**Почему это плохо**:
+- Нарушает устоявшуюся .NET-конвенцию `TryXxx` → `bool`
+- Введёт в заблуждение разработчиков, ожидающих `bool`
+- Синтаксис становится более громоздким
+
+**Правильно**: Либо используйте `TryGet` с `bool + out`, либо называйте метод по-другому (например, `GetUser` с Result).
+
+#### Почему в .NET нет TryFind?
+
+**Короткий ответ**: Потому что методы `Find` в LINQ уже возвращают `null` или `default`, что достаточно для большинства случаев.
+
+**Длинный ответ**:
+
+В коллекциях .NET существуют методы:
+- `First()` — возвращает первый элемент или выбрасывает исключение
+- `FirstOrDefault()` — возвращает первый элемент или `default` (по сути, аналог `TryFind`)
+
+```csharp
+var numbers = new List<int> { 1, 2, 3, 4, 5 };
+
+// First — бросает исключение, если нет элемента
+var first = numbers.First(x => x > 10); // InvalidOperationException
+
+// FirstOrDefault — возвращает default (0 для int), если нет элемента
+var firstOrDefault = numbers.FirstOrDefault(x => x > 10); // 0
+
+// Проверка
+if (firstOrDefault != default)
+{
+    Console.WriteLine($"Найдено: {firstOrDefault}");
+}
+```
+
+`FirstOrDefault` выполняет роль `TryFind`: пытается найти элемент, возвращает `default` при неудаче. Дополнительный метод `TryFind` был бы избыточен.
+
+**Однако**: Для reference types `FirstOrDefault` возвращает `null`, что идеально. Для value types возвращает `default` (например, `0` для `int`), что может быть неоднозначно (0 — это отсутствие элемента или найденное значение?).
+
+В таких случаях можно использовать **nullable value types** (`int?`):
+
+```csharp
+var firstOrDefault = numbers.Cast<int?>().FirstOrDefault(x => x > 10);
+
+if (firstOrDefault.HasValue)
+{
+    Console.WriteLine($"Найдено: {firstOrDefault.Value}");
+}
+else
+{
+    Console.WriteLine("Не найдено");
+}
+```
+
+Или написать собственный `TryFind`, если это упростит код:
+
+```csharp
+public static bool TryFind<T>(
+    this IEnumerable<T> source,
+    Func<T, bool> predicate,
+    out T? result)
+{
+    foreach (var item in source)
+    {
+        if (predicate(item))
+        {
+            result = item;
+            return true;
+        }
+    }
+
+    result = default;
+    return false;
+}
+
+// Использование
+if (numbers.TryFind(x => x > 3, out var found))
+{
+    Console.WriteLine($"Найдено: {found}");
+}
+else
+{
+    Console.WriteLine("Не найдено");
+}
+```
+
+#### Рекомендации по TryXxx
+
+✅ **Следуйте конвенции**:
+- Возвращайте `bool`
+- Результат передавайте через `out`-параметр
+- Используйте префикс `Try`
+- Не выбрасывайте исключения при неудаче
+
+✅ **Используйте TryXxx для**:
+- Парсинга пользовательского ввода
+- Доступа к элементам коллекции
+- Операций, которые могут не завершиться
+
+❌ **Не используйте TryXxx**:
+- Если операция всегда успешна
+- Если неудача — это ошибка программы (используйте исключения)
+- Если нужна сложная информация об ошибке (используйте Result Pattern)
+
+**Принцип**: `TryXxx` — для простых операций с бинарным исходом (успех/неудача), где неудача — нормальный сценарий.
 
 ---
 
