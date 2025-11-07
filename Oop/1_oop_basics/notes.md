@@ -1627,7 +1627,7 @@ Console.WriteLine($"Point2: ({point2.X}, {point2.Y})"); // (15, 25)
 
 ### Record-типы в современном C#
 
-**Record-типы (Record Types)** — специальный вид типов в C#, предназначенный для создания иммутабельных объектов со значением по умолчанию. Появились в C# 9 и были усовершенствованы в последующих версиях.
+**Record-типы (Record Types)** — специальный вид типов в C#, предназначенный для создания иммутабельных объектов с семантикой значений. Появились в C# 9 и были усовершенствованы в последующих версиях.
 
 ```csharp
 // Record — иммутабельный по умолчанию
@@ -2689,12 +2689,6 @@ public readonly struct Mass
 
     public double Kilograms { get; }
 
-    // ❌ ПЛОХО: Не очевидно, что Mass / Acceleration → Force
-    public static Force operator /(Mass mass, Acceleration acceleration)
-    {
-        return new Force(mass.Kilograms / acceleration.MetersPerSecondSquared);
-    }
-
     // ❌ ПЛОХО: Не очевидно, что Mass * Acceleration → Force
     public static Force operator *(Mass mass, Acceleration acceleration)
     {
@@ -2719,15 +2713,14 @@ var mass = new Mass(10);           // 10 кг
 var acceleration = new Acceleration(5); // 5 м/с²
 
 // ❌ ПРОБЛЕМА: Не интуитивно
-var force1 = mass * acceleration;  // Что это? Откуда Force?
-var force2 = mass / acceleration;  // Ещё менее понятно!
+var force = mass * acceleration;  // Что это? Откуда Force?
 ```
 
 **Почему это плохо?**
 
 1. **Не интуитивно**: `Mass * Acceleration` не очевидно даёт `Force` без знания физики. Оператор `*` скрывает сложную бизнес-логику.
 
-2. **Требуется контекст**: Чтобы понять, что `mass / acceleration` даёт силу, нужно знать физическую формулу. Это нарушает принцип «самодокументируемого кода».
+2. **Требуется контекст**: Чтобы понять, что `mass * acceleration` даёт силу, нужно знать физическую формулу. Это нарушает принцип «самодокументируемого кода».
 
 3. **Неоднозначность**: Что делать, если нужно реализовать другую операцию с массой? Например, `mass / volume` → `density`. Операторов не хватит на все комбинации.
 
@@ -2985,7 +2978,7 @@ public readonly struct Email
 
         // Проверка: домен с точкой
         var atIndex = email.IndexOf('@');
-        if (atIndex == -1 || email.IndexOf('.', atIndex) == -1)
+        if (email.IndexOf('.', atIndex) == -1)
         {
             return new EmailCreationResult.InvalidDomain(email);
         }
@@ -3590,20 +3583,7 @@ if (firstOrDefault != default)
 
 В таких случаях можно использовать **nullable value types** (`int?`):
 
-```csharp
-var firstOrDefault = numbers.Cast<int?>().FirstOrDefault(x => x > 10);
-
-if (firstOrDefault.HasValue)
-{
-    Console.WriteLine($"Найдено: {firstOrDefault.Value}");
-}
-else
-{
-    Console.WriteLine("Не найдено");
-}
-```
-
-Или написать собственный `TryFind`, если это упростит код:
+В таких случаях лучше использовать собственный метод расширения `TryFind`:
 
 ```csharp
 public static bool TryFind<T>(
