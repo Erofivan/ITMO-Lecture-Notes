@@ -1627,7 +1627,7 @@ Console.WriteLine($"Point2: ({point2.X}, {point2.Y})"); // (15, 25)
 
 ### Record-типы в современном C#
 
-**Record-типы (Record Types)** — специальный вид типов в C#, предназначенный для создания иммутабельных объектов с семантикой значений. Появились в C# 9 и были усовершенствованы в последующих версиях.
+**Record-типы (Record Types)** — специальный вид типов в C#, предназначенный для создания иммутабельных объектов с семантикой значений. Впервые представлены в C# 9.0 (2020) как `record class`, дополнены в C# 10.0 (2021) поддержкой `record struct` и `readonly record struct`, что позволяет использовать преимущества record-синтаксиса как для ссылочных, так и для значимых типов.
 
 ```csharp
 // Record — иммутабельный по умолчанию
@@ -2681,8 +2681,8 @@ public readonly struct Mass
 {
     public Mass(double kilograms)
     {
-        if (kilograms <= 0)
-            throw new ArgumentException("Масса должна быть положительной");
+        if (kilograms < 0)
+            throw new ArgumentException("Масса не может быть отрицательной");
         
         Kilograms = kilograms;
     }
