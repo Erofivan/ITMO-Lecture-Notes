@@ -403,11 +403,12 @@ public class ZipCompressionStrategy : ICompressionStrategy
 {
     public byte[] Compress(byte[] data)
     {
-        // Реализация сжатия с использованием GZip
+        // Реализация сжатия с использованием GZip (.NET 9.0)
         using var output = new MemoryStream();
         using (var gzip = new GZipStream(output, CompressionMode.Compress))
         {
-            gzip.Write(data, 0, data.Length);
+            // Использование современного перегруженного метода Write с ReadOnlySpan
+            gzip.Write(data);
         }
         return output.ToArray();
     }
@@ -444,7 +445,8 @@ var compressor = new ModernFileCompressor(data =>
     using var output = new MemoryStream();
     using (var gzip = new GZipStream(output, CompressionMode.Compress))
     {
-        gzip.Write(data, 0, data.Length);
+        // .NET 9.0: современный способ записи с ReadOnlySpan
+        gzip.Write(data);
     }
     return output.ToArray();
 });
