@@ -389,6 +389,8 @@ graph TD
 Да, некоторые паттерны действительно стали менее актуальны с эволюцией языков программирования. Однако это естественный процесс: лучшие практики становятся частью языка. Это не обесценивает концепцию паттернов — наоборот, это подтверждает их ценность.
 
 ```csharp
+using System.IO.Compression;
+
 // Традиционный паттерн Strategy (GoF-стиль)
 public interface ICompressionStrategy
 {
@@ -397,7 +399,16 @@ public interface ICompressionStrategy
 
 public class ZipCompressionStrategy : ICompressionStrategy
 {
-    public byte[] Compress(byte[] data) { /* реализация */ }
+    public byte[] Compress(byte[] data)
+    {
+        // Реализация сжатия с использованием GZip
+        using var output = new MemoryStream();
+        using (var gzip = new GZipStream(output, CompressionMode.Compress))
+        {
+            gzip.Write(data, 0, data.Length);
+        }
+        return output.ToArray();
+    }
 }
 
 public class FileCompressor
@@ -408,9 +419,11 @@ public class FileCompressor
     {
         _strategy = strategy;
     }
+    
+    public byte[] Compress(byte[] data) => _strategy.Compress(data);
 }
 
-// Современный подход в C# с делегатами
+// Современный подход в C# с делегатами (функциональный стиль)
 public class ModernFileCompressor
 {
     private readonly Func<byte[], byte[]> _compressionFunc;
@@ -419,10 +432,20 @@ public class ModernFileCompressor
     {
         _compressionFunc = compressionFunc;
     }
+    
+    public byte[] Compress(byte[] data) => _compressionFunc(data);
 }
 
-// Использование
-var compressor = new ModernFileCompressor(data => CompressWithZip(data));
+// Использование: передаём функцию сжатия напрямую
+var compressor = new ModernFileCompressor(data => 
+{
+    using var output = new MemoryStream();
+    using (var gzip = new GZipStream(output, CompressionMode.Compress))
+    {
+        gzip.Write(data, 0, data.Length);
+    }
+    return output.ToArray();
+});
 ```
 
 ### 2. "Догматическое применение"
