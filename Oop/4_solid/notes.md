@@ -103,6 +103,7 @@ graph TD
 ```
 
 **Визуализация решения:**
+
 ![](src/splitted_chtez.png)
 
 ```mermaid
