@@ -23,7 +23,7 @@
 
 **Порождающие паттерны (Creational Design Patterns)** — это набор проверенных решений, которые помогают организовать процесс создания объектов таким образом, чтобы система оставалась гибкой, понятной и легко расширяемой.
 
-###  Зачем нужны порождающие паттерны?
+### Зачем нужны порождающие паттерны?
 
 Представьте, что вы разрабатываете приложение для интернет-магазина. В разных частях системы вам нужно создавать заказы. Прямое использование `new Order(...)` приводит к проблемам:
 
@@ -34,28 +34,28 @@
 
 Порождающие паттерны решают эти проблемы, **инкапсулируя знание о том, какие конкретные классы использует система, и скрывая детали того, как экземпляры этих классов создаются и компонуются**.
 
-###  Обзор паттернов
+### Обзор паттернов
 
 ```mermaid
 graph TD
-    A[Порождающие паттерны] --> B[Factory Method<br/>Наследование]
-    A --> C[Abstract Factory<br/>Композиция]
-    A --> D[Builder<br/>Пошаговое<br/>построение]
-    A --> E[Prototype<br/>Клонирование]
-    A --> F[Singleton<br/>Единственный<br/>экземпляр]
-    
-    B --> B1[Создание через<br/>переопределение метода]
-    C --> C1[Создание семейств<br/>объектов]
-    D --> D1[Создание сложных<br/>объектов]
-    E --> E1[Создание копий<br/>объектов]
-    F --> F1[Контроль<br/>количества экземпляров]
-    
-    style A fill:#e1f5fe
-    style B fill:#fff3e0
-    style C fill:#fff3e0
-    style D fill:#fff3e0
-    style E fill:#fff3e0
-    style F fill:#fff3e0
+ A[Порождающие паттерны] --> B[Factory Method<br/>Наследование]
+ A --> C[Abstract Factory<br/>Композиция]
+ A --> D[Builder<br/>Пошаговое<br/>построение]
+ A --> E[Prototype<br/>Клонирование]
+ A --> F[Singleton<br/>Единственный<br/>экземпляр]
+ 
+ B --> B1[Создание через<br/>переопределение метода]
+ C --> C1[Создание семейств<br/>объектов]
+ D --> D1[Создание сложных<br/>объектов]
+ E --> E1[Создание копий<br/>объектов]
+ F --> F1[Контроль<br/>количества экземпляров]
+ 
+ style A fill:#e1f5fe
+ style B fill:#fff3e0
+ style C fill:#fff3e0
+ style D fill:#fff3e0
+ style E fill:#fff3e0
+ style F fill:#fff3e0
 ```
 
 **Краткая характеристика каждого паттерна:**
@@ -76,13 +76,13 @@ graph TD
 
 > **Суть паттерна**: Вариативность создания объектов при помощи наследования и полиморфизма
 
-###  Определение
+### Определение
 
 **Factory Method (Фабричный метод)** — это порождающий паттерн проектирования, который определяет общий интерфейс для создания объектов в суперклассе, позволяя подклассам изменять тип создаваемых объектов.
 
 **Другие названия**: Virtual Constructor (Виртуальный конструктор)
 
-###  Проблема
+### Проблема
 
 Представьте, что вы создаёте программу управления грузовыми перевозками. Изначально система поддерживает только автомобильные перевозки, поэтому весь код работает с объектами класса `Truck` (грузовик).
 
@@ -94,7 +94,7 @@ graph TD
 
 В результате код превратится в запутанную структуру, переполненную условными операторами (`if`/`else` или `switch`), которые выбирают поведение в зависимости от конкретного типа транспорта. Такой подход нарушает принцип открытости/закрытости (Open/Closed Principle) и затрудняет поддержку системы.
 
-###  Решение
+### Решение
 
 Паттерн Factory Method предлагает создавать объекты не напрямую через оператор `new`, а опосредованно — через вызов специального фабричного метода (factory method). Объекты по-прежнему создаются с помощью `new`, но это происходит внутри фабричного метода, что позволяет подклассам переопределять тип создаваемых объектов.
 
@@ -114,7 +114,7 @@ graph TD
 
 Для клиентского кода разница между этими объектами несущественна — он взаимодействует с ними через абстрактный интерфейс `ITransport`. Клиенту важно только наличие метода `Deliver()`, конкретная реализация которого определяется во время выполнения благодаря полиморфизму.
 
-###  Структура паттерна
+### Структура паттерна
 
 Паттерн Factory Method состоит из четырёх ключевых компонентов:
 
@@ -132,7 +132,7 @@ graph TD
 
 Фабричный метод необязательно должен создавать новые объекты при каждом вызове. Его можно реализовать так, чтобы он возвращал существующие объекты из пула, кэша или другого хранилища, что позволяет экономить ресурсы и повторно использовать тяжёлые объекты.
 
-###  Пример реализации
+### Пример реализации
 
 Рассмотрим пример создания кросс-платформенных элементов интерфейса.
 
@@ -163,16 +163,16 @@ using System;
 /// </summary>
 public interface IButton
 {
-    /// <summary>
-    /// Отрисовывает кнопку на экране
-    /// </summary>
-    void Render();
-    
-    /// <summary>
-    /// Привязывает обработчик к событию нажатия кнопки
-    /// </summary>
-    /// <param name="handler">Делегат, который будет вызван при нажатии</param>
-    void OnClick(Action handler);
+ /// <summary>
+ /// Отрисовывает кнопку на экране
+ /// </summary>
+ void Render();
+ 
+ /// <summary>
+ /// Привязывает обработчик к событию нажатия кнопки
+ /// </summary>
+ /// <param name="handler">Делегат, который будет вызван при нажатии</param>
+ void OnClick(Action handler);
 }
 
 // ============================================
@@ -185,16 +185,16 @@ public interface IButton
 /// </summary>
 public class WindowsButton : IButton
 {
-    public void Render()
-    {
-        Console.WriteLine("[Windows] Отрисована нативная кнопка в стиле Windows 11");
-    }
+ public void Render()
+ {
+ Console.WriteLine("[Windows] Отрисована нативная кнопка в стиле Windows 11");
+ }
 
-    public void OnClick(Action handler)
-    {
-        Console.WriteLine("[Windows] Привязан обработчик события WM_LBUTTONDOWN");
-        handler?.Invoke();
-    }
+ public void OnClick(Action handler)
+ {
+ Console.WriteLine("[Windows] Привязан обработчик события WM_LBUTTONDOWN");
+ handler?.Invoke();
+ }
 }
 
 /// <summary>
@@ -203,16 +203,16 @@ public class WindowsButton : IButton
 /// </summary>
 public class HtmlButton : IButton
 {
-    public void Render()
-    {
-        Console.WriteLine("[HTML] Сгенерирована разметка: <button class=\"btn\">OK</button>");
-    }
+ public void Render()
+ {
+ Console.WriteLine("[HTML] Сгенерирована разметка: <button class=\"btn\">OK</button>");
+ }
 
-    public void OnClick(Action handler)
-    {
-        Console.WriteLine("[HTML] Привязан обработчик через addEventListener");
-        handler?.Invoke();
-    }
+ public void OnClick(Action handler)
+ {
+ Console.WriteLine("[HTML] Привязан обработчик через addEventListener");
+ handler?.Invoke();
+ }
 }
 
 // ============================================
@@ -226,41 +226,41 @@ public class HtmlButton : IButton
 /// </summary>
 public abstract class Dialog
 {
-    /// <summary>
-    /// Основная бизнес-логика отрисовки диалога
-    /// Использует продукты, созданные фабричным методом
-    /// </summary>
-    public void Render()
-    {
-        Console.WriteLine($"[{GetType().Name}] Начало отрисовки диалога...");
-        
-        // Вызываем фабричный метод для создания кнопки
-        // Конкретный тип кнопки определяется в подклассах
-        IButton okButton = CreateButton();
-        
-        // Привязываем обработчик и отрисовываем кнопку
-        okButton.OnClick(CloseDialog);
-        okButton.Render();
-        
-        Console.WriteLine($"[{GetType().Name}] Диалог отрисован успешно\n");
-    }
+ /// <summary>
+ /// Основная бизнес-логика отрисовки диалога
+ /// Использует продукты, созданные фабричным методом
+ /// </summary>
+ public void Render()
+ {
+ Console.WriteLine($"[{GetType().Name}] Начало отрисовки диалога...");
+ 
+ // Вызываем фабричный метод для создания кнопки
+ // Конкретный тип кнопки определяется в подклассах
+ IButton okButton = CreateButton();
+ 
+ // Привязываем обработчик и отрисовываем кнопку
+ okButton.OnClick(CloseDialog);
+ okButton.Render();
+ 
+ Console.WriteLine($"[{GetType().Name}] Диалог отрисован успешно\n");
+ }
 
-    /// <summary>
-    /// Фабричный метод (Factory Method)
-    /// Объявлен как abstract, поэтому подклассы ОБЯЗАНЫ его реализовать
-    /// Возвращает интерфейс IButton, скрывая конкретную реализацию
-    /// </summary>
-    /// <returns>Экземпляр кнопки, специфичный для платформы</returns>
-    protected abstract IButton CreateButton();
+ /// <summary>
+ /// Фабричный метод (Factory Method)
+ /// Объявлен как abstract, поэтому подклассы ОБЯЗАНЫ его реализовать
+ /// Возвращает интерфейс IButton, скрывая конкретную реализацию
+ /// </summary>
+ /// <returns>Экземпляр кнопки, специфичный для платформы</returns>
+ protected abstract IButton CreateButton();
 
-    /// <summary>
-    /// Обработчик закрытия диалога
-    /// Общая логика, не зависящая от типа кнопки
-    /// </summary>
-    protected void CloseDialog()
-    {
-        Console.WriteLine("[Dialog] Диалоговое окно закрыто пользователем");
-    }
+ /// <summary>
+ /// Обработчик закрытия диалога
+ /// Общая логика, не зависящая от типа кнопки
+ /// </summary>
+ protected void CloseDialog()
+ {
+ Console.WriteLine("[Dialog] Диалоговое окно закрыто пользователем");
+ }
 }
 
 // ============================================
@@ -273,13 +273,13 @@ public abstract class Dialog
 /// </summary>
 public class WindowsDialog : Dialog
 {
-    /// <summary>
-    /// Фабричный метод возвращает кнопку в стиле Windows
-    /// </summary>
-    protected override IButton CreateButton()
-    {
-        return new WindowsButton();
-    }
+ /// <summary>
+ /// Фабричный метод возвращает кнопку в стиле Windows
+ /// </summary>
+ protected override IButton CreateButton()
+ {
+ return new WindowsButton();
+ }
 }
 
 /// <summary>
@@ -288,13 +288,13 @@ public class WindowsDialog : Dialog
 /// </summary>
 public class WebDialog : Dialog
 {
-    /// <summary>
-    /// Фабричный метод возвращает кнопку в HTML-формате
-    /// </summary>
-    protected override IButton CreateButton()
-    {
-        return new HtmlButton();
-    }
+ /// <summary>
+ /// Фабричный метод возвращает кнопку в HTML-формате
+ /// </summary>
+ protected override IButton CreateButton()
+ {
+ return new HtmlButton();
+ }
 }
 
 // ============================================
@@ -307,37 +307,37 @@ public class WebDialog : Dialog
 /// </summary>
 public class Application
 {
-    private Dialog? _dialog;
+ private Dialog? _dialog;
 
-    /// <summary>
-    /// Инициализация: выбор типа диалога на основе конфигурации
-    /// В реальном приложении конфигурация читается из файла или окружения
-    /// </summary>
-    public void Initialize(string platform)
-    {
-        Console.WriteLine($"[Application] Инициализация для платформы: {platform}");
-        
-        // Выбираем конкретную фабрику на основе платформы
-        // Благодаря Factory Method, остальной код не зависит от выбора
-        _dialog = platform.ToLower() switch
-        {
-            "windows" => new WindowsDialog(),
-            "web" => new WebDialog(),
-            _ => throw new ArgumentException($"Неподдерживаемая платформа: {platform}")
-        };
-    }
+ /// <summary>
+ /// Инициализация: выбор типа диалога на основе конфигурации
+ /// В реальном приложении конфигурация читается из файла или окружения
+ /// </summary>
+ public void Initialize(string platform)
+ {
+ Console.WriteLine($"[Application] Инициализация для платформы: {platform}");
+ 
+ // Выбираем конкретную фабрику на основе платформы
+ // Благодаря Factory Method, остальной код не зависит от выбора
+ _dialog = platform.ToLower() switch
+ {
+ "windows" => new WindowsDialog(),
+ "web" => new WebDialog(),
+ _ => throw new ArgumentException($"Неподдерживаемая платформа: {platform}")
+ };
+ }
 
-    /// <summary>
-    /// Запуск приложения
-    /// Работает с диалогом через абстракцию
-    /// </summary>
-    public void Run()
-    {
-        if (_dialog is null)
-            throw new InvalidOperationException("Приложение не инициализировано. Вызовите Initialize() перед Run().");
-        
-        _dialog.Render();
-    }
+ /// <summary>
+ /// Запуск приложения
+ /// Работает с диалогом через абстракцию
+ /// </summary>
+ public void Run()
+ {
+ if (_dialog is null)
+ throw new InvalidOperationException("Приложение не инициализировано. Вызовите Initialize() перед Run().");
+ 
+ _dialog.Render();
+ }
 }
 
 // ============================================
@@ -346,24 +346,24 @@ public class Application
 
 public static class Program
 {
-    public static void Main()
-    {
-        Console.WriteLine("=== Демонстрация паттерна Factory Method ===\n");
-        
-        // Сценарий 1: Windows приложение
-        Console.WriteLine("--- Сценарий 1: Windows ---");
-        var windowsApp = new Application();
-        windowsApp.Initialize("windows");
-        windowsApp.Run();
-        
-        // Сценарий 2: Web приложение
-        Console.WriteLine("--- Сценарий 2: Web ---");
-        var webApp = new Application();
-        webApp.Initialize("web");
-        webApp.Run();
-        
-        Console.WriteLine("=== Демонстрация завершена ===");
-    }
+ public static void Main()
+ {
+ Console.WriteLine("=== Демонстрация паттерна Factory Method ===\n");
+ 
+ // Сценарий 1: Windows приложение
+ Console.WriteLine("--- Сценарий 1: Windows ---");
+ var windowsApp = new Application();
+ windowsApp.Initialize("windows");
+ windowsApp.Run();
+ 
+ // Сценарий 2: Web приложение
+ Console.WriteLine("--- Сценарий 2: Web ---");
+ var webApp = new Application();
+ webApp.Initialize("web");
+ webApp.Run();
+ 
+ Console.WriteLine("=== Демонстрация завершена ===");
+ }
 }
 
 /* Вывод программы:
@@ -387,7 +387,7 @@ public static class Program
 */
 ```
 
-###  Когда использовать? 
+### Когда использовать? 
 
 - **Когда заранее неизвестны типы и зависимости объектов, с которыми должен работать ваш код**
 Фабричный метод отделяет код производства продуктов от остального кода, который эти продукты использует.
@@ -436,27 +436,27 @@ public static class Program
 ```csharp
 public record OrderItem(decimal Price, int Amount)
 {
-    public decimal Cost => Price * Amount;
+ public decimal Cost => Price * Amount;
 }
 
 public record Order(IEnumerable<OrderItem> Items)
 {
-    public decimal TotalCost => Items.Sum(x => x.Cost);
+ public decimal TotalCost => Items.Sum(x => x.Cost);
 }
 
 public record CashPayment(decimal Amount);
 
 public class PaymentCalculator
 {
-    public CashPayment Calculate(Order order)
-    {
-        var totalCost = order.TotalCost;
+ public CashPayment Calculate(Order order)
+ {
+ var totalCost = order.TotalCost;
 
-        // Apply discounts and coupons
-        ...
+ // Apply discounts and coupons
+ ...
 
-        return new CashPayment(totalCost);
-    }
+ return new CashPayment(totalCost);
+ }
 }
 ```
 
@@ -486,15 +486,15 @@ public class PaymentCalculator
 // Это Product в терминах Factory Method
 public interface IPayment
 {
-    decimal Amount { get; }
+ decimal Amount { get; }
 }
 
 public record CashPayment(
-    decimal Amount) : IPayment;
+ decimal Amount) : IPayment;
 
 public record BankPayment(
-    decimal Amount,
-    string ReceiverAccountId) : IPayment;
+ decimal Amount,
+ string ReceiverAccountId) : IPayment;
 ```
 
 Мы ввели интерфейс `IPayment`. Это наш абстрактный product. Теперь `CashPayment` и новый `BankPayment` реализуют этот интерфейс. Это даёт нам полиморфизм: мы можем работать с любым типом оплаты через общий интерфейс `IPayment`.
@@ -504,17 +504,17 @@ public record BankPayment(
 ```csharp
 public abstract class PaymentCalculator
 {
-    public IPayment Calculate(Order order)
-    {
-        var totalCost = order.TotalCost;
+ public IPayment Calculate(Order order)
+ {
+ var totalCost = order.TotalCost;
 
-        // Apply discounts and coupons
-        ...
+ // Apply discounts and coupons
+ ...
 
-        return CreatePayment(totalCost);
-    }
+ return CreatePayment(totalCost);
+ }
 
-    protected abstract IPayment CreatePayment(decimal amount);
+ protected abstract IPayment CreatePayment(decimal amount);
 }
 ```
 
@@ -527,23 +527,23 @@ public abstract class PaymentCalculator
 ```csharp
 public class CashPaymentCalculator : PaymentCalculator
 {
-    protected override IPayment CreatePayment(decimal amount) 
-        => new CashPayment(amount);
+ protected override IPayment CreatePayment(decimal amount) 
+ => new CashPayment(amount);
 }
 
 public class BankPaymentCalculator : PaymentCalculator
 {
-    private readonly string _currentReceiverAccountId;
+ private readonly string _currentReceiverAccountId;
 
-    public BankPaymentCalculator(string currentReceiverAccountId)
-    {
-        _currentReceiverAccountId = currentReceiverAccountId;
-    }
+ public BankPaymentCalculator(string currentReceiverAccountId)
+ {
+ _currentReceiverAccountId = currentReceiverAccountId;
+ }
 
-    protected override IPayment CreatePayment(decimal amount)
-    {
-        return new BankPayment(amount, _currentReceiverAccountId);
-    }
+ protected override IPayment CreatePayment(decimal amount)
+ {
+ return new BankPayment(amount, _currentReceiverAccountId);
+ }
 }
 ```
 
@@ -610,14 +610,14 @@ creator (например, BankPaymentCalculator) становится отве�
 
 
 
-###  Реальные сценарии использования
+### Реальные сценарии использования
 
 **1. Frameworks и библиотеки**
 ```csharp
 // ASP.NET Core использует Factory Method для создания контроллеров
 public abstract class ControllerFactory
 {
-    protected abstract Controller CreateController();
+ protected abstract Controller CreateController();
 }
 ```
 
@@ -626,7 +626,7 @@ public abstract class ControllerFactory
 // Entity Framework создаёт запросы через фабричные методы
 public abstract class DbContext
 {
-    protected abstract DbSet<T> CreateSet<T>() where T : class;
+ protected abstract DbSet<T> CreateSet<T>() where T : class;
 }
 ```
 
@@ -635,11 +635,11 @@ public abstract class DbContext
 // Загрузчик плагинов использует Factory Method
 public abstract class PluginLoader
 {
-    protected abstract IPlugin LoadPlugin(string path);
+ protected abstract IPlugin LoadPlugin(string path);
 }
 ```
 
-###  Ключевые выводы: Factory Method
+### Ключевые выводы: Factory Method
 
 **Преимущества:**
 - ✅ Избавляет от привязки к конкретным классам продуктов
@@ -671,11 +671,11 @@ public abstract class PluginLoader
 
 > **Суть паттерна**: Вариативность создания объектов при помощи композиции и полиморфизма
 
-###  Определение
+### Определение
 
 **Abstract Factory (Абстрактная фабрика)** — это порождающий паттерн проектирования, который предоставляет интерфейс для создания семейств связанных или зависимых объектов без указания их конкретных классов.
 
-###  Отличие от Factory Method
+### Отличие от Factory Method
 
 В отличие от Factory Method, который создаёт объекты одного типа, Abstract Factory создаёт **семейства связанных объектов**. Например, не просто кнопку, а кнопку, текстовое поле, чекбокс — всё в одном стиле.
 
@@ -683,58 +683,58 @@ public abstract class PluginLoader
 
 
 
-###  Структура паттерна
+### Структура паттерна
 
 ```mermaid
 classDiagram
-    class IFurnitureFactory {
-        <<interface>>
-        +CreateChair() IChair
-        +CreateSofa() ISofa
-        +CreateTable() ICoffeeTable
-    }
-    
-    class ModernFactory {
-        +CreateChair() IChair
-        +CreateSofa() ISofa
-        +CreateTable() ICoffeeTable
-    }
-    
-    class VictorianFactory {
-        +CreateChair() IChair
-        +CreateSofa() ISofa
-        +CreateTable() ICoffeeTable
-    }
-    
-    class IChair {
-        <<interface>>
-        +SitOn() void
-    }
-    
-    class ISofa {
-        <<interface>>
-        +LieOn() void
-    }
-    
-    class ModernChair {
-        +SitOn() void
-    }
-    
-    class VictorianChair {
-        +SitOn() void
-    }
-    
-    IFurnitureFactory <|.. ModernFactory : implements
-    IFurnitureFactory <|.. VictorianFactory : implements
-    IChair <|.. ModernChair : implements
-    IChair <|.. VictorianChair : implements
-    ModernFactory ..> ModernChair : creates
-    VictorianFactory ..> VictorianChair : creates
+ class IFurnitureFactory {
+ <<interface>>
+ +CreateChair() IChair
+ +CreateSofa() ISofa
+ +CreateTable() ICoffeeTable
+ }
+ 
+ class ModernFactory {
+ +CreateChair() IChair
+ +CreateSofa() ISofa
+ +CreateTable() ICoffeeTable
+ }
+ 
+ class VictorianFactory {
+ +CreateChair() IChair
+ +CreateSofa() ISofa
+ +CreateTable() ICoffeeTable
+ }
+ 
+ class IChair {
+ <<interface>>
+ +SitOn() void
+ }
+ 
+ class ISofa {
+ <<interface>>
+ +LieOn() void
+ }
+ 
+ class ModernChair {
+ +SitOn() void
+ }
+ 
+ class VictorianChair {
+ +SitOn() void
+ }
+ 
+ IFurnitureFactory <|.. ModernFactory : implements
+ IFurnitureFactory <|.. VictorianFactory : implements
+ IChair <|.. ModernChair : implements
+ IChair <|.. VictorianChair : implements
+ ModernFactory ..> ModernChair : creates
+ VictorianFactory ..> VictorianChair : creates
 ```
 
 **Ключевая идея**: Фабрика создаёт **семейство** продуктов (стул, диван, столик), причём все продукты **согласованы** по стилю.
 
-###  От Factory Method к Abstract Factory
+### От Factory Method к Abstract Factory
 
 **Factory Method** хорошо работает, когда нужно создавать объекты одного типа. Но что делать, если нужно создать **семейство связанных объектов**?
 
@@ -759,16 +759,16 @@ classDiagram
 ```csharp
 public abstract class Dialog
 {
-    public void Render()
-    {
-        // Используем фабричный метод для создания кнопки
-        IButton okButton = CreateButton();
+ public void Render()
+ {
+ // Используем фабричный метод для создания кнопки
+ IButton okButton = CreateButton();
 
-        okButton.Render();
-    }
+ okButton.Render();
+ }
 
-    // Фабричный метод
-    protected abstract IButton CreateButton();
+ // Фабричный метод
+ protected abstract IButton CreateButton();
 }
 ```
 
@@ -777,20 +777,20 @@ public abstract class Dialog
 ```csharp
 public abstract class Dialog
 {
-    public void Render()
-    {
-        // Нам нужно ДВА продукта, и они должны быть из ОДНОЙ СЕМЬИ
-        // (оба должны быть 'Windows' или оба 'Html')
-        IButton okButton = CreateButton();
-        ITextBox nameBox = CreateTextBox(); // <-- Вторая точка создания
-        
-        okButton.Render();
-        nameBox.Render();
-    }
+ public void Render()
+ {
+ // Нам нужно ДВА продукта, и они должны быть из ОДНОЙ СЕМЬИ
+ // (оба должны быть 'Windows' или оба 'Html')
+ IButton okButton = CreateButton();
+ ITextBox nameBox = CreateTextBox(); // <-- Вторая точка создания
+ 
+ okButton.Render();
+ nameBox.Render();
+ }
 
-    // Наш Creator "распухает" от фабричных методов
-    protected abstract IButton CreateButton();
-    protected abstract ITextBox CreateTextBox(); // <-- Добавили второй метод
+ // Наш Creator "распухает" от фабричных методов
+ protected abstract IButton CreateButton();
+ protected abstract ITextBox CreateTextBox(); // <-- Добавили второй метод
 }
 ```
 
@@ -799,20 +799,20 @@ public abstract class Dialog
 ```csharp
 public abstract class Dialog
 {
-    public void Render()
-    {
-        IButton okButton = CreateButton();
-        ITextBox nameBox = CreateTextBox(); 
-        IScrollBar vScroll = CreateScrollBar(); // третий...
-        
-        okButton.Render();
-        nameBox.Render();
-    }
+ public void Render()
+ {
+ IButton okButton = CreateButton();
+ ITextBox nameBox = CreateTextBox(); 
+ IScrollBar vScroll = CreateScrollBar(); // третий...
+ 
+ okButton.Render();
+ nameBox.Render();
+ }
 
-    // Уже целых три абстрактных метода
-    protected abstract IButton CreateButton();
-    protected abstract ITextBox CreateTextBox(); 
-    protected abstract IScrollBar CreateScrollBar(); 
+ // Уже целых три абстрактных метода
+ protected abstract IButton CreateButton();
+ protected abstract ITextBox CreateTextBox(); 
+ protected abstract IScrollBar CreateScrollBar(); 
 }
 ```
 
@@ -829,50 +829,50 @@ public abstract class Dialog
 // Она описывает СЕМЕЙСТВО продуктов
 public interface IUIFactory
 {
-    IButton CreateButton();
-    ITextBox CreateTextBox();
-    IScrollBar CreateScrollBar();
+ IButton CreateButton();
+ ITextBox CreateTextBox();
+ IScrollBar CreateScrollBar();
 }
 
 // Фабрика 1
 public class WindowsFactory : IUIFactory
 {
-    public IButton CreateButton() => new WindowsButton();
-    public ITextBox CreateTextBox() => new WindowsTextBox();
-    public IScrollBar CreateScrollBar() => new WindowsScrollBar();
+ public IButton CreateButton() => new WindowsButton();
+ public ITextBox CreateTextBox() => new WindowsTextBox();
+ public IScrollBar CreateScrollBar() => new WindowsScrollBar();
 }
 
 // Фабрика 2
 public class WebFactory : IUIFactory
 {
-    public IButton CreateButton() => new HtmlButton();
-    public ITextBox CreateTextBox() => new HtmlTextBox();
-    public IScrollBar CreateScrollBar() => new HtmlScrollBar();
+ public IButton CreateButton() => new HtmlButton();
+ public ITextBox CreateTextBox() => new HtmlTextBox();
+ public IScrollBar CreateScrollBar() => new HtmlScrollBar();
 }
 
 // Теперь уже не абстрактный
 public class Dialog
 {
-    // 1. (Композиция)
-    private readonly IUIFactory _factory;
+ // 1. (Композиция)
+ private readonly IUIFactory _factory;
 
-    public Dialog(IUIFactory factory)
-    {
-        _factory = factory;
-    }
+ public Dialog(IUIFactory factory)
+ {
+ _factory = factory;
+ }
 
-    // 3. Логика Render() не изменилась
-    public void Render()
-    {
-        // но теперь она ДЕЛЕГИРУЕТ создание фабрике
-        IButton okButton = _factory.CreateButton();
-        ITextBox nameBox = _factory.CreateTextBox();
-        IScrollBar scrollBar = _factory.CreateScrollBar();
-        
-        okButton.Render();
-        nameBox.Render();
-        scrollBar.Render();
-    }
+ // 3. Логика Render() не изменилась
+ public void Render()
+ {
+ // но теперь она ДЕЛЕГИРУЕТ создание фабрике
+ IButton okButton = _factory.CreateButton();
+ ITextBox nameBox = _factory.CreateTextBox();
+ IScrollBar scrollBar = _factory.CreateScrollBar();
+ 
+ okButton.Render();
+ nameBox.Render();
+ scrollBar.Render();
+ }
 }
 ```
 
@@ -883,17 +883,17 @@ public class Dialog
 // Это общий интерфейс продуктов
 public interface IPayment
 {
-    decimal Amount { get; }
+ decimal Amount { get; }
 }
 
 // Это продукт 1
 public record BankPayment(
-    decimal Amount,
-    string ReceiverAccountId) : IPayment;
+ decimal Amount,
+ string ReceiverAccountId) : IPayment;
 
 // Это продукт 2
 public record CashPayment(
-    decimal Amount) : IPayment;
+ decimal Amount) : IPayment;
 ```
 
 Теперь мы определяем контракт для создателя:
@@ -902,7 +902,7 @@ public record CashPayment(
 // Определяем интерфейс для продукта
 public interface IPaymentFactory
 {
-    IPayment Create(decimal amount);
+ IPayment Create(decimal amount);
 }
 ```
 
@@ -912,30 +912,30 @@ public interface IPaymentFactory
 // "Конкретная фабрика 1"
 public class BankPaymentFactory : IPaymentFactory
 {
-    private readonly string _currentReceiverAccountId;
+ private readonly string _currentReceiverAccountId;
 
-    // Фабрика может иметь свое состояние!
-    public BankPaymentFactory(string currentReceiverAccountId)
-    {
-        _currentReceiverAccountId = currentReceiverAccountId;
-    }
+ // Фабрика может иметь свое состояние!
+ public BankPaymentFactory(string currentReceiverAccountId)
+ {
+ _currentReceiverAccountId = currentReceiverAccountId;
+ }
 
-    public IPayment Create(decimal amount)
-    {
-        // Эта фабрика знает, как создать BankPayment.
-        // Она инкапсулирует эту логику.
-        return new BankPayment(amount, _currentReceiverAccountId);
-    }
+ public IPayment Create(decimal amount)
+ {
+ // Эта фабрика знает, как создать BankPayment.
+ // Она инкапсулирует эту логику.
+ return new BankPayment(amount, _currentReceiverAccountId);
+ }
 }
 
 // "Конкретная фабрика 2"
 public class CashPaymentFactory : IPaymentFactory
 {
-    public IPayment Create(decimal amount)
-    {
-        // Эта фабрика знает, как создать CashPayment.
-        return new CashPayment(amount);
-    }
+ public IPayment Create(decimal amount)
+ {
+ // Эта фабрика знает, как создать CashPayment.
+ return new CashPayment(amount);
+ }
 }
 ```
 
@@ -945,51 +945,51 @@ public class CashPaymentFactory : IPaymentFactory
 // интерфейс для калькулятора
 public interface IPaymentCalculator
 {
-    IPayment Calculate(Order order);
+ IPayment Calculate(Order order);
 }
 
 public class PaymentCalculator : IPaymentCalculator
 {
-    private readonly IPaymentFactory _paymentFactory;
+ private readonly IPaymentFactory _paymentFactory;
 
-    public PaymentCalculator(IPaymentFactory paymentFactory)
-    {
-        _paymentFactory = paymentFactory;
-    }
+ public PaymentCalculator(IPaymentFactory paymentFactory)
+ {
+ _paymentFactory = paymentFactory;
+ }
 
-    public IPayment Calculate(Order order)
-    {
-        var totalCost = order.TotalCost;
-        
-        // Apply discounts and coupons 
+ public IPayment Calculate(Order order)
+ {
+ var totalCost = order.TotalCost;
+ 
+ // Apply discounts and coupons 
 
-        // ...
+ // ...
 
-        return _paymentFactory.Create(totalCost);
-    }
+ return _paymentFactory.Create(totalCost);
+ }
 }
 
 // Другой калькулятор
 public class FixedPaymentCalculator : IPaymentCalculator
 {
-    private readonly decimal _fixedPrice;
-    private readonly IPaymentFactory _paymentFactory;
+ private readonly decimal _fixedPrice;
+ private readonly IPaymentFactory _paymentFactory;
 
-    public FixedPaymentCalculator(decimal fixedPrice, IPaymentFactory paymentFactory)
-    {
-        _fixedPrice = fixedPrice;
-        _paymentFactory = paymentFactory;
-    }
-    public IPayment Calculate(Order order)
-    {
-        var totalCost = order.Items.Sum(item =>_fixedPrice * item.Amount);
+ public FixedPaymentCalculator(decimal fixedPrice, IPaymentFactory paymentFactory)
+ {
+ _fixedPrice = fixedPrice;
+ _paymentFactory = paymentFactory;
+ }
+ public IPayment Calculate(Order order)
+ {
+ var totalCost = order.Items.Sum(item =>_fixedPrice * item.Amount);
 
-        // Apply discounts and coupons
+ // Apply discounts and coupons
 
-        // ...
+ // ...
 
-        return _paymentFactory.Create(totalCost);
-    }
+ return _paymentFactory.Create(totalCost);
+ }
 }
 ```
 
@@ -1000,13 +1000,13 @@ public record CryptoPayment(decimal Amount, string Wallet) : IPayment;
 
 public class CryptoPaymentFactory : IPaymentFactory
 {
-    private readonly string _companyWallet;
-    public CryptoPaymentFactory(string companyWallet) { _companyWallet = companyWallet; }
+ private readonly string _companyWallet;
+ public CryptoPaymentFactory(string companyWallet) { _companyWallet = companyWallet; }
 
-    public IPayment Create(decimal amount)
-    {
-        return new CryptoPayment(amount, _companyWallet);
-    }
+ public IPayment Create(decimal amount)
+ {
+ return new CryptoPayment(amount, _companyWallet);
+ }
 }
 ```
 
@@ -1015,43 +1015,43 @@ public class CryptoPaymentFactory : IPaymentFactory
 ```csharp
 public static class Program
 {
-    public static void Main(string[] args)
-    {
-        Console.WriteLine("--- Сценарий 1: Банк ---");
+ public static void Main(string[] args)
+ {
+ Console.WriteLine("--- Сценарий 1: Банк ---");
 
-        // 1. Создаем конкретную фабрику
-        IPaymentFactory bankFactory = new BankPaymentFactory("UA1234567890");
+ // 1. Создаем конкретную фабрику
+ IPaymentFactory bankFactory = new BankPaymentFactory("UA1234567890");
 
-        // 2. Внедряем фабрику в калькулятор
-        IPaymentCalculator bankCalculator = new PaymentCalculator(bankFactory);
+ // 2. Внедряем фабрику в калькулятор
+ IPaymentCalculator bankCalculator = new PaymentCalculator(bankFactory);
 
-        // 3. Используем калькулятор
-        Order order1 = new Order { TotalCost = 250.50m };
-        IPayment payment1 = bankCalculator.Calculate(order1);
-        
-        // 4. Проверяем результат
-        Console.WriteLine($"Создан платеж типа: {payment1.GetType().Name}"); // Выведет: BankPayment
-        Console.WriteLine($"Сумма: {payment1.Amount}");
+ // 3. Используем калькулятор
+ Order order1 = new Order { TotalCost = 250.50m };
+ IPayment payment1 = bankCalculator.Calculate(order1);
+ 
+ // 4. Проверяем результат
+ Console.WriteLine($"Создан платеж типа: {payment1.GetType().Name}"); // Выведет: BankPayment
+ Console.WriteLine($"Сумма: {payment1.Amount}");
 
-        
-        // === СЦЕНАРИЙ 2: Конфигурация для наличных ===
-        Console.WriteLine("\n--- Сценарий 2: Наличные ---");
+ 
+ // === СЦЕНАРИЙ 2: Конфигурация для наличных ===
+ Console.WriteLine("\n--- Сценарий 2: Наличные ---");
 
-        // 1. Создаем ДРУГУЮ фабрику
-        IPaymentFactory cashFactory = new CashPaymentFactory();
+ // 1. Создаем ДРУГУЮ фабрику
+ IPaymentFactory cashFactory = new CashPaymentFactory();
 
-        // 2. Внедряем эту фабрику в тот же тип калькулятора
-        IPaymentCalculator cashCalculator = new PaymentCalculator(cashFactory);
+ // 2. Внедряем эту фабрику в тот же тип калькулятора
+ IPaymentCalculator cashCalculator = new PaymentCalculator(cashFactory);
 
-        // 3. Используем
-        Order order2 = new Order { TotalCost = 99.00m };
-        IPayment payment2 = cashCalculator.Calculate(order2);
+ // 3. Используем
+ Order order2 = new Order { TotalCost = 99.00m };
+ IPayment payment2 = cashCalculator.Calculate(order2);
 
-        // 4. Проверяем
-        // На этот раз код калькулятора создал CashPayment!
-        Console.WriteLine($"Создан платеж типа: {payment2.GetType().Name}"); // Выведет: CashPayment
-        Console.WriteLine($"Сумма: {payment2.Amount}");
-    }
+ // 4. Проверяем
+ // На этот раз код калькулятора создал CashPayment!
+ Console.WriteLine($"Создан платеж типа: {payment2.GetType().Name}"); // Выведет: CashPayment
+ Console.WriteLine($"Сумма: {payment2.Amount}");
+ }
 }
 ```
 
@@ -1111,18 +1111,18 @@ public static class Program
 
 public interface IArmchair
 {
-    // Общий метод для всех кресел
-    void SitOn();
+ // Общий метод для всех кресел
+ void SitOn();
 }
 
 public interface ISofa
 {
-    void LieOn();
+ void LieOn();
 }
 
 public interface ICoffeeTable
 {
-    void PutCoffee();
+ void PutCoffee();
 }
 
 // -----------------------------
@@ -1132,17 +1132,17 @@ public interface ICoffeeTable
 
 public class ArtDecoArmchair : IArmchair
 {
-    public void SitOn() => Console.WriteLine("Вы сидите на кресле Ар-деко.");
+ public void SitOn() => Console.WriteLine("Вы сидите на кресле Ар-деко.");
 }
 
 public class ArtDecoSofa : ISofa
 {
-    public void LieOn() => Console.WriteLine("Вы лежите на диване Ар-деко.");
+ public void LieOn() => Console.WriteLine("Вы лежите на диване Ар-деко.");
 }
 
 public class ArtDecoCoffeeTable : ICoffeeTable
 {
-    public void PutCoffee() => Console.WriteLine("Вы ставите кофе на столик Ар-деко.");
+ public void PutCoffee() => Console.WriteLine("Вы ставите кофе на столик Ар-деко.");
 }
 
 // -----------------------------
@@ -1152,17 +1152,17 @@ public class ArtDecoCoffeeTable : ICoffeeTable
 
 public class ModernArmchair : IArmchair
 {
-    public void SitOn() => Console.WriteLine("Вы сидите на кресле в стиле модерн.");
+ public void SitOn() => Console.WriteLine("Вы сидите на кресле в стиле модерн.");
 }
 
 public class ModernSofa : ISofa
 {
-    public void LieOn() => Console.WriteLine("Вы лежите на диване в стиле модерн.");
+ public void LieOn() => Console.WriteLine("Вы лежите на диване в стиле модерн.");
 }
 
 public class ModernCoffeeTable : ICoffeeTable
 {
-    public void PutCoffee() => Console.WriteLine("Вы ставите кофе на столик в стиле модерн.");
+ public void PutCoffee() => Console.WriteLine("Вы ставите кофе на столик в стиле модерн.");
 }
 
 // -----------------------------
@@ -1172,17 +1172,17 @@ public class ModernCoffeeTable : ICoffeeTable
 
 public class VictorianArmchair : IArmchair
 {
-    public void SitOn() => Console.WriteLine("Вы сидите на викторианском кресле.");
+ public void SitOn() => Console.WriteLine("Вы сидите на викторианском кресле.");
 }
 
 public class VictorianSofa : ISofa
 {
-    public void LieOn() => Console.WriteLine("Вы лежите на викторианском диване.");
+ public void LieOn() => Console.WriteLine("Вы лежите на викторианском диване.");
 }
 
 public class VictorianCoffeeTable : ICoffeeTable
 {
-    public void PutCoffee() => Console.WriteLine("Вы ставите кофе на викторианский столик.");
+ public void PutCoffee() => Console.WriteLine("Вы ставите кофе на викторианский столик.");
 }
 
 // -----------------------------
@@ -1191,9 +1191,9 @@ public class VictorianCoffeeTable : ICoffeeTable
 
 public interface IFurnitureFactory
 {
-    IArmchair CreateArmchair();
-    ISofa CreateSofa();
-    ICoffeeTable CreateCoffeeTable();
+ IArmchair CreateArmchair();
+ ISofa CreateSofa();
+ ICoffeeTable CreateCoffeeTable();
 }
 
 // -----------------------------
@@ -1202,23 +1202,23 @@ public interface IFurnitureFactory
 
 public class ArtDecoFurnitureFactory : IFurnitureFactory
 {
-    public IArmchair CreateArmchair() => new ArtDecoArmchair();
-    public ISofa CreateSofa() => new ArtDecoSofa();
-    public ICoffeeTable CreateCoffeeTable() => new ArtDecoCoffeeTable();
+ public IArmchair CreateArmchair() => new ArtDecoArmchair();
+ public ISofa CreateSofa() => new ArtDecoSofa();
+ public ICoffeeTable CreateCoffeeTable() => new ArtDecoCoffeeTable();
 }
 
 public class ModernFurnitureFactory : IFurnitureFactory
 {
-    public IArmchair CreateArmchair() => new ModernArmchair();
-    public ISofa CreateSofa() => new ModernSofa();
-    public ICoffeeTable CreateCoffeeTable() => new ModernCoffeeTable();
+ public IArmchair CreateArmchair() => new ModernArmchair();
+ public ISofa CreateSofa() => new ModernSofa();
+ public ICoffeeTable CreateCoffeeTable() => new ModernCoffeeTable();
 }
 
 public class VictorianFurnitureFactory : IFurnitureFactory
 {
-    public IArmchair CreateArmchair() => new VictorianArmchair();
-    public ISofa CreateSofa() => new VictorianSofa();
-    public ICoffeeTable CreateCoffeeTable() => new VictorianCoffeeTable();
+ public IArmchair CreateArmchair() => new VictorianArmchair();
+ public ISofa CreateSofa() => new VictorianSofa();
+ public ICoffeeTable CreateCoffeeTable() => new VictorianCoffeeTable();
 }
 
 // -----------------------------
@@ -1227,30 +1227,30 @@ public class VictorianFurnitureFactory : IFurnitureFactory
 
 public class FurnitureShowroom
 {
-    private readonly IFurnitureFactory _factory;
+ private readonly IFurnitureFactory _factory;
 
-    private IArmchair _armchair;
-    private ISofa _sofa;
-    private ICoffeeTable _table;
+ private IArmchair _armchair;
+ private ISofa _sofa;
+ private ICoffeeTable _table;
 
-    public FurnitureShowroom(IFurnitureFactory factory)
-    {
-        _factory = factory;
-    }
+ public FurnitureShowroom(IFurnitureFactory factory)
+ {
+ _factory = factory;
+ }
 
-    public void CreateFurnitureSet()
-    {
-        _armchair = _factory.CreateArmchair();
-        _sofa = _factory.CreateSofa();
-        _table = _factory.CreateCoffeeTable();
-    }
+ public void CreateFurnitureSet()
+ {
+ _armchair = _factory.CreateArmchair();
+ _sofa = _factory.CreateSofa();
+ _table = _factory.CreateCoffeeTable();
+ }
 
-    public void Demo()
-    {
-        _armchair.SitOn();
-        _sofa.LieOn();
-        _table.PutCoffee();
-    }
+ public void Demo()
+ {
+ _armchair.SitOn();
+ _sofa.LieOn();
+ _table.PutCoffee();
+ }
 }
 
 // -----------------------------
@@ -1259,23 +1259,23 @@ public class FurnitureShowroom
 
 public static class AppConfig
 {
-    public static void Main()
-    {
-        string style = "ArtDeco"; // читаем из конфига
+ public static void Main()
+ {
+ string style = "ArtDeco"; // читаем из конфига
 
-        IFurnitureFactory factory = style switch
-        {
-            "ArtDeco" => new ArtDecoFurnitureFactory(),
-            "Modern" => new ModernFurnitureFactory(),
-            "Victorian" => new VictorianFurnitureFactory(),
-            _ => throw new Exception("Неизвестный стиль мебели!")
-        };
+ IFurnitureFactory factory = style switch
+ {
+ "ArtDeco" => new ArtDecoFurnitureFactory(),
+ "Modern" => new ModernFurnitureFactory(),
+ "Victorian" => new VictorianFurnitureFactory(),
+ _ => throw new Exception("Неизвестный стиль мебели!")
+ };
 
-        var showroom = new FurnitureShowroom(factory);
+ var showroom = new FurnitureShowroom(factory);
 
-        showroom.CreateFurnitureSet();
-        showroom.Demo();
-    }
+ showroom.CreateFurnitureSet();
+ showroom.Demo();
+ }
 }
 ```
 
@@ -1304,7 +1304,7 @@ public static class AppConfig
 
 
 
-###  Ключевые выводы: Abstract Factory
+### Ключевые выводы: Abstract Factory
 
 **Преимущества:**
 - ✅ Гарантирует сочетаемость создаваемых продуктов
@@ -1331,33 +1331,33 @@ public static class AppConfig
 
 > **Суть паттерна**: Выделение отдельного типа, инкапсулирующего логику сбора данных и создания объекта
 
-###  Определение
+### Определение
 
 **Builder (Строитель (Builder))** — это порождающий паттерн проектирования, который позволяет создавать сложные объекты пошагово. Строитель (Builder) даёт возможность использовать один и тот же код строительства для получения разных представлений объектов.
 
 
 
-###  Концепция Builder
+### Концепция Builder
 
 ```mermaid
 flowchart LR
-    A[Клиент] --> B[Builder]
-    B --> C[Продукт]
-    
-    B --> D[WithProperty1]
-    D --> E[WithProperty2]
-    E --> F[WithProperty3]
-    F --> G[Build]
-    G --> C
-    
-    style A fill:#e1f5fe
-    style B fill:#fff3e0
-    style C fill:#c8e6c9
+ A[Клиент] --> B[Builder]
+ B --> C[Продукт]
+ 
+ B --> D[WithProperty1]
+ D --> E[WithProperty2]
+ E --> F[WithProperty3]
+ F --> G[Build]
+ G --> C
+ 
+ style A fill:#e1f5fe
+ style B fill:#fff3e0
+ style C fill:#c8e6c9
 ```
 
 Builder собирает объект **пошагово**, позволяя гибко настраивать каждый параметр.
 
-###  Проблема
+### Проблема
 
 Параметр - набор тип+имя находящийся в сигнатуре метода 
 Ex.: `public void A(int a, char b); // int a и char b — это параметры`
@@ -1366,10 +1366,10 @@ Ex.: `public void A(int a, char b); // int a и char b — это парамет
 Ex.: `obj.A(1, '2'); // 1 и '2' - аргументы метода A()`
 
 ```csharp
-void M(int x, string s)   // int x и string s — параметры
+void M(int x, string s) // int x и string s — параметры
 {
 }
-M(10, "hi");               // 10 и "hi" — аргументы
+M(10, "hi"); // 10 и "hi" — аргументы
 ```
 
 Строитель — это порождающий паттерн проектирования, который позволяет создавать сложные объекты пошагово. Строитель даёт возможность использовать один и тот же код строительства для получения разных представлений объектов.
@@ -1383,49 +1383,49 @@ M(10, "hi");               // 10 и "hi" — аргументы
 ```csharp
 public class House
 {
-    public string Address { get; }
-    public int Floors { get; }
-    public bool HasGarage { get; }
-    public bool HasGarden { get; }
-    public bool HasPool { get; }
-    public bool HasFancyStatues { get; }
+ public string Address { get; }
+ public int Floors { get; }
+ public bool HasGarage { get; }
+ public bool HasGarden { get; }
+ public bool HasPool { get; }
+ public bool HasFancyStatues { get; }
 
-    // Базовый конструктор, куда сводятся все остальные
-    public House(string address, int floors, bool hasGarage, bool hasGarden, bool hasPool, bool hasFancyStatues)
-    {
-        Address = address;
-        Floors = floors;
-        HasGarage = hasGarage;
-        HasGarden = hasGarden;
-        HasPool = hasPool;
-        HasFancyStatues = hasFancyStatues;
-    }
+ // Базовый конструктор, куда сводятся все остальные
+ public House(string address, int floors, bool hasGarage, bool hasGarden, bool hasPool, bool hasFancyStatues)
+ {
+ Address = address;
+ Floors = floors;
+ HasGarage = hasGarage;
+ HasGarden = hasGarden;
+ HasPool = hasPool;
+ HasFancyStatues = hasFancyStatues;
+ }
 
-    // Только адрес → минимальный дом
-    public House(string address)
-        : this(address, 1, false, false, false, false) { }
+ // Только адрес → минимальный дом
+ public House(string address)
+ : this(address, 1, false, false, false, false) { }
 
-    // Адрес + этажность
-    public House(string address, int floors)
-        : this(address, floors, false, false, false, false) { }
+ // Адрес + этажность
+ public House(string address, int floors)
+ : this(address, floors, false, false, false, false) { }
 
-    // Дом с гаражом
-    public static House WithGarage(string address, int floors = 1)
-        => new House(address, floors, hasGarage: true, hasGarden: false, hasPool: false, hasFancyStatues: false);
+ // Дом с гаражом
+ public static House WithGarage(string address, int floors = 1)
+ => new House(address, floors, hasGarage: true, hasGarden: false, hasPool: false, hasFancyStatues: false);
 
-    // Дом с садом
-    public static House WithGarden(string address, int floors = 1)
-        => new House(address, floors, false, hasGarden: true, false, false);
+ // Дом с садом
+ public static House WithGarden(string address, int floors = 1)
+ => new House(address, floors, false, hasGarden: true, false, false);
 
-    // Дом с бассейном
-    public static House WithPool(string address, int floors = 1)
-        => new House(address, floors, false, false, hasPool: true, false);
+ // Дом с бассейном
+ public static House WithPool(string address, int floors = 1)
+ => new House(address, floors, false, false, hasPool: true, false);
 
-    // Дом со статуями
-    public static House WithFancyStatues(string address, int floors = 1)
-        => new House(address, floors, false, false, false, hasFancyStatues: true);
+ // Дом со статуями
+ public static House WithFancyStatues(string address, int floors = 1)
+ => new House(address, floors, false, false, false, hasFancyStatues: true);
  
-    // И так далее...
+ // И так далее...
 } 
 ```
 
@@ -1443,31 +1443,31 @@ public class House
 
 // Раньше: создавали дом в явном виде
 var house = House(
-    adress: "ulitsa- pushkina-dom-kalatush",
-    floors: 2,
-    HasGarage = false,
-    HasGarden = true,
-    HasPool = true,
-    HasFancyStatues = true
-    )
+ adress: "ulitsa- pushkina-dom-kalatush",
+ floors: 2,
+ HasGarage = false,
+ HasGarden = true,
+ HasPool = true,
+ HasFancyStatues = true
+ )
 
 // Либо: создавали конкретный дом
 var house = houseWithPoolAndGardenAndFancyStatues(
-    adress: "ulitsa- pushkina-dom-kalatush",
-    floors: 2
-    )
+ adress: "ulitsa- pushkina-dom-kalatush",
+ floors: 2
+ )
 // И если бы мы хотели добавить что-то новое,
 // то пришлось бы либо 
 // менять конструктор, либо вызывать новый дом
 
 // Теперь можем собрать дом "по кусочкам":
 var house = HouseBuilder()
-    .WithAddress("ulitsa-pushkina-dom-kalatush")
-    .WithFloors(2)
-    .WithPool()
-    .WithGarden()
-    .WithStatues()
-    .Build()
+ .WithAddress("ulitsa-pushkina-dom-kalatush")
+ .WithFloors(2)
+ .WithPool()
+ .WithGarden()
+ .WithStatues()
+ .Build()
 
 // Если бы мы захотели добавить что-то ещё
 // , то достаточно было бы просто прописать ещё 
@@ -1488,12 +1488,12 @@ public record Order(IEnumerable<OrderItem> Items);
 
 ```csharp
 var order = new Order(
-    [
-        new OrderItem(Name: "banana", Price: 42, Amount: 20),
-        new OrderItem(Name: "phone", Price: 30000, Amount: 1),
-        new OrderItem(Name: "marker", Price: 201, Amount: 3),
-        new OrderItem(Name: "steak", Price: 1337, Amount: 1)
-    ]
+ [
+ new OrderItem(Name: "banana", Price: 42, Amount: 20),
+ new OrderItem(Name: "phone", Price: 30000, Amount: 1),
+ new OrderItem(Name: "marker", Price: 201, Amount: 3),
+ new OrderItem(Name: "steak", Price: 1337, Amount: 1)
+ ]
 );
 ```
 
@@ -1501,12 +1501,12 @@ var order = new Order(
 
 ```csharp
 public record Order(
-    string CommentForShop,
-    string CommentForDelivery,
-    IEnumerable<OrderItem> Items,
-    DateTimeOffset CreatedAt,
-    string? ReceiverPhoneNumber,
-    // и ещё много...
+ string CommentForShop,
+ string CommentForDelivery,
+ IEnumerable<OrderItem> Items,
+ DateTimeOffset CreatedAt,
+ string? ReceiverPhoneNumber,
+ // и ещё много...
 );
 ```
 
@@ -1514,20 +1514,20 @@ public record Order(
 
 ```csharp
 var order = new Order(
-    CommentForShop: "Срочно!",
-    CommentForDelivery: "Оставить у двери",
-    Items: [
-        new OrderItem(Name: "banana", Price: 42, Amount: 20),
-        new OrderItem(Name: "phone", Price: 30000, Amount: 1),
-        new OrderItem(Name: "marker", Price: 201, Amount: 3),
-        new OrderItem(Name: "steak", Price: 1337, Amount: 1)
-    ],
-    CreatedAt: DateTimeOffset.UtcNow,
-    ReceiverPhoneNumber: "+7-900-123-45-67"
+ CommentForShop: "Срочно!",
+ CommentForDelivery: "Оставить у двери",
+ Items: [
+ new OrderItem(Name: "banana", Price: 42, Amount: 20),
+ new OrderItem(Name: "phone", Price: 30000, Amount: 1),
+ new OrderItem(Name: "marker", Price: 201, Amount: 3),
+ new OrderItem(Name: "steak", Price: 1337, Amount: 1)
+ ],
+ CreatedAt: DateTimeOffset.UtcNow,
+ ReceiverPhoneNumber: "+7-900-123-45-67"
 );
 ```
 
-Это становится неудобно. Кроме того, создание заказа часто требует логики: иногда товары надо добавлять в строго определённом порядке, например, сначала продукты, а только потом бытовую технику. Где проверять, что в заказе, например, не больше 20 товаров? Некоторые клиеты (например с вип-статусом) могут иметь больше привелегий. Как всё это организовать?     
+Это становится неудобно. Кроме того, создание заказа часто требует логики: иногда товары надо добавлять в строго определённом порядке, например, сначала продукты, а только потом бытовую технику. Где проверять, что в заказе, например, не больше 20 товаров? Некоторые клиеты (например с вип-статусом) могут иметь больше привелегий. Как всё это организовать? 
 
 Вот здесь появляется паттерн Builder. Как мы уже знаем его основная идея выделить отдельный тип, который инкапсулирует логику сбора данных и создания объекта. 
 
@@ -1548,24 +1548,24 @@ Builder — это вспомогательный класс, который:
 // Накапливает состояние и предоставляет fluent interface
 public class OrderBuilder
 {
-    // 1. Он хранит *внутреннее, изменяемое состояние*
-    private readonly List<OrderItem> _items = [];
+ // 1. Он хранит *внутреннее, изменяемое состояние*
+ private readonly List<OrderItem> _items = [];
 
-    // 2. Он предоставляет "текучий" (fluent) интерфейс
-    // Метод для добавления товара в заказ
-    // Возвращает this для создания цепочки вызовов (fluent interface)
-    public OrderBuilder WithItem(OrderItem item)
-    {
-        _items.Add(item);
-        return this; // <- Ключевой момент для "цепочки" вызовов
-    }
+ // 2. Он предоставляет "текучий" (fluent) интерфейс
+ // Метод для добавления товара в заказ
+ // Возвращает this для создания цепочки вызовов (fluent interface)
+ public OrderBuilder WithItem(OrderItem item)
+ {
+ _items.Add(item);
+ return this; // <- Ключевой момент для "цепочки" вызовов
+ }
 
-    // 3. Он имеет финальный метод "Build"
-    public Order Build()
-    {
-        // В этот момент он создает иммутабельный продукт
-        return new Order(_items.ToArray());
-    }
+ // 3. Он имеет финальный метод "Build"
+ public Order Build()
+ {
+ // В этот момент он создает иммутабельный продукт
+ return new Order(_items.ToArray());
+ }
 }
 ```
 
@@ -1573,10 +1573,10 @@ public class OrderBuilder
 
 ```csharp
 var orderBuilder = new OrderBuilder() // Заказ
-    .WithItem(Name: "banana", Price: 42, Amount: 20) // с бананами
-    .WithItem(Name: "phone", Price: 30000, Amount: 1) // и телефоном
-    .WithItem(Name: "marker", Price: 201, Amount: 3) // и тремя маркерами
-    .WithItem(Name: "steak", Price: 1337, Amount: 1); // и одним стейком
+ .WithItem(Name: "banana", Price: 42, Amount: 20) // с бананами
+ .WithItem(Name: "phone", Price: 30000, Amount: 1) // и телефоном
+ .WithItem(Name: "marker", Price: 201, Amount: 3) // и тремя маркерами
+ .WithItem(Name: "steak", Price: 1337, Amount: 1); // и одним стейком
 
 // Мы можем *передавать строителя* в другие методы,
 // чтобы они его "до-настроили".
@@ -1617,22 +1617,22 @@ Order order = orderBuilder.Build(); // соберём заказ
 ```csharp
 // в заказе много полей
 public record Order(
-    string CommentForShop,
-    string CommentForDelivery,
-    IEnumerable<OrderItem> Items,
-    DateTimeOffset CreatedAt,
-    string? ReceiverPhoneNumber
+ string CommentForShop,
+ string CommentForDelivery,
+ IEnumerable<OrderItem> Items,
+ DateTimeOffset CreatedAt,
+ string? ReceiverPhoneNumber
 );
 
 // пропуск кода
 
 // Это то, чего мы хотим избежать!
 var order = new Order(
-    CommentForShop: string.Empty, // по умолчанию
-    CommentForDelivery: string.Empty, // по умолчанию
-    Items: [new OrderItem(Price: 1337, Amount: 2)], // < - единственное нужное поле
-    CreatedAt: DateTimeOffset.UtcNow, // по умолчанию
-    ReceiverPhoneNumber: null // по умолчанию
+ CommentForShop: string.Empty, // по умолчанию
+ CommentForDelivery: string.Empty, // по умолчанию
+ Items: [new OrderItem(Price: 1337, Amount: 2)], // < - единственное нужное поле
+ CreatedAt: DateTimeOffset.UtcNow, // по умолчанию
+ ReceiverPhoneNumber: null // по умолчанию
 );
 ```
 
@@ -1642,46 +1642,46 @@ Convinience builder решает эту проблему. Он сам, внут�
 // Builder должен хранить значения всех полей со значениями по умолчанию
 public class OrderBuilder
 {
-    private readonly List<OrderItem> _items = [];
-    private string _commentForShop = string.Empty;
-    private string _commentForDelivery = string.Empty;
-    private DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
-    private string? _receiverPhoneNumber = null;
+ private readonly List<OrderItem> _items = [];
+ private string _commentForShop = string.Empty;
+ private string _commentForDelivery = string.Empty;
+ private DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
+ private string? _receiverPhoneNumber = null;
 
-    public OrderBuilder WithItem(OrderItem item)
-    {
-        _items.Add(item);
-        return this;
-    }
+ public OrderBuilder WithItem(OrderItem item)
+ {
+ _items.Add(item);
+ return this;
+ }
 
-    public OrderBuilder WithCommentForShop(string value)
-    {
-        _commentForShop = value;
-        return this;
-    }
+ public OrderBuilder WithCommentForShop(string value)
+ {
+ _commentForShop = value;
+ return this;
+ }
 
-    public OrderBuilder WithCommentForDelivery(string value)
-    {
-        _commentForDelivery = value;
-        return this;
-    }
+ public OrderBuilder WithCommentForDelivery(string value)
+ {
+ _commentForDelivery = value;
+ return this;
+ }
 
-    public OrderBuilder WithReceiverPhoneNumber(string? value)
-    {
-        _receiverPhoneNumber = value;
-        return this;
-    }
+ public OrderBuilder WithReceiverPhoneNumber(string? value)
+ {
+ _receiverPhoneNumber = value;
+ return this;
+ }
 
-    public Order Build()
-    {
-        return new Order(
-            CommentForShop: _commentForShop,
-            CommentForDelivery: _commentForDelivery,
-            Items: _items,
-            CreatedAt: _createdAt,
-            ReceiverPhoneNumber: _receiverPhoneNumber
-        );
-    }
+ public Order Build()
+ {
+ return new Order(
+ CommentForShop: _commentForShop,
+ CommentForDelivery: _commentForDelivery,
+ Items: _items,
+ CreatedAt: _createdAt,
+ ReceiverPhoneNumber: _receiverPhoneNumber
+ );
+ }
 }
 ```
 
@@ -1691,15 +1691,15 @@ public class OrderBuilder
 
 ```csharp
 var order = new OrderBuilder()
-    .WithItem(new OrderItem(Price: 1337, Amount: 2))
-    .Build();
+ .WithItem(new OrderItem(Price: 1337, Amount: 2))
+ .Build();
 
 // Или с большей кастомизацией:
 var customOrder = new OrderBuilder()
-    .WithItem(new OrderItem(Price: 100, Amount: 5))
-    .WithCommentForShop("Упаковать аккуратно!")
-    .WithReceiverPhoneNumber("+7-900-000-00-00")
-    .Build();
+ .WithItem(new OrderItem(Price: 100, Amount: 5))
+ .WithCommentForShop("Упаковать аккуратно!")
+ .WithReceiverPhoneNumber("+7-900-000-00-00")
+ .Build();
 ```
 
 Иными словами с помощью Convenience Builder мы упрощаем создание объектов с гигантским конструктором, предполагая, что некоторые аргумент можем сделать по умолчанию. 
@@ -1712,9 +1712,9 @@ var customOrder = new OrderBuilder()
 
 - в билдер выносятся валидации входных данных
 - позволяет выполнять валидации во время сбора данных
-    - fail-fast
-    - упрощение логики валидации
-    - упрощение определения момента добавления некорректных данных
+ - fail-fast
+ - упрощение логики валидации
+ - упрощение определения момента добавления некорректных данных
 
 Двигаемся дальше. Вот появляется новое требование: в заказе не может быть больше 20 товаров. Где это проверять?
 
@@ -1725,34 +1725,34 @@ Stateful Constructor решает это так: валидация происх
 ```csharp
 public class Order
 {
-    private Order(IEnumerable<OrderItem> items)
-    {
-        Items = items;
-    }
+ private Order(IEnumerable<OrderItem> items)
+ {
+ Items = items;
+ }
 
-    public IEnumerable<OrderItem> Items { get; }
+ public IEnumerable<OrderItem> Items { get; }
 
-    // Builder — вложенный класс
-    public class OrderBuilder
-    {
-        private const int MaxOrderItemCount = 20;
-        private readonly List<OrderItem> _items = [];
+ // Builder — вложенный класс
+ public class OrderBuilder
+ {
+ private const int MaxOrderItemCount = 20;
+ private readonly List<OrderItem> _items = [];
 
-        public OrderBuilder WithItem(OrderItem item)
-        {
-            if (_items.Count >= MaxOrderItemCount)
-                throw new ArgumentException(
-                    $"Cannot add more than {MaxOrderItemCount} items");
-            
-            _items.Add(item);
-            return this;
-        }
+ public OrderBuilder WithItem(OrderItem item)
+ {
+ if (_items.Count >= MaxOrderItemCount)
+ throw new ArgumentException(
+ $"Cannot add more than {MaxOrderItemCount} items");
+ 
+ _items.Add(item);
+ return this;
+ }
 
-        public Order Build()
-        {
-            return new Order(_items.ToArray());
-        }
-    }
+ public Order Build()
+ {
+ return new Order(_items.ToArray());
+ }
+ }
 }
 ```
 
@@ -1762,7 +1762,7 @@ public class Order
 var orderBuilder = new Order.OrderBuilder();
 for (int i = 0; i < 20; i++)
 {
-    orderBuilder.WithItem(new OrderItem(Price: i, Amount: 1));
+ orderBuilder.WithItem(new OrderItem(Price: i, Amount: 1));
 }
 
 // Это выбросит исключение сразу же!
@@ -1787,43 +1787,43 @@ orderBuilder.WithItem(new OrderItem(Price: 1000, Amount: 1));
 // Определяем интерфейс для продукта
 public interface IOrderBuilder
 {
-    IOrderBuilder WithItem(OrderItem item);
-    Order Build();
+ IOrderBuilder WithItem(OrderItem item);
+ Order Build();
 }
 
 public class LimitedOrderBuilder : IOrderBuilder
 {
-    private const int MaxOrderItemCount = 20;
-    private readonly List<OrderItem> _items = [];
+ private const int MaxOrderItemCount = 20;
+ private readonly List<OrderItem> _items = [];
 
-    public IOrderBuilder WithItem(OrderItem item)
-    {
-        if (_items.Count >= MaxOrderItemCount)
-            throw new ArgumentException("Limit exceeded");
-        _items.Add(item);
-        return this;
-    }
+ public IOrderBuilder WithItem(OrderItem item)
+ {
+ if (_items.Count >= MaxOrderItemCount)
+ throw new ArgumentException("Limit exceeded");
+ _items.Add(item);
+ return this;
+ }
 
-    public Order Build()
-    {
-        return new Order(_items.ToArray());
-    }
+ public Order Build()
+ {
+ return new Order(_items.ToArray());
+ }
 }
 
 public class UnlimitedOrderBuilder : IOrderBuilder
 {
-    private readonly List<OrderItem> _items = [];
+ private readonly List<OrderItem> _items = [];
 
-    public IOrderBuilder WithItem(OrderItem item)
-    {
-        _items.Add(item);
-        return this;
-    }
+ public IOrderBuilder WithItem(OrderItem item)
+ {
+ _items.Add(item);
+ return this;
+ }
 
-    public Order Build()
-    {
-        return new Order(_items.ToArray());
-    }
+ public Order Build()
+ {
+ return new Order(_items.ToArray());
+ }
 }
 ```
 
@@ -1832,14 +1832,14 @@ public class UnlimitedOrderBuilder : IOrderBuilder
 ```csharp
 public class OrderService
 {
-    public Order CreateOrder(User user, IOrderBuilder builder)
-    {
-        // Код не знает, ограниченный это builder или нет
-        return builder
-            .WithItem(new OrderItem(Price: 100, Amount: 1))
-            .WithItem(new OrderItem(Price: 200, Amount: 2))
-            .Build();
-    }
+ public Order CreateOrder(User user, IOrderBuilder builder)
+ {
+ // Код не знает, ограниченный это builder или нет
+ return builder
+ .WithItem(new OrderItem(Price: 100, Amount: 1))
+ .WithItem(new OrderItem(Price: 200, Amount: 2))
+ .Build();
+ }
 }
 
 // Для обычного пользователя
@@ -1864,25 +1864,25 @@ var premiumOrder = orderService.CreateOrder(user, premiumBuilder);
 
 ```csharp
 public record Pizza(
-    PizzaSize Size,
-    DoughType DoughType,
-    Sauce Sauce,
-    IReadOnlyCollection<Topping> Toppings
+ PizzaSize Size,
+ DoughType DoughType,
+ Sauce Sauce,
+ IReadOnlyCollection<Topping> Toppings
 );
 
 public class PizzaBuilder
 {
-    private readonly List<Topping> _toppings = [];
-    private PizzaSize _size = PizzaSize.Medium;
-    private DoughType _doughType = DoughType.Standard;
-    private Sauce _sauce = Sauce.Tomato;
+ private readonly List<Topping> _toppings = [];
+ private PizzaSize _size = PizzaSize.Medium;
+ private DoughType _doughType = DoughType.Standard;
+ private Sauce _sauce = Sauce.Tomato;
 
-    public PizzaBuilder WithTopping(Topping topping) { /* ... */ }
-    public PizzaBuilder WithSize(PizzaSize size) { /* ... */ }
-    public PizzaBuilder WithDoughType(DoughType type) { /* ... */ }
-    public PizzaBuilder WithSause(Sauce sauce) { /* ... */ }
+ public PizzaBuilder WithTopping(Topping topping) { /* ... */ }
+ public PizzaBuilder WithSize(PizzaSize size) { /* ... */ }
+ public PizzaBuilder WithDoughType(DoughType type) { /* ... */ }
+ public PizzaBuilder WithSause(Sauce sauce) { /* ... */ }
 
-    public Pizza Build() { /* ... */ }
+ public Pizza Build() { /* ... */ }
 }
 ```
 
@@ -1899,20 +1899,20 @@ public class PizzaBuilder
 // Определяем интерфейс для продукта
 public interface IPizzaDirector
 {
-    PizzaBuilder Direct(PizzaBuilder builder);
+ PizzaBuilder Direct(PizzaBuilder builder);
 }
 
 public class PepperoniPizzaDirector : IPizzaDirector
 {
-    public PizzaBuilder Direct(PizzaBuilder builder)
-    {
-        return builder
-            .WithDoughType(DoughType.Standard)
-            .WithSause(Sauce.Tomato)
-            .WithSize(PizzaSize.Medium)
-            .WithTopping(Topping.Cheese)
-            .WithTopping(Topping.Pepperoni);
-    }
+ public PizzaBuilder Direct(PizzaBuilder builder)
+ {
+ return builder
+ .WithDoughType(DoughType.Standard)
+ .WithSause(Sauce.Tomato)
+ .WithSize(PizzaSize.Medium)
+ .WithTopping(Topping.Cheese)
+ .WithTopping(Topping.Pepperoni);
+ }
 }
 ```
 
@@ -1923,10 +1923,10 @@ var pizzaBuilder = new PizzaBuilder();
 var pepperoniDirector = new PepperoniPizzaDirector();
 
 var myPizza = pepperoniDirector
-    .Direct(pizzaBuilder)
-    .WithTopping(Topping.Jalapeno)      // Кастомизируем после директора
-    .WithSize(PizzaSize.Large)
-    .Build();
+ .Direct(pizzaBuilder)
+ .WithTopping(Topping.Jalapeno) // Кастомизируем после директора
+ .WithSize(PizzaSize.Large)
+ .Build();
 ```
 
 Альтернатива через Extension Methods:
@@ -1936,15 +1936,15 @@ var myPizza = pepperoniDirector
 ```csharp
 public static class PizzaBuilderExtensions
 {
-    public static PizzaBuilder DirectPepperoni(this PizzaBuilder builder)
-    {
-        return builder
-            .WithDoughType(DoughType.Standard)
-            .WithSause(Sauce.Tomato)
-            .WithSize(PizzaSize.Medium)
-            .WithTopping(Topping.Cheese)
-            .WithTopping(Topping.Pepperoni);
-    }
+ public static PizzaBuilder DirectPepperoni(this PizzaBuilder builder)
+ {
+ return builder
+ .WithDoughType(DoughType.Standard)
+ .WithSause(Sauce.Tomato)
+ .WithSize(PizzaSize.Medium)
+ .WithTopping(Topping.Cheese)
+ .WithTopping(Topping.Pepperoni);
+ }
 }
 ```
 
@@ -1952,10 +1952,10 @@ public static class PizzaBuilderExtensions
 
 ```csharp
 var myPizza = new PizzaBuilder()
-    .DirectPepperoni()
-    .WithTopping(Topping.Jalapeno)
-    .WithSize(PizzaSize.Large)
-    .Build();
+ .DirectPepperoni()
+ .WithTopping(Topping.Jalapeno)
+ .WithSize(PizzaSize.Large)
+ .Build();
 ```
 
 Это более простой и изящный способ в C#. Директор как класс нужен, когда нужен полиморфизм (разные реализации директора).
@@ -1973,237 +1973,237 @@ public enum Sauce { Tomato, BBQ, White }
 public enum Topping { Cheese, Pepperoni, Mushrooms, Olives, Jalapeno, Bacon, Pineapple }
 
 public record Pizza(
-    PizzaSize Size,
-    DoughType DoughType,
-    Sauce Sauce,
-    IReadOnlyCollection<Topping> Toppings
+ PizzaSize Size,
+ DoughType DoughType,
+ Sauce Sauce,
+ IReadOnlyCollection<Topping> Toppings
 );
 
 // === Builder с ограничениями ===
 public class PizzaBuilder
 {
-    private const int MaxAdditionalToppings = 5;
-    
-    private readonly List<Topping> _toppings = [];
-    private PizzaSize _size = PizzaSize.Medium;
-    private DoughType _doughType = DoughType.Standard;
-    private Sauce _sauce = Sauce.Tomato;
-    
-    // Флаг, который блокирует изменение теста после работы директора
-    private bool _doughTypeLocked = false;
-    
-    // Счётчик базовых топпингов (которые добавил директор)
-    // Их не учитываем в лимите дополнительных топпингов
-    private int _baseToppingsCount = 0;
+ private const int MaxAdditionalToppings = 5;
+ 
+ private readonly List<Topping> _toppings = [];
+ private PizzaSize _size = PizzaSize.Medium;
+ private DoughType _doughType = DoughType.Standard;
+ private Sauce _sauce = Sauce.Tomato;
+ 
+ // Флаг, который блокирует изменение теста после работы директора
+ private bool _doughTypeLocked = false;
+ 
+ // Счётчик базовых топпингов (которые добавил директор)
+ // Их не учитываем в лимите дополнительных топпингов
+ private int _baseToppingsCount = 0;
 
-    // === Публичные методы для клиента ===
-    
-    public PizzaBuilder WithTopping(Topping topping)
-    {
-        // Вычисляем сколько дополнительных топпингов уже добавлено
-        int additionalToppingsCount = _toppings.Count - _baseToppingsCount;
-        
-        if (additionalToppingsCount >= MaxAdditionalToppings)
-        {
-            throw new InvalidOperationException(
-                $"Cannot add more than {MaxAdditionalToppings} additional toppings");
-        }
-        
-        _toppings.Add(topping);
-        return this;
-    }
+ // === Публичные методы для клиента ===
+ 
+ public PizzaBuilder WithTopping(Topping topping)
+ {
+ // Вычисляем сколько дополнительных топпингов уже добавлено
+ int additionalToppingsCount = _toppings.Count - _baseToppingsCount;
+ 
+ if (additionalToppingsCount >= MaxAdditionalToppings)
+ {
+ throw new InvalidOperationException(
+ $"Cannot add more than {MaxAdditionalToppings} additional toppings");
+ }
+ 
+ _toppings.Add(topping);
+ return this;
+ }
 
-    public PizzaBuilder WithSize(PizzaSize size)
-    {
-        _size = size;
-        return this;
-    }
+ public PizzaBuilder WithSize(PizzaSize size)
+ {
+ _size = size;
+ return this;
+ }
 
-    public PizzaBuilder WithDoughType(DoughType type)
-    {
-        // Проверяем, не заблокирован ли тип теста директором
-        if (_doughTypeLocked)
-        {
-            throw new InvalidOperationException(
-                "Cannot change dough type - it was locked by the recipe");
-        }
-        
-        _doughType = type;
-        return this;
-    }
+ public PizzaBuilder WithDoughType(DoughType type)
+ {
+ // Проверяем, не заблокирован ли тип теста директором
+ if (_doughTypeLocked)
+ {
+ throw new InvalidOperationException(
+ "Cannot change dough type - it was locked by the recipe");
+ }
+ 
+ _doughType = type;
+ return this;
+ }
 
-    public PizzaBuilder WithSauce(Sauce sauce)
-    {
-        _sauce = sauce;
-        return this;
-    }
+ public PizzaBuilder WithSauce(Sauce sauce)
+ {
+ _sauce = sauce;
+ return this;
+ }
 
-    public Pizza Build()
-    {
-        if (_toppings.Count == 0)
-        {
-            throw new InvalidOperationException("Pizza must have at least one topping");
-        }
+ public Pizza Build()
+ {
+ if (_toppings.Count == 0)
+ {
+ throw new InvalidOperationException("Pizza must have at least one topping");
+ }
 
-        return new Pizza(
-            Size: _size,
-            DoughType: _doughType,
-            Sauce: _sauce,
-            Toppings: _toppings.AsReadOnly()
-        );
-    }
+ return new Pizza(
+ Size: _size,
+ DoughType: _doughType,
+ Sauce: _sauce,
+ Toppings: _toppings.AsReadOnly()
+ );
+ }
 
-    // === Внутренние методы для директора ===
-    // Эти методы используются только директором и игнорируют ограничения
-    
-    internal PizzaBuilder SetBaseDoughType(DoughType type)
-    {
-        _doughType = type;
-        _doughTypeLocked = true;  // Блокируем изменение теста
-        return this;
-    }
+ // === Внутренние методы для директора ===
+ // Эти методы используются только директором и игнорируют ограничения
+ 
+ internal PizzaBuilder SetBaseDoughType(DoughType type)
+ {
+ _doughType = type;
+ _doughTypeLocked = true; // Блокируем изменение теста
+ return this;
+ }
 
-    internal PizzaBuilder AddBaseTopping(Topping topping)
-    {
-        _toppings.Add(topping);
-        _baseToppingsCount++;  // Увеличиваем счётчик базовых топпингов
-        return this;
-    }
+ internal PizzaBuilder AddBaseTopping(Topping topping)
+ {
+ _toppings.Add(topping);
+ _baseToppingsCount++; // Увеличиваем счётчик базовых топпингов
+ return this;
+ }
 
-    internal PizzaBuilder SetBaseSauce(Sauce sauce)
-    {
-        _sauce = sauce;
-        return this;
-    }
+ internal PizzaBuilder SetBaseSauce(Sauce sauce)
+ {
+ _sauce = sauce;
+ return this;
+ }
 
-    internal PizzaBuilder SetBaseSize(PizzaSize size)
-    {
-        _size = size;
-        return this;
-    }
+ internal PizzaBuilder SetBaseSize(PizzaSize size)
+ {
+ _size = size;
+ return this;
+ }
 }
 
 // === Директор ===
 public interface IPizzaDirector
 {
-    PizzaBuilder Direct(PizzaBuilder builder);
+ PizzaBuilder Direct(PizzaBuilder builder);
 }
 
 public class PepperoniPizzaDirector : IPizzaDirector
 {
-    public PizzaBuilder Direct(PizzaBuilder builder)
-    {
-        // Используем внутренние методы для установки базовой конфигурации
-        // Эти методы не подчиняются ограничениям
-        return builder
-            .SetBaseDoughType(DoughType.Standard)  // Тесто блокируется!
-            .SetBaseSauce(Sauce.Tomato)
-            .SetBaseSize(PizzaSize.Medium)
-            .AddBaseTopping(Topping.Cheese)        // Базовый топпинг
-            .AddBaseTopping(Topping.Pepperoni);    // Базовый топпинг
-    }
+ public PizzaBuilder Direct(PizzaBuilder builder)
+ {
+ // Используем внутренние методы для установки базовой конфигурации
+ // Эти методы не подчиняются ограничениям
+ return builder
+ .SetBaseDoughType(DoughType.Standard) // Тесто блокируется!
+ .SetBaseSauce(Sauce.Tomato)
+ .SetBaseSize(PizzaSize.Medium)
+ .AddBaseTopping(Topping.Cheese) // Базовый топпинг
+ .AddBaseTopping(Topping.Pepperoni); // Базовый топпинг
+ }
 }
 
 public class VegetarianPizzaDirector : IPizzaDirector
 {
-    public PizzaBuilder Direct(PizzaBuilder builder)
-    {
-        return builder
-            .SetBaseDoughType(DoughType.Thin)
-            .SetBaseSauce(Sauce.White)
-            .SetBaseSize(PizzaSize.Medium)
-            .AddBaseTopping(Topping.Cheese)
-            .AddBaseTopping(Topping.Mushrooms)
-            .AddBaseTopping(Topping.Olives);
-    }
+ public PizzaBuilder Direct(PizzaBuilder builder)
+ {
+ return builder
+ .SetBaseDoughType(DoughType.Thin)
+ .SetBaseSauce(Sauce.White)
+ .SetBaseSize(PizzaSize.Medium)
+ .AddBaseTopping(Topping.Cheese)
+ .AddBaseTopping(Topping.Mushrooms)
+ .AddBaseTopping(Topping.Olives);
+ }
 }
 
 // === Примеры использования ===
 public class Program
 {
-    public static void Main()
-    {
-        Console.WriteLine("=== Пример 1: Успешная кастомизация пепперони ===");
-        var pizzaBuilder1 = new PizzaBuilder();
-        var pepperoniDirector = new PepperoniPizzaDirector();
+ public static void Main()
+ {
+ Console.WriteLine("=== Пример 1: Успешная кастомизация пепперони ===");
+ var pizzaBuilder1 = new PizzaBuilder();
+ var pepperoniDirector = new PepperoniPizzaDirector();
 
-        var customPepperoni = pepperoniDirector
-            .Direct(pizzaBuilder1)
-            .WithTopping(Topping.Jalapeno)      // +1 доп топпинг (1/5)
-            .WithTopping(Topping.Mushrooms)     // +2 доп топпинг (2/5)
-            .WithSize(PizzaSize.Large)          // Размер можно менять
-            .Build();
+ var customPepperoni = pepperoniDirector
+ .Direct(pizzaBuilder1)
+ .WithTopping(Topping.Jalapeno) // +1 доп топпинг (1/5)
+ .WithTopping(Topping.Mushrooms) // +2 доп топпинг (2/5)
+ .WithSize(PizzaSize.Large) // Размер можно менять
+ .Build();
 
-        PrintPizza(customPepperoni);
+ PrintPizza(customPepperoni);
 
-        Console.WriteLine("\n=== Пример 2: Попытка изменить тесто (ОШИБКА) ===");
-        try
-        {
-            var pizzaBuilder2 = new PizzaBuilder();
-            var failedPizza = pepperoniDirector
-                .Direct(pizzaBuilder2)
-                .WithDoughType(DoughType.Thick)  // Это вызовет исключение!
-                .Build();
-        }
-        catch (InvalidOperationException ex)
-        {
-            Console.WriteLine($"❌ Ошибка: {ex.Message}");
-        }
+ Console.WriteLine("\n=== Пример 2: Попытка изменить тесто (ОШИБКА) ===");
+ try
+ {
+ var pizzaBuilder2 = new PizzaBuilder();
+ var failedPizza = pepperoniDirector
+ .Direct(pizzaBuilder2)
+ .WithDoughType(DoughType.Thick) // Это вызовет исключение!
+ .Build();
+ }
+ catch (InvalidOperationException ex)
+ {
+ Console.WriteLine($"❌ Ошибка: {ex.Message}");
+ }
 
-        Console.WriteLine("\n=== Пример 3: Превышение лимита топпингов (ОШИБКА) ===");
-        try
-        {
-            var pizzaBuilder3 = new PizzaBuilder();
-            var overloadedPizza = pepperoniDirector
-                .Direct(pizzaBuilder3)
-                .WithTopping(Topping.Bacon)         // +1 (1/5)
-                .WithTopping(Topping.Mushrooms)     // +2 (2/5)
-                .WithTopping(Topping.Olives)        // +3 (3/5)
-                .WithTopping(Topping.Jalapeno)      // +4 (4/5)
-                .WithTopping(Topping.Pineapple)     // +5 (5/5)
-                .WithTopping(Topping.Bacon)         // +6 - ОШИБКА!
-                .Build();
-        }
-        catch (InvalidOperationException ex)
-        {
-            Console.WriteLine($"❌ Ошибка: {ex.Message}");
-        }
+ Console.WriteLine("\n=== Пример 3: Превышение лимита топпингов (ОШИБКА) ===");
+ try
+ {
+ var pizzaBuilder3 = new PizzaBuilder();
+ var overloadedPizza = pepperoniDirector
+ .Direct(pizzaBuilder3)
+ .WithTopping(Topping.Bacon) // +1 (1/5)
+ .WithTopping(Topping.Mushrooms) // +2 (2/5)
+ .WithTopping(Topping.Olives) // +3 (3/5)
+ .WithTopping(Topping.Jalapeno) // +4 (4/5)
+ .WithTopping(Topping.Pineapple) // +5 (5/5)
+ .WithTopping(Topping.Bacon) // +6 - ОШИБКА!
+ .Build();
+ }
+ catch (InvalidOperationException ex)
+ {
+ Console.WriteLine($"❌ Ошибка: {ex.Message}");
+ }
 
-        Console.WriteLine("\n=== Пример 4: Максимум дополнительных топпингов ===");
-        var pizzaBuilder4 = new PizzaBuilder();
-        var maxPizza = pepperoniDirector
-            .Direct(pizzaBuilder4)
-            .WithTopping(Topping.Bacon)         // +1
-            .WithTopping(Topping.Mushrooms)     // +2
-            .WithTopping(Topping.Olives)        // +3
-            .WithTopping(Topping.Jalapeno)      // +4
-            .WithTopping(Topping.Pineapple)     // +5 - максимум!
-            .WithSize(PizzaSize.Large)
-            .Build();
+ Console.WriteLine("\n=== Пример 4: Максимум дополнительных топпингов ===");
+ var pizzaBuilder4 = new PizzaBuilder();
+ var maxPizza = pepperoniDirector
+ .Direct(pizzaBuilder4)
+ .WithTopping(Topping.Bacon) // +1
+ .WithTopping(Topping.Mushrooms) // +2
+ .WithTopping(Topping.Olives) // +3
+ .WithTopping(Topping.Jalapeno) // +4
+ .WithTopping(Topping.Pineapple) // +5 - максимум!
+ .WithSize(PizzaSize.Large)
+ .Build();
 
-        PrintPizza(maxPizza);
+ PrintPizza(maxPizza);
 
-        Console.WriteLine("\n=== Пример 5: Вегетарианская пицца с базовыми 3 топпингами ===");
-        var pizzaBuilder5 = new PizzaBuilder();
-        var vegetarianDirector = new VegetarianPizzaDirector();
-        
-        var veggiePizza = vegetarianDirector
-            .Direct(pizzaBuilder5)
-            .WithTopping(Topping.Jalapeno)      // +1 доп топпинг
-            .WithTopping(Topping.Pineapple)     // +2 доп топпинг
-            .Build();
+ Console.WriteLine("\n=== Пример 5: Вегетарианская пицца с базовыми 3 топпингами ===");
+ var pizzaBuilder5 = new PizzaBuilder();
+ var vegetarianDirector = new VegetarianPizzaDirector();
+ 
+ var veggiePizza = vegetarianDirector
+ .Direct(pizzaBuilder5)
+ .WithTopping(Topping.Jalapeno) // +1 доп топпинг
+ .WithTopping(Topping.Pineapple) // +2 доп топпинг
+ .Build();
 
-        PrintPizza(veggiePizza);
-    }
+ PrintPizza(veggiePizza);
+ }
 
-    private static void PrintPizza(Pizza pizza)
-    {
-        Console.WriteLine($"🍕 Пицца:");
-        Console.WriteLine($"   Размер: {pizza.Size}");
-        Console.WriteLine($"   Тесто: {pizza.DoughType}");
-        Console.WriteLine($"   Соус: {pizza.Sauce}");
-        Console.WriteLine($"   Топпинги ({pizza.Toppings.Count}): {string.Join(", ", pizza.Toppings)}");
-    }
+ private static void PrintPizza(Pizza pizza)
+ {
+ Console.WriteLine($"🍕 Пицца:");
+ Console.WriteLine($" Размер: {pizza.Size}");
+ Console.WriteLine($" Тесто: {pizza.DoughType}");
+ Console.WriteLine($" Соус: {pizza.Sauce}");
+ Console.WriteLine($" Топпинги ({pizza.Toppings.Count}): {string.Join(", ", pizza.Toppings)}");
+ }
 }
 ```
 
@@ -2213,9 +2213,9 @@ public class Program
 
 ```csharp
 public record Email(
-    string Address,
-    string Subject,
-    string Body
+ string Address,
+ string Subject,
+ string Body
 );
 ```
 
@@ -2223,8 +2223,8 @@ public record Email(
 
 ```csharp
 var email = new EmailBuilder()
-    .WithBody("Hello!")
-    .Build();  // Ошибка! Address не установлен
+ .WithBody("Hello!")
+ .Build(); // Ошибка! Address не установлен
 ```
 
 То ошибка произойдёт при Build(). Но хотелось бы поймать это на этапе компиляции.
@@ -2237,58 +2237,58 @@ var email = new EmailBuilder()
 // Первый шаг: нужно установить адрес
 public interface IEmailAddressBuilder
 {
-    IEmailBuilder WithAddress(string address);
+ IEmailBuilder WithAddress(string address);
 }
 
 // Второй шаг: можно установить Subject, Body или Build
 public interface IEmailBuilder
 {
-    IEmailBuilder WithSubject(string subject);
-    IEmailBuilder WithBody(string body);
-    Email Build();
+ IEmailBuilder WithSubject(string subject);
+ IEmailBuilder WithBody(string body);
+ Email Build();
 }
 
 public static class Email
 {
-    public static IEmailAddressBuilder Builder => new EmailBuilder();
+ public static IEmailAddressBuilder Builder => new EmailBuilder();
 
-    private class EmailBuilder : IEmailAddressBuilder, IEmailBuilder
-    {
-        private string? _address;
-        private string _subject = string.Empty;
-        private string _body = string.Empty;
+ private class EmailBuilder : IEmailAddressBuilder, IEmailBuilder
+ {
+ private string? _address;
+ private string _subject = string.Empty;
+ private string _body = string.Empty;
 
-        // Первый метод: только один способ начать — установить адрес
-        public IEmailBuilder WithAddress(string address)
-        {
-            _address = address;
-            return this;  // Возвращаем IEmailBuilder, а не IEmailAddressBuilder
-        }
+ // Первый метод: только один способ начать — установить адрес
+ public IEmailBuilder WithAddress(string address)
+ {
+ _address = address;
+ return this; // Возвращаем IEmailBuilder, а не IEmailAddressBuilder
+ }
 
-        public IEmailBuilder WithSubject(string subject)
-        {
-            _subject = subject;
-            return this;
-        }
+ public IEmailBuilder WithSubject(string subject)
+ {
+ _subject = subject;
+ return this;
+ }
 
-        public IEmailBuilder WithBody(string body)
-        {
-            _body = body;
-            return this;
-        }
+ public IEmailBuilder WithBody(string body)
+ {
+ _body = body;
+ return this;
+ }
 
-        public Email Build()
-        {
-            if (_address is null)
-                throw new ArgumentNullException(nameof(_address));
+ public Email Build()
+ {
+ if (_address is null)
+ throw new ArgumentNullException(nameof(_address));
 
-            return new Email(
-                Address: _address,
-                Subject: _subject,
-                Body: _body
-            );
-        }
-    }
+ return new Email(
+ Address: _address,
+ Subject: _subject,
+ Body: _body
+ );
+ }
+ }
 }
 ```
 
@@ -2297,21 +2297,21 @@ public static class Email
 ```csharp
 // Это не скомпилируется! WithBody() возвращает IEmailBuilder, но нет метода Build() без WithAddress()
 // var email = Email.Builder
-//     .WithBody("Hello!")
-//     .Build();  // Ошибка компилятора!
+// .WithBody("Hello!")
+// .Build(); // Ошибка компилятора!
 
 // Только так работает:
 var email = Email.Builder
-    .WithAddress("user@example.com")
-    .WithBody("Hello!")
-    .Build();  // OK!
+ .WithAddress("user@example.com")
+ .WithBody("Hello!")
+ .Build(); // OK!
 
 // И порядок методов не важен, важен только первый вызов:
 var email2 = Email.Builder
-    .WithAddress("user@example.com")
-    .WithSubject("Greeting")
-    .WithBody("Hi there!")
-    .Build();
+ .WithAddress("user@example.com")
+ .WithSubject("Greeting")
+ .WithBody("Hi there!")
+ .Build();
 ```
 
 Архитектурный смысл:
@@ -2359,32 +2359,32 @@ public class PremiumOrderBuilder { }
 
 ```csharp
 var request = new HttpRequestBuilder()
-    .WithUrl("https://api.example.com/orders")
-    .WithMethod(HttpMethod.Post)
-    .WithHeader("Authorization", "Bearer token")
-    .WithBody(jsonPayload)
-    .Build();
+ .WithUrl("https://api.example.com/orders")
+ .WithMethod(HttpMethod.Post)
+ .WithHeader("Authorization", "Bearer token")
+ .WithBody(jsonPayload)
+ .Build();
 ```
 
 2. SQL queries
 
 ```csharp
 var query = new SqlQueryBuilder()
-    .Select("id", "name", "email")
-    .From("users")
-    .Where("age > 18")
-    .OrderBy("name")
-    .Build();
+ .Select("id", "name", "email")
+ .From("users")
+ .Where("age > 18")
+ .OrderBy("name")
+ .Build();
 ```
 
 3. UI/Configuration
 
 ```csharp
 var form = new FormBuilder()
-    .AddField(new TextField("name", required: true))
-    .AddField(new EmailField("email"))
-    .AddButton("Submit")
-    .Build();
+ .AddField(new TextField("name", required: true))
+ .AddField(new EmailField("email"))
+ .AddButton("Submit")
+ .Build();
 ```
 
 Философия паттерна и уроки проектирования
@@ -2418,159 +2418,159 @@ using System.Linq;
 public record OrderItem(decimal Price, int Amount);
 
 public record Order(
-    string CommentForShop,
-    string CommentForDelivery,
-    IReadOnlyCollection<OrderItem> Items,
-    DateTimeOffset CreatedAt,
-    string? ReceiverPhoneNumber
+ string CommentForShop,
+ string CommentForDelivery,
+ IReadOnlyCollection<OrderItem> Items,
+ DateTimeOffset CreatedAt,
+ string? ReceiverPhoneNumber
 )
 {
-    public decimal TotalPrice => Items.Sum(i => i.Price * i.Amount);
+ public decimal TotalPrice => Items.Sum(i => i.Price * i.Amount);
 }
 
 // === Builder с валидацией ===
 public class OrderBuilder
 {
-    private const int MaxOrderItemCount = 20;
-    private readonly List<OrderItem> _items = [];
-    private string _commentForShop = string.Empty;
-    private string _commentForDelivery = string.Empty;
-    private DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
-    private string? _receiverPhoneNumber = null;
+ private const int MaxOrderItemCount = 20;
+ private readonly List<OrderItem> _items = [];
+ private string _commentForShop = string.Empty;
+ private string _commentForDelivery = string.Empty;
+ private DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
+ private string? _receiverPhoneNumber = null;
 
-    public OrderBuilder WithItem(OrderItem item)
-    {
-        if (_items.Count >= MaxOrderItemCount)
-            throw new ArgumentException(
-                $"Cannot add more than {MaxOrderItemCount} items to an order");
-        
-        _items.Add(item);
-        return this;
-    }
+ public OrderBuilder WithItem(OrderItem item)
+ {
+ if (_items.Count >= MaxOrderItemCount)
+ throw new ArgumentException(
+ $"Cannot add more than {MaxOrderItemCount} items to an order");
+ 
+ _items.Add(item);
+ return this;
+ }
 
-    public OrderBuilder WithCommentForShop(string comment)
-    {
-        _commentForShop = comment ?? string.Empty;
-        return this;
-    }
+ public OrderBuilder WithCommentForShop(string comment)
+ {
+ _commentForShop = comment ?? string.Empty;
+ return this;
+ }
 
-    public OrderBuilder WithCommentForDelivery(string comment)
-    {
-        _commentForDelivery = comment ?? string.Empty;
-        return this;
-    }
+ public OrderBuilder WithCommentForDelivery(string comment)
+ {
+ _commentForDelivery = comment ?? string.Empty;
+ return this;
+ }
 
-    public OrderBuilder WithReceiverPhoneNumber(string? phoneNumber)
-    {
-        _receiverPhoneNumber = phoneNumber;
-        return this;
-    }
+ public OrderBuilder WithReceiverPhoneNumber(string? phoneNumber)
+ {
+ _receiverPhoneNumber = phoneNumber;
+ return this;
+ }
 
-    public Order Build()
-    {
-        if (_items.Count == 0)
-            throw new InvalidOperationException("Order must contain at least one item");
+ public Order Build()
+ {
+ if (_items.Count == 0)
+ throw new InvalidOperationException("Order must contain at least one item");
 
-        return new Order(
-            CommentForShop: _commentForShop,
-            CommentForDelivery: _commentForDelivery,
-            Items: _items.AsReadOnly(),
-            CreatedAt: _createdAt,
-            ReceiverPhoneNumber: _receiverPhoneNumber
-        );
-    }
+ return new Order(
+ CommentForShop: _commentForShop,
+ CommentForDelivery: _commentForDelivery,
+ Items: _items.AsReadOnly(),
+ CreatedAt: _createdAt,
+ ReceiverPhoneNumber: _receiverPhoneNumber
+ );
+ }
 }
 
 // === Пример использования в main ===
 public class Program
 {
-    public static void Main()
-    {
-        Console.WriteLine("=== Пример 1: Простой заказ ===");
-        var simpleOrder = new OrderBuilder()
-            .WithItem(new OrderItem(Price: 100, Amount: 2))
-            .WithItem(new OrderItem(Price: 50, Amount: 1))
-            .Build();
+ public static void Main()
+ {
+ Console.WriteLine("=== Пример 1: Простой заказ ===");
+ var simpleOrder = new OrderBuilder()
+ .WithItem(new OrderItem(Price: 100, Amount: 2))
+ .WithItem(new OrderItem(Price: 50, Amount: 1))
+ .Build();
 
-        PrintOrder(simpleOrder);
+ PrintOrder(simpleOrder);
 
-        Console.WriteLine("\n=== Пример 2: Заказ с комментариями ===");
-        var complexOrder = new OrderBuilder()
-            .WithItem(new OrderItem(Price: 1337, Amount: 2))
-            .WithCommentForShop("Упаковать аккуратно!")
-            .WithCommentForDelivery("Оставить у двери")
-            .WithReceiverPhoneNumber("+7-900-123-45-67")
-            .Build();
+ Console.WriteLine("\n=== Пример 2: Заказ с комментариями ===");
+ var complexOrder = new OrderBuilder()
+ .WithItem(new OrderItem(Price: 1337, Amount: 2))
+ .WithCommentForShop("Упаковать аккуратно!")
+ .WithCommentForDelivery("Оставить у двери")
+ .WithReceiverPhoneNumber("+7-900-123-45-67")
+ .Build();
 
-        PrintOrder(complexOrder);
+ PrintOrder(complexOrder);
 
-        Console.WriteLine("\n=== Пример 3: Пошаговое построение ===");
-        var builder = new OrderBuilder();
-        
-        // Добавляем базовые товары
-        AddDefaultItems(builder);
-        
-        // Добавляем товары по запросу
-        AddRequestedItems(builder);
-        
-        // Добавляем прогнозируемые товары
-        AddForecastedItems(builder);
-        
-        var finalOrder = builder.Build();
-        PrintOrder(finalOrder);
+ Console.WriteLine("\n=== Пример 3: Пошаговое построение ===");
+ var builder = new OrderBuilder();
+ 
+ // Добавляем базовые товары
+ AddDefaultItems(builder);
+ 
+ // Добавляем товары по запросу
+ AddRequestedItems(builder);
+ 
+ // Добавляем прогнозируемые товары
+ AddForecastedItems(builder);
+ 
+ var finalOrder = builder.Build();
+ PrintOrder(finalOrder);
 
-        Console.WriteLine("\n=== Пример 4: Обработка ошибок ===");
-        try
-        {
-            var badOrder = new OrderBuilder()
-                .Build();  // Ошибка: нет товаров
-        }
-        catch (InvalidOperationException ex)
-        {
-            Console.WriteLine($"Ошибка: {ex.Message}");
-        }
+ Console.WriteLine("\n=== Пример 4: Обработка ошибок ===");
+ try
+ {
+ var badOrder = new OrderBuilder()
+ .Build(); // Ошибка: нет товаров
+ }
+ catch (InvalidOperationException ex)
+ {
+ Console.WriteLine($"Ошибка: {ex.Message}");
+ }
 
-        Console.WriteLine("\n=== Пример 5: Превышение лимита ===");
-        try
-        {
-            var tooManyItems = new OrderBuilder();
-            for (int i = 0; i < 21; i++)
-            {
-                tooManyItems.WithItem(new OrderItem(Price: 10, Amount: 1));
-            }
-        }
-        catch (ArgumentException ex)
-        {
-            Console.WriteLine($"Ошибка: {ex.Message}");
-        }
-    }
+ Console.WriteLine("\n=== Пример 5: Превышение лимита ===");
+ try
+ {
+ var tooManyItems = new OrderBuilder();
+ for (int i = 0; i < 21; i++)
+ {
+ tooManyItems.WithItem(new OrderItem(Price: 10, Amount: 1));
+ }
+ }
+ catch (ArgumentException ex)
+ {
+ Console.WriteLine($"Ошибка: {ex.Message}");
+ }
+ }
 
-    private static void AddDefaultItems(OrderBuilder builder)
-    {
-        builder.WithItem(new OrderItem(Price: 100, Amount: 1));
-    }
+ private static void AddDefaultItems(OrderBuilder builder)
+ {
+ builder.WithItem(new OrderItem(Price: 100, Amount: 1));
+ }
 
-    private static void AddRequestedItems(OrderBuilder builder)
-    {
-        builder
-            .WithItem(new OrderItem(Price: 200, Amount: 2))
-            .WithItem(new OrderItem(Price: 150, Amount: 1));
-    }
+ private static void AddRequestedItems(OrderBuilder builder)
+ {
+ builder
+ .WithItem(new OrderItem(Price: 200, Amount: 2))
+ .WithItem(new OrderItem(Price: 150, Amount: 1));
+ }
 
-    private static void AddForecastedItems(OrderBuilder builder)
-    {
-        builder.WithItem(new OrderItem(Price: 75, Amount: 3));
-    }
+ private static void AddForecastedItems(OrderBuilder builder)
+ {
+ builder.WithItem(new OrderItem(Price: 75, Amount: 3));
+ }
 
-    private static void PrintOrder(Order order)
-    {
-        Console.WriteLine($"Заказ создан: {order.CreatedAt:dd.MM.yyyy HH:mm:ss}");
-        Console.WriteLine($"Товаров в заказе: {order.Items.Count}");
-        Console.WriteLine($"Сумма заказа: {order.TotalPrice}₽");
-        Console.WriteLine($"Комментарий магазину: {order.CommentForShop}");
-        Console.WriteLine($"Комментарий доставке: {order.CommentForDelivery}");
-        Console.WriteLine($"Телефон получателя: {order.ReceiverPhoneNumber ?? "не указан"}");
-    }
+ private static void PrintOrder(Order order)
+ {
+ Console.WriteLine($"Заказ создан: {order.CreatedAt:dd.MM.yyyy HH:mm:ss}");
+ Console.WriteLine($"Товаров в заказе: {order.Items.Count}");
+ Console.WriteLine($"Сумма заказа: {order.TotalPrice}₽");
+ Console.WriteLine($"Комментарий магазину: {order.CommentForShop}");
+ Console.WriteLine($"Комментарий доставке: {order.CommentForDelivery}");
+ Console.WriteLine($"Телефон получателя: {order.ReceiverPhoneNumber ?? "не указан"}");
+ }
 }
 /* Вывод
 === Пример 1: Простой заказ ===
@@ -2605,17 +2605,17 @@ public class Program
 */
 ```
 
-###  Когда использовать?
+### Когда использовать?
 1. **Когда вы хотите избавиться от «телескопического конструктора».**
 
  Допустим, у вас есть один конструктор с десятью опциональными параметрами. Его неудобно вызывать, поэтому вы создали ещё десять конструкторов с меньшим количеством параметров. Всё, что они делают — это переадресуют вызов к базовому конструктору, подавая какие-то значения по умолчанию в параметры, которые пропущены в них самих.
 
 ```csharp
 class Pizza {
-    Pizza(int size) { ... }
-    Pizza(int size, boolean cheese) { ... }
-    Pizza(int size, boolean cheese, boolean pepperoni) { ... }
-    // ...
+ Pizza(int size) { ... }
+ Pizza(int size, boolean cheese) { ... }
+ Pizza(int size, boolean cheese, boolean pepperoni) { ... }
+ // ...
 ```
 
 Такого монстра можно создать только в языках, имеющих механизм перегрузки методов, например, C# или Java.
@@ -2638,7 +2638,7 @@ class Pizza {
 
 > **Суть паттерна**: Создание новых объектов путём копирования существующих экземпляров (прототипов)
 
-###  Определение
+### Определение
 
 **Prototype (Прототип (Prototype))** — это порождающий паттерн проектирования, который позволяет копировать объекты, не вдаваясь в подробности их реализации.
 
@@ -2646,38 +2646,38 @@ class Pizza {
 
 
 
-###  Концепция Prototype
+### Концепция Prototype
 
 ```mermaid
 flowchart TD
-    A[Оригинальный объект<br/>Прототип] --> B[Clone]
-    B --> C[Копия 1]
-    B --> D[Копия 2]
-    B --> E[Копия 3]
-    
-    C --> F[Изменение копии 1]
-    D --> G[Изменение копии 2]
-    
-    style A fill:#e1f5fe
-    style C fill:#fff3e0
-    style D fill:#fff3e0
-    style E fill:#fff3e0
+ A[Оригинальный объект<br/>Прототип] --> B[Clone]
+ B --> C[Копия 1]
+ B --> D[Копия 2]
+ B --> E[Копия 3]
+ 
+ C --> F[Изменение копии 1]
+ D --> G[Изменение копии 2]
+ 
+ style A fill:#e1f5fe
+ style C fill:#fff3e0
+ style D fill:#fff3e0
+ style E fill:#fff3e0
 ```
 
 Вместо создания объекта через конструктор, **клонируем** существующий объект.
 
-###  Проблема
+### Проблема
 
 Представьте себе задачу. У вас есть сложный объект, например `User`, со множеством полей:
 
 ```csharp
 public class User
 {
-    public string Name { get; set; }
-    public int Age { get; set; }
-    public Email Email { get; set; }
-    public List<Permission> Permissions { get; set; }
-    public Dictionary<string, object> Settings { get; set; }
+ public string Name { get; set; }
+ public int Age { get; set; }
+ public Email Email { get; set; }
+ public List<Permission> Permissions { get; set; }
+ public Dictionary<string, object> Settings { get; set; }
 }
 ```
 
@@ -2686,11 +2686,11 @@ public class User
 ```csharp
 var userCopy = new User 
 { 
-    Name = originalUser.Name,
-    Age = originalUser.Age,
-    Email = originalUser.Email,
-    Permissions = originalUser.Permissions,
-    Settings = originalUser.Settings
+ Name = originalUser.Name,
+ Age = originalUser.Age,
+ Email = originalUser.Email,
+ Permissions = originalUser.Permissions,
+ Settings = originalUser.Settings
 };
 ```
 
@@ -2705,8 +2705,8 @@ var userCopy = new User
 ```csharp
 foreach (Shape shape in shapes)
 {
-    // Что здесь писать?
-    Shape copy = ???
+ // Что здесь писать?
+ Shape copy = ???
 }
 ```
 
@@ -2720,8 +2720,8 @@ public class GuestUser : User { }
 
 public void DuplicateUser(User original)
 {
-    // Какой конструктор вызвать? Мы не знаем, это Admin или Guest!
-    User copy = ??? // Тоже непонятно какой именно это у нас пользователь
+ // Какой конструктор вызвать? Мы не знаем, это Admin или Guest!
+ User copy = ??? // Тоже непонятно какой именно это у нас пользователь
 }
 ```
 
@@ -2735,23 +2735,23 @@ public void DuplicateUser(User original)
 // Определяем интерфейс для продукта
 public interface IPrototype
 {
-    IPrototype Clone();
+ IPrototype Clone();
 }
 
 public class User : IPrototype
 {
-    public string Name { get; set; }
-    public int Age { get; set; }
-    
-    public IPrototype Clone()
-    {
-        // Создаём новый экземпляр с копией всех полей
-        return new User 
-        { 
-            Name = this.Name,
-            Age = this.Age 
-        };
-    }
+ public string Name { get; set; }
+ public int Age { get; set; }
+ 
+ public IPrototype Clone()
+ {
+ // Создаём новый экземпляр с копией всех полей
+ return new User 
+ { 
+ Name = this.Name,
+ Age = this.Age 
+ };
+ }
 }
 ```
 
@@ -2773,13 +2773,13 @@ var copy = original.Clone();
 
 ```
 Shallow Copy:
-Original:  [Object] --> [Reference to List]
-                              ↓
-Clone:     [Object] --------> [Same List]  ⚠️ Оба указывают на один список!
+Original: [Object] --> [Reference to List]
+ ↓
+Clone: [Object] --------> [Same List] ⚠️ Оба указывают на один список!
 
 Deep Copy:
-Original:  [Object] --> [List A]
-Clone:     [Object] --> [List B]  ✅ Независимые копии
+Original: [Object] --> [List A]
+Clone: [Object] --> [List B] ✅ Независимые копии
 ```
 
 
@@ -2787,19 +2787,19 @@ Clone:     [Object] --> [List B]  ✅ Независимые копии
 ```csharp
 public class Prototype
 {
-    private readonly IReadOnlyCollection<int> _relatedEntityIds;
+ private readonly IReadOnlyCollection<int> _relatedEntityIds;
 
-    public Prototype(IReadOnlyCollection<int> relatedEntityIds)
-    {
-        _relatedEntityIds = relatedEntityIds;
-    }
+ public Prototype(IReadOnlyCollection<int> relatedEntityIds)
+ {
+ _relatedEntityIds = relatedEntityIds;
+ }
 
-    public Prototype Clone()
-    {
-        // Создаём новый экземпляр с копией всех полей
-        // Просто копируем ссылку на коллекцию
-        return new Prototype(_relatedEntityIds);
-    }
+ public Prototype Clone()
+ {
+ // Создаём новый экземпляр с копией всех полей
+ // Просто копируем ссылку на коллекцию
+ return new Prototype(_relatedEntityIds);
+ }
 }
 ```
 
@@ -2814,14 +2814,14 @@ public class Prototype
 
 ```
 
-Original:    Clone:
-┌─────────┐  ┌─────────┐
-│Name: "A"│  │Name: "A"│
-└─────────┘  └─────────┘
-      │            │
-      └────┬───────┘
-           ↓
-      [1, 2, 3, 4] (общая коллекция)
+Original: Clone:
+┌─────────┐ ┌─────────┐
+│Name: "A"│ │Name: "A"│
+└─────────┘ └─────────┘
+ │ │
+ └────┬───────┘
+ ↓
+ [1, 2, 3, 4] (общая коллекция)
 ```
 
 Это нормально, если:
@@ -2838,42 +2838,42 @@ Original:    Clone:
 // Обёрнутое значение (изменяемое)
 public class WrappedValue
 {
-    public int Value { get; set; }
+ public int Value { get; set; }
 
-    public WrappedValue Clone()
-    {
-        // Создаём новый экземпляр с копией всех полей
-        return new WrappedValue { Value = this.Value };
-    }
+ public WrappedValue Clone()
+ {
+ // Создаём новый экземпляр с копией всех полей
+ return new WrappedValue { Value = this.Value };
+ }
 }
 
 // Прототив, содержащий список обёрнутых значений
 public class DeepCopyPrototype
 {
-    private readonly List<WrappedValue> _values;
+ private readonly List<WrappedValue> _values;
 
-    public DeepCopyPrototype(List<WrappedValue> values)
-    {
-        _values = values;
-    }
+ public DeepCopyPrototype(List<WrappedValue> values)
+ {
+ _values = values;
+ }
 
-    public DeepCopyPrototype Clone()
-    {
-        // Создаём новый экземпляр с копией всех полей
-        // Ключ: мы клонируем и сам список, и каждый элемент в нём
-        List<WrappedValue> clonedValues = _values
-            .Select(x => x.Clone())  // Каждое значение копируется!
-            .ToList();
-        /*
-        1. Создаем новый список (.ToList()).
+ public DeepCopyPrototype Clone()
+ {
+ // Создаём новый экземпляр с копией всех полей
+ // Ключ: мы клонируем и сам список, и каждый элемент в нём
+ List<WrappedValue> clonedValues = _values
+ .Select(x => x.Clone()) // Каждое значение копируется!
+ .ToList();
+ /*
+ 1. Создаем новый список (.ToList()).
 
-        2. Проходим по каждому элементу x в старом списке.
+ 2. Проходим по каждому элементу x в старом списке.
 
-        3. Вызываем x.Clone() для каждого элемента, создавая новые объекты WrappedValue.
-        */
+ 3. Вызываем x.Clone() для каждого элемента, создавая новые объекты WrappedValue.
+ */
 
-        return new DeepCopyPrototype(clonedValues);
-    }
+ return new DeepCopyPrototype(clonedValues);
+ }
 }
 ```
 
@@ -2882,8 +2882,8 @@ public class DeepCopyPrototype
 ```csharp
 var original = new DeepCopyPrototype(new List<WrappedValue>
 {
-    new WrappedValue { Value = 10 },
-    new WrappedValue { Value = 20 }
+ new WrappedValue { Value = 10 },
+ new WrappedValue { Value = 20 }
 });
 
 var copy = original.Clone();
@@ -2906,42 +2906,42 @@ var copy = original.Clone();
 ```csharp
 public interface IHierarchyPrototype
 {
-    IHierarchyPrototype Clone();
+ IHierarchyPrototype Clone();
 }
 
 // Тип A
 public class FirstDerivedPrototype : IHierarchyPrototype
 {
-    private readonly string _name;
-    private readonly int _age;
+ private readonly string _name;
+ private readonly int _age;
 
-    public FirstDerivedPrototype(string name, int age)
-    {
-        _name = name;
-        _age = age;
-    }
+ public FirstDerivedPrototype(string name, int age)
+ {
+ _name = name;
+ _age = age;
+ }
 
-    public IHierarchyPrototype Clone()
-    {
-        // Создаём новый экземпляр с копией всех полей
-        return new FirstDerivedPrototype(_name, _age);
-    }
+ public IHierarchyPrototype Clone()
+ {
+ // Создаём новый экземпляр с копией всех полей
+ return new FirstDerivedPrototype(_name, _age);
+ }
 }
 
 // Тип B
 public class SecondDerivedPrototype : IHierarchyPrototype
 {
-    private readonly long _iterationCount;
+ private readonly long _iterationCount;
 
-    public SecondDerivedPrototype(long iterationCount)
-    {
-        _iterationCount = iterationCount;
-    }
+ public SecondDerivedPrototype(long iterationCount)
+ {
+ _iterationCount = iterationCount;
+ }
 
-    public IHierarchyPrototype Clone()
-    {
-        return new SecondDerivedPrototype(_iterationCount);
-    }
+ public IHierarchyPrototype Clone()
+ {
+ return new SecondDerivedPrototype(_iterationCount);
+ }
 }
 ```
 
@@ -2950,24 +2950,24 @@ public class SecondDerivedPrototype : IHierarchyPrototype
 ```csharp
 public void ProcessPrototype(IHierarchyPrototype proto)
 {
-    // ...
+ // ...
 
-    // Мы НЕ знаем, FirstDerivedPrototype это или SecondDerivedPrototype
-    // Но мы можем создать копию!
-    var clone = proto.Clone();
-    
-    // clone будет правильного типа автоматически
-    // потому что каждый класс знает, как себя копировать
+ // Мы НЕ знаем, FirstDerivedPrototype это или SecondDerivedPrototype
+ // Но мы можем создать копию!
+ var clone = proto.Clone();
+ 
+ // clone будет правильного типа автоматически
+ // потому что каждый класс знает, как себя копировать
 
-    // ...
+ // ...
 }
 
 // Использование:
 var first = new FirstDerivedPrototype("Alice", 30);
 var second = new SecondDerivedPrototype(1000);
 
-ProcessPrototype(first);   // Создаст копию FirstDerivedPrototype
-ProcessPrototype(second);  // Создаст копию SecondDerivedPrototype
+ProcessPrototype(first); // Создаст копию FirstDerivedPrototype
+ProcessPrototype(second); // Создаст копию SecondDerivedPrototype
 ```
 
 Это решает проблему: теперь нам не нужно использовать typeof, is, as или switch для копирования. Каждый класс сам знает, как себя копировать.
@@ -2977,15 +2977,15 @@ ProcessPrototype(second);  // Создаст копию SecondDerivedPrototype
 ```csharp
 public abstract class Prototype
 {
-    public abstract Prototype Clone();
+ public abstract Prototype Clone();
 }
 
 public class ClassPrototype : Prototype
 {
-    public override ClassPrototype Clone()
-    {
-        return new ClassPrototype();
-    }
+ public override ClassPrototype Clone()
+ {
+ return new ClassPrototype();
+ }
 }
 ```
 
@@ -2994,22 +2994,22 @@ public class ClassPrototype : Prototype
 ```csharp
 public interface IPrototype
 {
-    IPrototype Clone();
+ IPrototype Clone();
 }
 
 public class InterfacePrototype : IPrototype
 {
-    // Явная реализация через интерфейс
-    IPrototype IPrototype.Clone()
-    {
-        return Clone();
-    }
+ // Явная реализация через интерфейс
+ IPrototype IPrototype.Clone()
+ {
+ return Clone();
+ }
 
-    // А сам метод возвращает конкретный тип
-    public InterfacePrototype Clone()
-    {
-        return new InterfacePrototype();
-    }
+ // А сам метод возвращает конкретный тип
+ public InterfacePrototype Clone()
+ {
+ return new InterfacePrototype();
+ }
 }
 ```
 
@@ -3017,11 +3017,11 @@ public class InterfacePrototype : IPrototype
 
 ```csharp
 IPrototype proto = new InterfacePrototype();
-var clone = proto.Clone();  // Тип: IPrototype, теряем информацию!
+var clone = proto.Clone(); // Тип: IPrototype, теряем информацию!
 
 // С двойной реализацией:
 InterfacePrototype proto2 = new InterfacePrototype();
-var clone2 = proto2.Clone();  // Тип: InterfacePrototype, сохранили!
+var clone2 = proto2.Clone(); // Тип: InterfacePrototype, сохранили!
 ```
 
 Какой выбрать?
@@ -3039,26 +3039,26 @@ var clone2 = proto2.Clone();  // Тип: InterfacePrototype, сохранили!
 ```csharp 
 public abstract class Prototype
 {
-    public void DoSomeStuff()
-    {
-        // Общая логика для всех прототипов
-        Console.WriteLine("Doing common work...");
-    }
+ public void DoSomeStuff()
+ {
+ // Общая логика для всех прототипов
+ Console.WriteLine("Doing common work...");
+ }
 
-    public abstract Prototype Clone();
+ public abstract Prototype Clone();
 }
 
 public class ClassPrototype : Prototype
 {
-    public void DoOtherStuff()
-    {
-        Console.WriteLine("Doing specific work...");
-    }
+ public void DoOtherStuff()
+ {
+ Console.WriteLine("Doing specific work...");
+ }
 
-    public override Prototype Clone()
-    {
-        return new ClassPrototype();
-    }
+ public override Prototype Clone()
+ {
+ return new ClassPrototype();
+ }
 }
 ```
 
@@ -3067,23 +3067,23 @@ public class ClassPrototype : Prototype
 ```csharp
 public class Scenario
 {
-    public static Prototype CloneAndDoSomeStuff(Prototype prototype)
-    {
-        var clone = prototype.Clone();
-        clone.DoSomeStuff();  // Это работает, потому что эИными словами в базовом классе
-        return clone;
-    }
+ public static Prototype CloneAndDoSomeStuff(Prototype prototype)
+ {
+ var clone = prototype.Clone();
+ clone.DoSomeStuff(); // Это работает, потому что эИными словами в базовом классе
+ return clone;
+ }
 
-    public static void TopLevelScenario()
-    {
-        var prototype = new ClassPrototype();
-        Prototype clone = CloneAndDoSomeStuff(prototype);
-        
-        // ПРОБЛЕМА: теперь clone — это Prototype, а не ClassPrototype
-        // Мы потеряли информацию о конкретном типе!
-        
-        clone.DoOtherStuff();  // ОШИБКА компилятора! DoOtherStuff нет в Prototype
-    }
+ public static void TopLevelScenario()
+ {
+ var prototype = new ClassPrototype();
+ Prototype clone = CloneAndDoSomeStuff(prototype);
+ 
+ // ПРОБЛЕМА: теперь clone — это Prototype, а не ClassPrototype
+ // Мы потеряли информацию о конкретном типе!
+ 
+ clone.DoOtherStuff(); // ОШИБКА компилятора! DoOtherStuff нет в Prototype
+ }
 }
 ```
 
@@ -3092,46 +3092,46 @@ public class Scenario
 ```csharp
 public interface IPrototype
 {
-    IPrototype Clone();
-    void DoSomeStuff();
+ IPrototype Clone();
+ void DoSomeStuff();
 }
 
 public class InterfacePrototype : IPrototype
 {
-    public IPrototype Clone()
-    {
-        return new InterfacePrototype();
-    }
+ public IPrototype Clone()
+ {
+ return new InterfacePrototype();
+ }
 
-    public void DoSomeStuff()
-    {
-        Console.WriteLine("Doing common work...");
-    }
+ public void DoSomeStuff()
+ {
+ Console.WriteLine("Doing common work...");
+ }
 
-    public void DoOtherStuff()
-    {
-        Console.WriteLine("Doing specific work...");
-    }
+ public void DoOtherStuff()
+ {
+ Console.WriteLine("Doing specific work...");
+ }
 }
 
 public class Scenario
 {
-    public static IPrototype CloneAndDoSomeStuff(IPrototype prototype)
-    {
-        var clone = prototype.Clone();
-        clone.DoSomeStuff();
-        return clone;
-    }
+ public static IPrototype CloneAndDoSomeStuff(IPrototype prototype)
+ {
+ var clone = prototype.Clone();
+ clone.DoSomeStuff();
+ return clone;
+ }
 
-    public static void TopLevelScenario()
-    {
-        var prototype = new InterfacePrototype();
-        IPrototype clone = CloneAndDoSomeStuff(prototype);
-        
-        // Мы можем привести к конкретному типу, но прихрдится делать cast
-        InterfacePrototype specificClone = (InterfacePrototype)clone;
-        specificClone.DoOtherStuff();  // OK!
-    }
+ public static void TopLevelScenario()
+ {
+ var prototype = new InterfacePrototype();
+ IPrototype clone = CloneAndDoSomeStuff(prototype);
+ 
+ // Мы можем привести к конкретному типу, но прихрдится делать cast
+ InterfacePrototype specificClone = (InterfacePrototype)clone;
+ specificClone.DoOtherStuff(); // OK!
+ }
 }
 ```
 
@@ -3143,31 +3143,31 @@ public class Scenario
 ```csharp
 public abstract class Shape
 {
-    public string Color { get; set; }
-    public double X { get; set; }
-    public double Y { get; set; }
+ public string Color { get; set; }
+ public double X { get; set; }
+ public double Y { get; set; }
 
-    protected Shape(string color, double x, double y)
-    {
-        Color = color;
-        X = x;
-        Y = y;
-    }
+ protected Shape(string color, double x, double y)
+ {
+ Color = color;
+ X = x;
+ Y = y;
+ }
 
-    // Общая логика для всех фигур
-    public void Draw()
-    {
-        Console.WriteLine($"Drawing {GetType().Name} at ({X}, {Y}) with color {Color}");
-    }
+ // Общая логика для всех фигур
+ public void Draw()
+ {
+ Console.WriteLine($"Drawing {GetType().Name} at ({X}, {Y}) with color {Color}");
+ }
 
-    public void MoveTo(double newX, double newY)
-    {
-        X = newX;
-        Y = newY;
-    }
+ public void MoveTo(double newX, double newY)
+ {
+ X = newX;
+ Y = newY;
+ }
 
-    // Метод клонирования
-    public abstract Shape Clone();
+ // Метод клонирования
+ public abstract Shape Clone();
 }
 
 ```
@@ -3177,51 +3177,51 @@ public abstract class Shape
 ```csharp
 public class Circle : Shape
 {
-    public double Radius { get; set; }
+ public double Radius { get; set; }
 
-    public Circle(string color, double x, double y, double radius)
-        : base(color, x, y)
-    {
-        Radius = radius;
-    }
+ public Circle(string color, double x, double y, double radius)
+ : base(color, x, y)
+ {
+ Radius = radius;
+ }
 
-    public override Circle Clone()
-    {
-        return new Circle(Color, X, Y, Radius);
-    }
+ public override Circle Clone()
+ {
+ return new Circle(Color, X, Y, Radius);
+ }
 
-    // Специфичный метод только для круга
-    public void Scale(double factor)
-    {
-        Radius *= factor;
-        Console.WriteLine($"Circle scaled to radius {Radius}");
-    }
+ // Специфичный метод только для круга
+ public void Scale(double factor)
+ {
+ Radius *= factor;
+ Console.WriteLine($"Circle scaled to radius {Radius}");
+ }
 }
 
 public class Rectangle : Shape
 {
-    public double Width { get; set; }
-    public double Height { get; set; }
+ public double Width { get; set; }
+ public double Height { get; set; }
 
-    public Rectangle(string color, double x, double y, double width, double height)
-        : base(color, x, y)
-    {
-        Width = width;
-        Height = height;
-    }
+ public Rectangle(string color, double x, double y, double width, double height)
+ : base(color, x, y)
+ {
+ Width = width;
+ Height = height;
+ }
 
-    public override Rectangle Clone()
-    {
-        return new Rectangle(Color, X, Y, Width, Height);
-    }
+ public override Rectangle Clone()
+ {
+ return new Rectangle(Color, X, Y, Width, Height);
+ }
 
-    // Специфичный метод только для прямоугольника
-    public void Resize(double newWidth, double newHeight)
-    {
-        Width = newWidth;
-        Height = newHeight;
-        Console.WriteLine($"Rectangle resized to {Width}x{Height}");
-    }
+ // Специфичный метод только для прямоугольника
+ public void Resize(double newWidth, double newHeight)
+ {
+ Width = newWidth;
+ Height = newHeight;
+ Console.WriteLine($"Rectangle resized to {Width}x{Height}");
+ }
 }
 ```
 
@@ -3230,13 +3230,13 @@ public class Rectangle : Shape
 ```csharp
 public class ShapeProcessor
 {
-    // Этот метод принимает любую фигуру
-    public static Shape CloneAndMove(Shape shape, double newX, double newY)
-    {
-        var clone = shape.Clone();  // Клонируем
-        clone.MoveTo(newX, newY);    // Перемещаем
-        return clone;                // Возвращаем
-    }
+ // Этот метод принимает любую фигуру
+ public static Shape CloneAndMove(Shape shape, double newX, double newY)
+ {
+ var clone = shape.Clone(); // Клонируем
+ clone.MoveTo(newX, newY); // Перемещаем
+ return clone; // Возвращаем
+ }
 }
 ```
 
@@ -3245,21 +3245,21 @@ public class ShapeProcessor
 ```csharp
 public static void Main()
 {
-    var circle = new Circle("Red", 10, 10, 5);
-    
-    // Вызываем наш метод
-    Shape clonedShape = ShapeProcessor.CloneAndMove(circle, 50, 50);
-    
-    // clonedShape имеет тип Shape, а не Circle!
-    // Мы не можем вызвать специфичный метод Scale()
-    
-    // clonedShape.Scale(2.0);  // Ошибка компиляции!
-    
-    // Приходится делать cast:
-    if (clonedShape is Circle clonedCircle)
-    {
-        clonedCircle.Scale(2.0);  // Теперь работает
-    }
+ var circle = new Circle("Red", 10, 10, 5);
+ 
+ // Вызываем наш метод
+ Shape clonedShape = ShapeProcessor.CloneAndMove(circle, 50, 50);
+ 
+ // clonedShape имеет тип Shape, а не Circle!
+ // Мы не можем вызвать специфичный метод Scale()
+ 
+ // clonedShape.Scale(2.0); // Ошибка компиляции!
+ 
+ // Приходится делать cast:
+ if (clonedShape is Circle clonedCircle)
+ {
+ clonedCircle.Scale(2.0); // Теперь работает
+ }
 }
 ```
 
@@ -3267,21 +3267,21 @@ public static void Main()
 
 ```csharp
 public static Shape CloneAndMove(Shape shape, ...)
-                   ↑
-            возвращаем Shape, а не конкретный тип!
+ ↑
+ возвращаем Shape, а не конкретный тип!
 ```
 
 Даже несмотря на то, что метод `Clone()` в `Circle` возвращает `Circle`, компилятор видит возвращаемый тип базового класса (`Shape`), потому что мы работаем через базовый класс.
 ```text
 Что мы хотим:
 Circle → CloneAndMove → Circle (сохранили тип!)
-                         ↓
-                    можем вызвать Scale()
+ ↓
+ можем вызвать Scale()
 
 Что мы получаем:
 Circle → CloneAndMove → Shape (потеряли тип!)
-                         ↓
-                    не можем вызвать Scale() без cast
+ ↓
+ не можем вызвать Scale() без cast
 ```
 
 Та же самая проблема будет с интерфейсами:
@@ -3289,73 +3289,73 @@ Circle → CloneAndMove → Shape (потеряли тип!)
 ```csharp
 public interface IPrototype
 {
-    IPrototype Clone();
-    void Draw();
+ IPrototype Clone();
+ void Draw();
 }
 
 public class Circle : IPrototype
 {
-    public double Radius { get; set; }
+ public double Radius { get; set; }
 
-    public Circle(double radius)
-    {
-        Radius = radius;
-    }
+ public Circle(double radius)
+ {
+ Radius = radius;
+ }
 
-    // Явная реализация интерфейса
-    IPrototype IPrototype.Clone()
-    {
-        return Clone();
-    }
+ // Явная реализация интерфейса
+ IPrototype IPrototype.Clone()
+ {
+ return Clone();
+ }
 
-    // Конкретная реализация возвращает Circle
-    public Circle Clone()
-    {
-        return new Circle(Radius);
-    }
+ // Конкретная реализация возвращает Circle
+ public Circle Clone()
+ {
+ return new Circle(Radius);
+ }
 
-    public void Draw()
-    {
-        Console.WriteLine($"Drawing circle with radius {Radius}");
-    }
+ public void Draw()
+ {
+ Console.WriteLine($"Drawing circle with radius {Radius}");
+ }
 
-    public void Scale(double factor)
-    {
-        Radius *= factor;
-    }
+ public void Scale(double factor)
+ {
+ Radius *= factor;
+ }
 }
 
 public class Rectangle : IPrototype
 {
-    public double Width { get; set; }
-    public double Height { get; set; }
+ public double Width { get; set; }
+ public double Height { get; set; }
 
-    public Rectangle(double width, double height)
-    {
-        Width = width;
-        Height = height;
-    }
+ public Rectangle(double width, double height)
+ {
+ Width = width;
+ Height = height;
+ }
 
-    IPrototype IPrototype.Clone()
-    {
-        return Clone();
-    }
+ IPrototype IPrototype.Clone()
+ {
+ return Clone();
+ }
 
-    public Rectangle Clone()
-    {
-        return new Rectangle(Width, Height);
-    }
+ public Rectangle Clone()
+ {
+ return new Rectangle(Width, Height);
+ }
 
-    public void Draw()
-    {
-        Console.WriteLine($"Drawing rectangle {Width}x{Height}");
-    }
+ public void Draw()
+ {
+ Console.WriteLine($"Drawing rectangle {Width}x{Height}");
+ }
 
-    public void Resize(double w, double h)
-    {
-        Width = w;
-        Height = h;
-    }
+ public void Resize(double w, double h)
+ {
+ Width = w;
+ Height = h;
+ }
 }
 ```
 
@@ -3364,29 +3364,29 @@ public class Rectangle : IPrototype
 ```csharp
 public class Scenario
 {
-    public static IPrototype CloneAndDraw(IPrototype prototype)
-    {
-        var clone = prototype.Clone();
-        clone.Draw();
-        return clone;
-    }
+ public static IPrototype CloneAndDraw(IPrototype prototype)
+ {
+ var clone = prototype.Clone();
+ clone.Draw();
+ return clone;
+ }
 
-    public static void Main()
-    {
-        var circle = new Circle(5.0);
-        
-        // Вызываем метод
-        IPrototype clonedProto = CloneAndDraw(circle);
-        
-        // тип IPrototype, а не Circle!
-        // clonedProto.Scale(2.0);  // Ошибка!
-        
-        // Снова нужен cast:
-        if (clonedProto is Circle clonedCircle)
-        {
-            clonedCircle.Scale(2.0);  // Работает, но некрасиво
-        }
-    }
+ public static void Main()
+ {
+ var circle = new Circle(5.0);
+ 
+ // Вызываем метод
+ IPrototype clonedProto = CloneAndDraw(circle);
+ 
+ // тип IPrototype, а не Circle!
+ // clonedProto.Scale(2.0); // Ошибка!
+ 
+ // Снова нужен cast:
+ if (clonedProto is Circle clonedCircle)
+ {
+ clonedCircle.Scale(2.0); // Работает, но некрасиво
+ }
+ }
 }
 ```
 
@@ -3409,26 +3409,26 @@ public class Scenario
 ```csharp
 public interface IPrototype<T> where T : IPrototype<T>
 {
-    T Clone();
-    void DoSomeStuff();
+ T Clone();
+ void DoSomeStuff();
 }
 
 public class Prototype : IPrototype<Prototype>
 {
-    public Prototype Clone()
-    {
-        return new Prototype();
-    }
+ public Prototype Clone()
+ {
+ return new Prototype();
+ }
 
-    public void DoSomeStuff()
-    {
-        Console.WriteLine("Doing common work...");
-    }
+ public void DoSomeStuff()
+ {
+ Console.WriteLine("Doing common work...");
+ }
 
-    public void DoOtherStuff()
-    {
-        Console.WriteLine("Doing specific work...");
-    }
+ public void DoOtherStuff()
+ {
+ Console.WriteLine("Doing specific work...");
+ }
 }
 ```
 
@@ -3440,9 +3440,9 @@ public class Prototype : IPrototype<Prototype>
 
 ```csharp
 public interface IPrototype<T> where T : IPrototype<T>
-                     ↑                         ↑
-                     └─────────────────────────┘
-                     Тип T должен реализовывать IPrototype<T>
+ ↑ ↑
+ └─────────────────────────┘
+ Тип T должен реализовывать IPrototype<T>
 ```
 
 Очень хорошо, что вы все помните CRTP ещё из плюсов и не нужно лишний раз объяснять что это и как это работает
@@ -3452,21 +3452,21 @@ public interface IPrototype<T> where T : IPrototype<T>
 ```csharp
 public class Scenario
 {
-    public static T CloneAndDoSomeStuff<T>(T prototype)
-        where T : IPrototype<T>
-    {
-        var clone = prototype.Clone();  // Тип: T (правильный!)
-        clone.DoSomeStuff();
-        return clone;
-    }
+ public static T CloneAndDoSomeStuff<T>(T prototype)
+ where T : IPrototype<T>
+ {
+ var clone = prototype.Clone(); // Тип: T (правильный!)
+ clone.DoSomeStuff();
+ return clone;
+ }
 
-    public static void TopLevelScenario()
-    {
-        var prototype = new Prototype();
-        Prototype clone = CloneAndDoSomeStuff(prototype);  // Тип сохранён!
-        
-        clone.DoOtherStuff();  // Никаких cast'ов!
-    }
+ public static void TopLevelScenario()
+ {
+ var prototype = new Prototype();
+ Prototype clone = CloneAndDoSomeStuff(prototype); // Тип сохранён!
+ 
+ clone.DoOtherStuff(); // Никаких cast'ов!
+ }
 }
 ```
 
@@ -3475,10 +3475,10 @@ public class Scenario
 ```csharp
 public class SecondPrototype : Prototype, IPrototype<SecondPrototype>
 {
-    public override SecondPrototype Clone()
-    {
-        return new SecondPrototype();
-    }
+ public override SecondPrototype Clone()
+ {
+ return new SecondPrototype();
+ }
 }
 ```
 
@@ -3490,10 +3490,10 @@ public class SecondPrototype : Prototype, IPrototype<SecondPrototype>
 ```csharp
 public static void Hierarchy()
 {
-    var second = new SecondPrototype();
-    SecondPrototype clonedSecond = CloneAndDoSomeStuff(second);
-    
-    // Правильный тип!
+ var second = new SecondPrototype();
+ SecondPrototype clonedSecond = CloneAndDoSomeStuff(second);
+ 
+ // Правильный тип!
 }
 ```
 
@@ -3503,25 +3503,25 @@ public static void Hierarchy()
 // Это необобщённый интерфейс (без типизации)
 public interface IPrototype
 {
-    void DoSomeStuff() { }
+ void DoSomeStuff() { }
 }
 
 // Это обобщённый интерфейс (с типизацией)
 public interface IPrototype<T> : IPrototype where T : IPrototype<T>
 {
-    T Clone();
+ T Clone();
 }
 
 public record Container(IPrototype Prototype);
 
 static void NonGeneric()
 {
-    // Проблема: Container хранит IPrototype
-    // Но IPrototype не имеет метода Clone()!
-    var container = new Container(new Prototype());
-    
-    // Как теперь клонировать?
-    // container.Prototype.Clone();  // Ошибка! Нет Clone() в IPrototype
+ // Проблема: Container хранит IPrototype
+ // Но IPrototype не имеет метода Clone()!
+ var container = new Container(new Prototype());
+ 
+ // Как теперь клонировать?
+ // container.Prototype.Clone(); // Ошибка! Нет Clone() в IPrototype
 }
 ```
 
@@ -3532,19 +3532,19 @@ static void NonGeneric()
 ```csharp
 public interface IPrototype
 {
-    IPrototype Clone();  // Необобщённая версия
-    void DoSomeStuff() { }
+ IPrototype Clone(); // Необобщённая версия
+ void DoSomeStuff() { }
 }
 
 public interface IPrototype<T> : IPrototype where T : IPrototype<T>
 {
-    new T Clone();  // Переопределяем с обобщённой версией
+ new T Clone(); // Переопределяем с обобщённой версией
 }
 
 // Теперь оба работают:
 var proto = new Prototype();
-IPrototype clone1 = proto.Clone();        // Из необобщённого интерфейса
-Prototype clone2 = proto.Clone();         // Из обобщённого интерфейса
+IPrototype clone1 = proto.Clone(); // Из необобщённого интерфейса
+Prototype clone2 = proto.Clone(); // Из обобщённого интерфейса
 ```
 
 Рассмотрим какой-нибудь пример, который объединяет это всё вместе:
@@ -3557,271 +3557,271 @@ using System.Linq;
 // === Интерфейсы ===
 public interface IDocument
 {
-    IDocument Clone();
-    void Print();
+ IDocument Clone();
+ void Print();
 }
 
 public interface IDocument<T> : IDocument where T : IDocument<T>
 {
-    new T Clone();
+ new T Clone();
 }
 
 // === Базовый класс документа ===
 public abstract class Document : IDocument<Document>
 {
-    protected string _title;
-    protected DateTimeOffset _createdAt;
+ protected string _title;
+ protected DateTimeOffset _createdAt;
 
-    protected Document(string title, DateTimeOffset createdAt)
-    {
-        _title = title;
-        _createdAt = createdAt;
-    }
+ protected Document(string title, DateTimeOffset createdAt)
+ {
+ _title = title;
+ _createdAt = createdAt;
+ }
 
-    // Необобщённая версия для коллекций
-    public IDocument Clone() => Clone();
+ // Необобщённая версия для коллекций
+ public IDocument Clone() => Clone();
 
-    // Обобщённая версия, которую переопределяют дети
-    public abstract Document Clone();
+ // Обобщённая версия, которую переопределяют дети
+ public abstract Document Clone();
 
-    public virtual void Print()
-    {
-        Console.WriteLine($"[{GetType().Name}] Title: {_title}");
-        Console.WriteLine($"Created: {_createdAt:dd.MM.yyyy HH:mm:ss}");
-    }
+ public virtual void Print()
+ {
+ Console.WriteLine($"[{GetType().Name}] Title: {_title}");
+ Console.WriteLine($"Created: {_createdAt:dd.MM.yyyy HH:mm:ss}");
+ }
 }
 
 // === Конкретные типы документов ===
 public class TextDocument : Document, IDocument<TextDocument>
 {
-    private readonly string _content;
-    private readonly List<string> _tags;
+ private readonly string _content;
+ private readonly List<string> _tags;
 
-    public TextDocument(string title, DateTimeOffset createdAt, string content, List<string> tags)
-        : base(title, createdAt)
-    {
-        _content = content;
-        _tags = tags;
-    }
+ public TextDocument(string title, DateTimeOffset createdAt, string content, List<string> tags)
+ : base(title, createdAt)
+ {
+ _content = content;
+ _tags = tags;
+ }
 
-    public override TextDocument Clone()
-    {
-        // Deep copy (глубокое копирование) списка тегов
-        var clonedTags = _tags.Select(t => t).ToList();
-        return new TextDocument(_title, _createdAt, _content, clonedTags);
-    }
+ public override TextDocument Clone()
+ {
+ // Deep copy (глубокое копирование) списка тегов
+ var clonedTags = _tags.Select(t => t).ToList();
+ return new TextDocument(_title, _createdAt, _content, clonedTags);
+ }
 
-    public override void Print()
-    {
-        base.Print();
-        Console.WriteLine($"Content: {_content}");
-        Console.WriteLine($"Tags: {string.Join(", ", _tags)}");
-    }
+ public override void Print()
+ {
+ base.Print();
+ Console.WriteLine($"Content: {_content}");
+ Console.WriteLine($"Tags: {string.Join(", ", _tags)}");
+ }
 
-    public void EditContent(string newContent)
-    {
-        // Имитируем редактирование
-        Console.WriteLine($"Edited: {_content} -> {newContent}");
-    }
+ public void EditContent(string newContent)
+ {
+ // Имитируем редактирование
+ Console.WriteLine($"Edited: {_content} -> {newContent}");
+ }
 }
 
 public class PresentationDocument : Document, IDocument<PresentationDocument>
 {
-    private readonly int _slideCount;
-    private readonly List<string> _presenters;
+ private readonly int _slideCount;
+ private readonly List<string> _presenters;
 
-    public PresentationDocument(string title, DateTimeOffset createdAt, int slideCount, List<string> presenters)
-        : base(title, createdAt)
-    {
-        _slideCount = slideCount;
-        _presenters = presenters;
-    }
+ public PresentationDocument(string title, DateTimeOffset createdAt, int slideCount, List<string> presenters)
+ : base(title, createdAt)
+ {
+ _slideCount = slideCount;
+ _presenters = presenters;
+ }
 
-    public override PresentationDocument Clone()
-    {
-        // Deep copy списка ораторов
-        var clonedPresenters = _presenters.Select(p => p).ToList();
-        return new PresentationDocument(_title, _createdAt, _slideCount, clonedPresenters);
-    }
+ public override PresentationDocument Clone()
+ {
+ // Deep copy списка ораторов
+ var clonedPresenters = _presenters.Select(p => p).ToList();
+ return new PresentationDocument(_title, _createdAt, _slideCount, clonedPresenters);
+ }
 
-    public override void Print()
-    {
-        base.Print();
-        Console.WriteLine($"Slides: {_slideCount}");
-        Console.WriteLine($"Presenters: {string.Join(", ", _presenters)}");
-    }
+ public override void Print()
+ {
+ base.Print();
+ Console.WriteLine($"Slides: {_slideCount}");
+ Console.WriteLine($"Presenters: {string.Join(", ", _presenters)}");
+ }
 
-    public void AddPresenter(string name)
-    {
-        Console.WriteLine($"Added presenter: {name}");
-    }
+ public void AddPresenter(string name)
+ {
+ Console.WriteLine($"Added presenter: {name}");
+ }
 }
 
 public class SpreadsheetDocument : Document, IDocument<SpreadsheetDocument>
 {
-    private readonly int _rows;
-    private readonly int _columns;
-    private readonly Dictionary<string, object> _data;
+ private readonly int _rows;
+ private readonly int _columns;
+ private readonly Dictionary<string, object> _data;
 
-    public SpreadsheetDocument(string title, DateTimeOffset createdAt, int rows, int columns)
-        : base(title, createdAt)
-    {
-        _rows = rows;
-        _columns = columns;
-        _data = new Dictionary<string, object>();
-    }
+ public SpreadsheetDocument(string title, DateTimeOffset createdAt, int rows, int columns)
+ : base(title, createdAt)
+ {
+ _rows = rows;
+ _columns = columns;
+ _data = new Dictionary<string, object>();
+ }
 
-    public override SpreadsheetDocument Clone()
-    {
-        var clone = new SpreadsheetDocument(_title, _createdAt, _rows, _columns);
-        
-        // Deep copy данных
-        foreach (var kvp in _data)
-        {
-            clone._data[kvp.Key] = kvp.Value;
-        }
+ public override SpreadsheetDocument Clone()
+ {
+ var clone = new SpreadsheetDocument(_title, _createdAt, _rows, _columns);
+ 
+ // Deep copy данных
+ foreach (var kvp in _data)
+ {
+ clone._data[kvp.Key] = kvp.Value;
+ }
 
-        return clone;
-    }
+ return clone;
+ }
 
-    public override void Print()
-    {
-        base.Print();
-        Console.WriteLine($"Dimensions: {_rows}x{_columns}");
-        Console.WriteLine($"Data entries: {_data.Count}");
-    }
+ public override void Print()
+ {
+ base.Print();
+ Console.WriteLine($"Dimensions: {_rows}x{_columns}");
+ Console.WriteLine($"Data entries: {_data.Count}");
+ }
 
-    public void SetCellValue(string key, object value)
-    {
-        _data[key] = value;
-        Console.WriteLine($"Set {key} = {value}");
-    }
+ public void SetCellValue(string key, object value)
+ {
+ _data[key] = value;
+ Console.WriteLine($"Set {key} = {value}");
+ }
 }
 
 // === Хранилище документов ===
 public class DocumentRepository
 {
-    private readonly List<IDocument> _documents = [];
+ private readonly List<IDocument> _documents = [];
 
-    // Работаем с необобщённым интерфейсом — можем хранить любые документы
-    public void AddDocument(IDocument doc)
-    {
-        _documents.Add(doc);
-    }
+ // Работаем с необобщённым интерфейсом — можем хранить любые документы
+ public void AddDocument(IDocument doc)
+ {
+ _documents.Add(doc);
+ }
 
-    // Клонируем документ, не зная его конкретного типа
-    public IDocument CloneDocument(int index)
-    {
-        if (index < 0 || index >= _documents.Count)
-            throw new IndexOutOfRangeException();
+ // Клонируем документ, не зная его конкретного типа
+ public IDocument CloneDocument(int index)
+ {
+ if (index < 0 || index >= _documents.Count)
+ throw new IndexOutOfRangeException();
 
-        return _documents[index].Clone();
-    }
+ return _documents[index].Clone();
+ }
 
-    public void PrintAll()
-    {
-        foreach (var doc in _documents)
-        {
-            doc.Print();
-            Console.WriteLine();
-        }
-    }
+ public void PrintAll()
+ {
+ foreach (var doc in _documents)
+ {
+ doc.Print();
+ Console.WriteLine();
+ }
+ }
 }
 
 // === Сценарий использования ===
 public class Program
 {
-    public static void Main()
-    {
-        Console.WriteLine("=== Пример 1: Клонирование разнородных документов ===\n");
+ public static void Main()
+ {
+ Console.WriteLine("=== Пример 1: Клонирование разнородных документов ===\n");
 
-        var textDoc = new TextDocument(
-            title: "Report",
-            createdAt: DateTimeOffset.Now,
-            content: "This is a report",
-            tags: new List<string> { "urgent", "finance" }
-        );
+ var textDoc = new TextDocument(
+ title: "Report",
+ createdAt: DateTimeOffset.Now,
+ content: "This is a report",
+ tags: new List<string> { "urgent", "finance" }
+ );
 
-        var presentation = new PresentationDocument(
-            title: "Q4 Review",
-            createdAt: DateTimeOffset.Now,
-            slideCount: 20,
-            presenters: new List<string> { "Alice", "Bob" }
-        );
+ var presentation = new PresentationDocument(
+ title: "Q4 Review",
+ createdAt: DateTimeOffset.Now,
+ slideCount: 20,
+ presenters: new List<string> { "Alice", "Bob" }
+ );
 
-        var spreadsheet = new SpreadsheetDocument(
-            title: "Budget",
-            createdAt: DateTimeOffset.Now,
-            rows: 100,
-            columns: 10
-        );
+ var spreadsheet = new SpreadsheetDocument(
+ title: "Budget",
+ createdAt: DateTimeOffset.Now,
+ rows: 100,
+ columns: 10
+ );
 
-        // Добавляем данные в таблицу
-        spreadsheet.SetCellValue("A1", 1000);
-        spreadsheet.SetCellValue("B1", 2000);
+ // Добавляем данные в таблицу
+ spreadsheet.SetCellValue("A1", 1000);
+ spreadsheet.SetCellValue("B1", 2000);
 
-        // Складываем в хранилище
-        var repo = new DocumentRepository();
-        repo.AddDocument(textDoc);
-        repo.AddDocument(presentation);
-        repo.AddDocument(spreadsheet);
+ // Складываем в хранилище
+ var repo = new DocumentRepository();
+ repo.AddDocument(textDoc);
+ repo.AddDocument(presentation);
+ repo.AddDocument(spreadsheet);
 
-        Console.WriteLine("--- Оригинальные документы ---");
-        repo.PrintAll();
+ Console.WriteLine("--- Оригинальные документы ---");
+ repo.PrintAll();
 
-        Console.WriteLine("\n=== Пример 2: Клонирование через необобщённый интерфейс ===\n");
+ Console.WriteLine("\n=== Пример 2: Клонирование через необобщённый интерфейс ===\n");
 
-        var clonedText = repo.CloneDocument(0) as TextDocument;
-        var clonedPresentation = repo.CloneDocument(1) as PresentationDocument;
-        var clonedSpreadsheet = repo.CloneDocument(2) as SpreadsheetDocument;
+ var clonedText = repo.CloneDocument(0) as TextDocument;
+ var clonedPresentation = repo.CloneDocument(1) as PresentationDocument;
+ var clonedSpreadsheet = repo.CloneDocument(2) as SpreadsheetDocument;
 
-        Console.WriteLine("--- Клонированные документы ---");
-        clonedText?.Print();
-        Console.WriteLine();
-        clonedPresentation?.Print();
-        Console.WriteLine();
-        clonedSpreadsheet?.Print();
+ Console.WriteLine("--- Клонированные документы ---");
+ clonedText?.Print();
+ Console.WriteLine();
+ clonedPresentation?.Print();
+ Console.WriteLine();
+ clonedSpreadsheet?.Print();
 
-        Console.WriteLine("\n=== Пример 3: Типобезопасное клонирование ===\n");
+ Console.WriteLine("\n=== Пример 3: Типобезопасное клонирование ===\n");
 
-        // Используем обобщённый интерфейс для типобезопасности
-        ProcessTextDocument(textDoc);
-        ProcessPresentation(presentation);
+ // Используем обобщённый интерфейс для типобезопасности
+ ProcessTextDocument(textDoc);
+ ProcessPresentation(presentation);
 
-        Console.WriteLine("\n=== Пример 4: Независимое редактирование копий ===\n");
+ Console.WriteLine("\n=== Пример 4: Независимое редактирование копий ===\n");
 
-        Console.WriteLine("Редактируем копию текстового документа:");
-        clonedText?.EditContent("Updated content");
+ Console.WriteLine("Редактируем копию текстового документа:");
+ clonedText?.EditContent("Updated content");
 
-        Console.WriteLine("\nДобавляем оратора к копии презентации:");
-        clonedPresentation?.AddPresenter("Charlie");
+ Console.WriteLine("\nДобавляем оратора к копии презентации:");
+ clonedPresentation?.AddPresenter("Charlie");
 
-        Console.WriteLine("\nДобавляем значение в копию таблицы:");
-        clonedSpreadsheet?.SetCellValue("C1", 3000);
+ Console.WriteLine("\nДобавляем значение в копию таблицы:");
+ clonedSpreadsheet?.SetCellValue("C1", 3000);
 
-        Console.WriteLine("\n--- Оригинальные документы остались без изменений ---");
-        repo.PrintAll();
-    }
+ Console.WriteLine("\n--- Оригинальные документы остались без изменений ---");
+ repo.PrintAll();
+ }
 
-    // Типобезопасный метод работает с обобщённым интерфейсом
-    private static T CloneAndModify<T>(T document) where T : IDocument<T>
-    {
-        var clone = document.Clone();
-        Console.WriteLine($"Cloned {typeof(T).Name}");
-        return clone;
-    }
+ // Типобезопасный метод работает с обобщённым интерфейсом
+ private static T CloneAndModify<T>(T document) where T : IDocument<T>
+ {
+ var clone = document.Clone();
+ Console.WriteLine($"Cloned {typeof(T).Name}");
+ return clone;
+ }
 
-    private static void ProcessTextDocument(TextDocument doc)
-    {
-        var clone = CloneAndModify(doc);
-        Console.WriteLine($"Cloned text doc: {typeof(TextDocument).Name}");
-    }
+ private static void ProcessTextDocument(TextDocument doc)
+ {
+ var clone = CloneAndModify(doc);
+ Console.WriteLine($"Cloned text doc: {typeof(TextDocument).Name}");
+ }
 
-    private static void ProcessPresentation(PresentationDocument doc)
-    {
-        var clone = CloneAndModify(doc);
-        Console.WriteLine($"Cloned presentation: {typeof(PresentationDocument).Name}");
-    }
+ private static void ProcessPresentation(PresentationDocument doc)
+ {
+ var clone = CloneAndModify(doc);
+ Console.WriteLine($"Cloned presentation: {typeof(PresentationDocument).Name}");
+ }
 }
 /* Вывод
 === Пример 1: Клонирование разнородных документов ===
@@ -3899,62 +3899,62 @@ Data entries: 2
 ```csharp
 public interface IPrototype<T> where T : IPrototype<T>
 {
-    T Clone();
-    void Draw();
+ T Clone();
+ void Draw();
 }
 
 public class Circle : IPrototype<Circle>
 {
-    public double Radius { get; set; }
+ public double Radius { get; set; }
 
-    public Circle(double radius)
-    {
-        Radius = radius;
-    }
+ public Circle(double radius)
+ {
+ Radius = radius;
+ }
 
-    // Метод Clone() возвращает именно Circle!
-    public Circle Clone()
-    {
-        return new Circle(Radius);
-    }
+ // Метод Clone() возвращает именно Circle!
+ public Circle Clone()
+ {
+ return new Circle(Radius);
+ }
 
-    public void Draw()
-    {
-        Console.WriteLine($"Drawing circle with radius {Radius}");
-    }
+ public void Draw()
+ {
+ Console.WriteLine($"Drawing circle with radius {Radius}");
+ }
 
-    public void Scale(double factor)
-    {
-        Radius *= factor;
-    }
+ public void Scale(double factor)
+ {
+ Radius *= factor;
+ }
 }
 
 public class Rectangle : IPrototype<Rectangle>
 {
-    public double Width { get; set; }
-    public double Height { get; set; }
+ public double Width { get; set; }
+ public double Height { get; set; }
 
-    public Rectangle(double width, double height)
-    {
-        Width = width;
-        Height = height;
-    }
+ public Rectangle(double width, double height)
+ {
+ Width = width;
+ Height = height;
+ }
 
-    public Rectangle Clone()
-    {
-        return new Rectangle(Width, Height);
-    }
+ public Rectangle Clone()
+ {
+ return new Rectangle(Width, Height);
+ }
 
-    public void Draw()
-    {
-        Console.WriteLine($"Drawing rectangle {Width}x{Height}");
-    }
+ public void Draw()
+ {
+ Console.WriteLine($"Drawing rectangle {Width}x{Height}");
+ }
 
-    public void Resize(double w, double h)
-    {
-        Width = w;
-        Height = h;
-    }
+ public void Resize(double w, double h)
+ {
+ Width = w;
+ Height = h;
+ }
 }
 ```
 
@@ -3963,31 +3963,31 @@ public class Rectangle : IPrototype<Rectangle>
 ```csharp 
 public class Scenario
 {
-    // Этот метод обобщённый и сохраняет тип!
-    public static T CloneAndDraw<T>(T prototype) where T : IPrototype<T>
-    {
-        var clone = prototype.Clone();  // Тип: T (правильный!)
-        clone.Draw();
-        return clone;  // Возвращаем T, а не IPrototype
-    }
+ // Этот метод обобщённый и сохраняет тип!
+ public static T CloneAndDraw<T>(T prototype) where T : IPrototype<T>
+ {
+ var clone = prototype.Clone(); // Тип: T (правильный!)
+ clone.Draw();
+ return clone; // Возвращаем T, а не IPrototype
+ }
 
-    public static void Main()
-    {
-        var circle = new Circle(5.0);
-        
-        // Вызываем метод — тип сохранён!
-        Circle clonedCircle = CloneAndDraw(circle);
-        
-        // Можем вызвать Scale() без cast
-        clonedCircle.Scale(2.0);
-        
-        // Аналогично для прямоугольника:
-        var rect = new Rectangle(10, 20);
-        Rectangle clonedRect = CloneAndDraw(rect);
-        
-        // Можем вызвать Resize() без cast
-        clonedRect.Resize(30, 40);
-    }
+ public static void Main()
+ {
+ var circle = new Circle(5.0);
+ 
+ // Вызываем метод — тип сохранён!
+ Circle clonedCircle = CloneAndDraw(circle);
+ 
+ // Можем вызвать Scale() без cast
+ clonedCircle.Scale(2.0);
+ 
+ // Аналогично для прямоугольника:
+ var rect = new Rectangle(10, 20);
+ Rectangle clonedRect = CloneAndDraw(rect);
+ 
+ // Можем вызвать Resize() без cast
+ clonedRect.Resize(30, 40);
+ }
 }
 ```
 
@@ -4004,11 +4004,11 @@ public class Scenario
 ```csharp 
 // Так компилятор видит ваш вызов:
 public static Circle CloneAndDraw(Circle prototype)
-    where Circle : IPrototype<Circle>
+ where Circle : IPrototype<Circle>
 {
-    var clone = prototype.Clone();  // Тип: Circle
-    clone.Draw();
-    return clone;  // Тип: Circle
+ var clone = prototype.Clone(); // Тип: Circle
+ clone.Draw();
+ return clone; // Тип: Circle
 }
 ```
 
@@ -4020,75 +4020,75 @@ public static Circle CloneAndDraw(Circle prototype)
 // Базовый класс для всех фигур
 public abstract class Shape<T> : IPrototype<T> where T : Shape<T>
 {
-    public string Color { get; set; }
-    public double X { get; set; }
-    public double Y { get; set; }
+ public string Color { get; set; }
+ public double X { get; set; }
+ public double Y { get; set; }
 
-    protected Shape(string color, double x, double y)
-    {
-        Color = color;
-        X = x;
-        Y = y;
-    }
+ protected Shape(string color, double x, double y)
+ {
+ Color = color;
+ X = x;
+ Y = y;
+ }
 
-    public abstract T Clone();
+ public abstract T Clone();
 
-    public void Draw()
-    {
-        Console.WriteLine($"Drawing {GetType().Name} at ({X}, {Y}) with color {Color}");
-    }
+ public void Draw()
+ {
+ Console.WriteLine($"Drawing {GetType().Name} at ({X}, {Y}) with color {Color}");
+ }
 
-    public void MoveTo(double newX, double newY)
-    {
-        X = newX;
-        Y = newY;
-    }
+ public void MoveTo(double newX, double newY)
+ {
+ X = newX;
+ Y = newY;
+ }
 }
 
 // Конкретные фигуры
 public class Circle : Shape<Circle>
 {
-    public double Radius { get; set; }
+ public double Radius { get; set; }
 
-    public Circle(string color, double x, double y, double radius)
-        : base(color, x, y)
-    {
-        Radius = radius;
-    }
+ public Circle(string color, double x, double y, double radius)
+ : base(color, x, y)
+ {
+ Radius = radius;
+ }
 
-    public override Circle Clone()
-    {
-        return new Circle(Color, X, Y, Radius);
-    }
+ public override Circle Clone()
+ {
+ return new Circle(Color, X, Y, Radius);
+ }
 
-    public void Scale(double factor)
-    {
-        Radius *= factor;
-    }
+ public void Scale(double factor)
+ {
+ Radius *= factor;
+ }
 }
 
 public class Rectangle : Shape<Rectangle>
 {
-    public double Width { get; set; }
-    public double Height { get; set; }
+ public double Width { get; set; }
+ public double Height { get; set; }
 
-    public Rectangle(string color, double x, double y, double width, double height)
-        : base(color, x, y)
-    {
-        Width = width;
-        Height = height;
-    }
+ public Rectangle(string color, double x, double y, double width, double height)
+ : base(color, x, y)
+ {
+ Width = width;
+ Height = height;
+ }
 
-    public override Rectangle Clone()
-    {
-        return new Rectangle(Color, X, Y, Width, Height);
-    }
+ public override Rectangle Clone()
+ {
+ return new Rectangle(Color, X, Y, Width, Height);
+ }
 
-    public void Resize(double w, double h)
-    {
-        Width = w;
-        Height = h;
-    }
+ public void Resize(double w, double h)
+ {
+ Width = w;
+ Height = h;
+ }
 }
 ```
 
@@ -4097,24 +4097,24 @@ public class Rectangle : Shape<Rectangle>
 ```csharp
 public static void Main()
 {
-    var circle = new Circle("Red", 10, 10, 5);
-    var rect = new Rectangle("Blue", 20, 20, 10, 15);
+ var circle = new Circle("Red", 10, 10, 5);
+ var rect = new Rectangle("Blue", 20, 20, 10, 15);
 
-    // Типобезопасное клонирование
-    Circle clonedCircle = CloneAndMove(circle, 50, 50);
-    Rectangle clonedRect = CloneAndMove(rect, 100, 100);
+ // Типобезопасное клонирование
+ Circle clonedCircle = CloneAndMove(circle, 50, 50);
+ Rectangle clonedRect = CloneAndMove(rect, 100, 100);
 
-    // Можем вызывать специфичные методы без cast!
-    clonedCircle.Scale(2.0);
-    clonedRect.Resize(20, 30);
+ // Можем вызывать специфичные методы без cast!
+ clonedCircle.Scale(2.0);
+ clonedRect.Resize(20, 30);
 }
 
 public static T CloneAndMove<T>(T shape, double x, double y) 
-    where T : Shape<T>
+ where T : Shape<T>
 {
-    var clone = shape.Clone();
-    clone.MoveTo(x, y);
-    return clone;
+ var clone = shape.Clone();
+ clone.MoveTo(x, y);
+ return clone;
 }
 ```
 
@@ -4125,47 +4125,47 @@ public static T CloneAndMove<T>(T shape, double x, double y)
 // Базовая фигура
 public class Circle : Shape<Circle>
 {
-    public double Radius { get; set; }
+ public double Radius { get; set; }
 
-    public Circle(string color, double x, double y, double radius)
-        : base(color, x, y)
-    {
-        Radius = radius;
-    }
+ public Circle(string color, double x, double y, double radius)
+ : base(color, x, y)
+ {
+ Radius = radius;
+ }
 
-    public override Circle Clone()
-    {
-        return new Circle(Color, X, Y, Radius);
-    }
+ public override Circle Clone()
+ {
+ return new Circle(Color, X, Y, Radius);
+ }
 
-    public virtual void Scale(double factor)
-    {
-        Radius *= factor;
-    }
+ public virtual void Scale(double factor)
+ {
+ Radius *= factor;
+ }
 }
 
 // Наследуемся от Circle
 public class FilledCircle : Circle, IPrototype<FilledCircle>
 {
-    public string FillPattern { get; set; }
+ public string FillPattern { get; set; }
 
-    public FilledCircle(string color, double x, double y, double radius, string fillPattern)
-        : base(color, x, y, radius)
-    {
-        FillPattern = fillPattern;
-    }
+ public FilledCircle(string color, double x, double y, double radius, string fillPattern)
+ : base(color, x, y, radius)
+ {
+ FillPattern = fillPattern;
+ }
 
-    // Переопределяем Clone() для возврата FilledCircle
-    public new FilledCircle Clone()
-    {
-        return new FilledCircle(Color, X, Y, Radius, FillPattern);
-    }
+ // Переопределяем Clone() для возврата FilledCircle
+ public new FilledCircle Clone()
+ {
+ return new FilledCircle(Color, X, Y, Radius, FillPattern);
+ }
 
-    public override void Scale(double factor)
-    {
-        base.Scale(factor);
-        Console.WriteLine($"Filled with pattern: {FillPattern}");
-    }
+ public override void Scale(double factor)
+ {
+ base.Scale(factor);
+ Console.WriteLine($"Filled with pattern: {FillPattern}");
+ }
 }
 ```
 
@@ -4174,13 +4174,13 @@ public class FilledCircle : Circle, IPrototype<FilledCircle>
 ```csharp
 public static void Main()
 {
-    var filledCircle = new FilledCircle("Red", 10, 10, 5, "Stripes");
-    
-    // Типобезопасное клонирование
-    FilledCircle cloned = CloneAndMove(filledCircle, 50, 50);
-    
-    cloned.Scale(2.0);
-    Console.WriteLine($"Pattern: {cloned.FillPattern}");
+ var filledCircle = new FilledCircle("Red", 10, 10, 5, "Stripes");
+ 
+ // Типобезопасное клонирование
+ FilledCircle cloned = CloneAndMove(filledCircle, 50, 50);
+ 
+ cloned.Scale(2.0);
+ Console.WriteLine($"Pattern: {cloned.FillPattern}");
 }
 ```
 
@@ -4189,14 +4189,14 @@ public static void Main()
 ```csharp
 public interface IPrototype<T> where T : IPrototype<T>
 {
-    T Clone();
+ T Clone();
 }
 
 public class Circle : IPrototype<Circle> { ... }
 public class Rectangle : IPrototype<Rectangle> { ... }
 
 // Как создать коллекцию?
-var shapes = new List<???>();  // Что тут написать?
+var shapes = new List<???>(); // Что тут написать?
 
 // List<IPrototype<???>> не работает, потому что у каждого свой тип!
 ```
@@ -4210,79 +4210,79 @@ Circle реализует IPrototype<Circle>, а Rectangle реализует IP
 // Необобщённый интерфейс (для коллекций)
 public interface IPrototype
 {
-    IPrototype Clone();  // Возвращает необобщённый тип
-    void Draw();
+ IPrototype Clone(); // Возвращает необобщённый тип
+ void Draw();
 }
 
 // Обобщённый интерфейс (для типобезопасности)
 public interface IPrototype<T> : IPrototype where T : IPrototype<T>
 {
-    new T Clone();  // Переопределяем с обобщённым типом
+ new T Clone(); // Переопределяем с обобщённым типом
 }
 
 public class Circle : IPrototype<Circle>
 {
-    public double Radius { get; set; }
+ public double Radius { get; set; }
 
-    public Circle(double radius)
-    {
-        Radius = radius;
-    }
+ public Circle(double radius)
+ {
+ Radius = radius;
+ }
 
-    // Явная реализация необобщённого интерфейса
-    IPrototype IPrototype.Clone()
-    {
-        return Clone();
-    }
+ // Явная реализация необобщённого интерфейса
+ IPrototype IPrototype.Clone()
+ {
+ return Clone();
+ }
 
-    // Обобщённая версия
-    public Circle Clone()
-    {
-        return new Circle(Radius);
-    }
+ // Обобщённая версия
+ public Circle Clone()
+ {
+ return new Circle(Radius);
+ }
 
-    public void Draw()
-    {
-        Console.WriteLine($"Circle with radius {Radius}");
-    }
+ public void Draw()
+ {
+ Console.WriteLine($"Circle with radius {Radius}");
+ }
 
-    public void Scale(double factor)
-    {
-        Radius *= factor;
-    }
+ public void Scale(double factor)
+ {
+ Radius *= factor;
+ }
 }
 
 public class Rectangle : IPrototype<Rectangle>
 {
-    public double Width { get; set; }
-    public double Height { get; set; }
+ public double Width { get; set; }
+ public double Height { get; set; }
 
-    public Rectangle(double width, double height)
-    {
-        Width = width;
-        Height = height;
-    }
+ public Rectangle(double width, double height)
+ {
+ Width = width;
+ Height = height;
+ }
 
-    IPrototype IPrototype.Clone()
-    {
-        return Clone();
-    }
+ IPrototype IPrototype.Clone()
+ {
+ return Clone();
+ }
 
-    public Rectangle Clone()
-    {
-        return new Rectangle(Width, Height);
-    }
+ public Rectangle Clone()
+ {
+ return new Rectangle(Width, Height);
+ }
 
-    public void Draw()
-    {
-        Console.WriteLine($"Rectangle {Width}x{Height}");
-    }
+ public void Draw()
+ {
+ Console.WriteLine($"Rectangle {Width}x{Height}");
+ }
 
-    public void Resize(double w, double h)
-    {
-        Width = w;
-        Height = h;
-    }
+ public void Resize(double w, double h)
+ {
+ Width = w;
+ Height = h;
+ }
 }
 ```
 
@@ -4291,28 +4291,28 @@ public class Rectangle : IPrototype<Rectangle>
 ```csharp
 public class ShapeManager
 {
-    private readonly List<IPrototype> _shapes = [];
+ private readonly List<IPrototype> _shapes = [];
 
-    public void AddShape(IPrototype shape)
-    {
-        _shapes.Add(shape);
-    }
+ public void AddShape(IPrototype shape)
+ {
+ _shapes.Add(shape);
+ }
 
-    public void CloneAll()
-    {
-        var clones = _shapes.Select(s => s.Clone()).ToList();
-        
-        foreach (var clone in clones)
-        {
-            clone.Draw();
-        }
-    }
+ public void CloneAll()
+ {
+ var clones = _shapes.Select(s => s.Clone()).ToList();
+ 
+ foreach (var clone in clones)
+ {
+ clone.Draw();
+ }
+ }
 
-    // Но если нужен конкретный тип, приходится делать cast:
-    public Circle? GetCircle(int index)
-    {
-        return _shapes[index] as Circle;
-    }
+ // Но если нужен конкретный тип, приходится делать cast:
+ public Circle? GetCircle(int index)
+ {
+ return _shapes[index] as Circle;
+ }
 }
 ```
 
@@ -4321,22 +4321,22 @@ public class ShapeManager
 ```csharp
 public static void Main()
 {
-    var manager = new ShapeManager();
-    
-    manager.AddShape(new Circle(5.0));
-    manager.AddShape(new Rectangle(10, 20));
-    manager.AddShape(new Circle(7.5));
+ var manager = new ShapeManager();
+ 
+ manager.AddShape(new Circle(5.0));
+ manager.AddShape(new Rectangle(10, 20));
+ manager.AddShape(new Circle(7.5));
 
-    Console.WriteLine("=== Клонирование всех фигур ===");
-    manager.CloneAll();
+ Console.WriteLine("=== Клонирование всех фигур ===");
+ manager.CloneAll();
 
-    Console.WriteLine("\n=== Получение конкретного типа ===");
-    var circle = manager.GetCircle(0);
-    if (circle != null)
-    {
-        circle.Scale(2.0);
-        circle.Draw();
-    }
+ Console.WriteLine("\n=== Получение конкретного типа ===");
+ var circle = manager.GetCircle(0);
+ if (circle != null)
+ {
+ circle.Scale(2.0);
+ circle.Draw();
+ }
 }
 ```
 
@@ -4346,56 +4346,56 @@ public static void Main()
 ```csharp
 public interface IShapeVisitor
 {
-    void Visit(Circle circle);
-    void Visit(Rectangle rectangle);
+ void Visit(Circle circle);
+ void Visit(Rectangle rectangle);
 }
 
 public interface IPrototype
 {
-    IPrototype Clone();
-    void Accept(IShapeVisitor visitor);
+ IPrototype Clone();
+ void Accept(IShapeVisitor visitor);
 }
 
 public class Circle : IPrototype<Circle>
 {
-    public double Radius { get; set; }
+ public double Radius { get; set; }
 
-    public Circle(double radius)
-    {
-        Radius = radius;
-    }
+ public Circle(double radius)
+ {
+ Radius = radius;
+ }
 
-    IPrototype IPrototype.Clone() => Clone();
-    
-    public Circle Clone() => new Circle(Radius);
+ IPrototype IPrototype.Clone() => Clone();
+ 
+ public Circle Clone() => new Circle(Radius);
 
-    public void Accept(IShapeVisitor visitor)
-    {
-        visitor.Visit(this);  // Передаём конкретный тип!
-    }
+ public void Accept(IShapeVisitor visitor)
+ {
+ visitor.Visit(this); // Передаём конкретный тип!
+ }
 }
 
 public class ScaleVisitor : IShapeVisitor
 {
-    private readonly double _factor;
+ private readonly double _factor;
 
-    public ScaleVisitor(double factor)
-    {
-        _factor = factor;
-    }
+ public ScaleVisitor(double factor)
+ {
+ _factor = factor;
+ }
 
-    public void Visit(Circle circle)
-    {
-        circle.Radius *= _factor;
-        Console.WriteLine($"Scaled circle to radius {circle.Radius}");
-    }
+ public void Visit(Circle circle)
+ {
+ circle.Radius *= _factor;
+ Console.WriteLine($"Scaled circle to radius {circle.Radius}");
+ }
 
-    public void Visit(Rectangle rectangle)
-    {
-        rectangle.Width *= _factor;
-        rectangle.Height *= _factor;
-        Console.WriteLine($"Scaled rectangle to {rectangle.Width}x{rectangle.Height}");
-    }
+ public void Visit(Rectangle rectangle)
+ {
+ rectangle.Width *= _factor;
+ rectangle.Height *= _factor;
+ Console.WriteLine($"Scaled rectangle to {rectangle.Width}x{rectangle.Height}");
+ }
 }
 ```
 
@@ -4404,19 +4404,19 @@ public class ScaleVisitor : IShapeVisitor
 ```csharp
 public static void Main()
 {
-    List<IPrototype> shapes = new()
-    {
-        new Circle(5.0),
-        new Rectangle(10, 20),
-        new Circle(7.5)
-    };
+ List<IPrototype> shapes = new()
+ {
+ new Circle(5.0),
+ new Rectangle(10, 20),
+ new Circle(7.5)
+ };
 
-    var scaleVisitor = new ScaleVisitor(2.0);
+ var scaleVisitor = new ScaleVisitor(2.0);
 
-    foreach (var shape in shapes)
-    {
-        shape.Accept(scaleVisitor);
-    }
+ foreach (var shape in shapes)
+ {
+ shape.Accept(scaleVisitor);
+ }
 }
 ```
 
@@ -4426,27 +4426,27 @@ public static void Main()
 // Необобщённый интерфейс
 public interface IPrototype
 {
-    void DoSomeStuff();
-    // Нет метода Clone()!
+ void DoSomeStuff();
+ // Нет метода Clone()!
 }
 
 // Обобщённый интерфейс
 public interface IPrototype<T> : IPrototype where T : IPrototype<T>
 {
-    T Clone();
+ T Clone();
 }
 
 public class Prototype : IPrototype<Prototype>
 {
-    public Prototype Clone()
-    {
-        return new Prototype();
-    }
+ public Prototype Clone()
+ {
+ return new Prototype();
+ }
 
-    public void DoSomeStuff()
-    {
-        Console.WriteLine("Doing stuff");
-    }
+ public void DoSomeStuff()
+ {
+ Console.WriteLine("Doing stuff");
+ }
 }
 
 // Контейнер хранит необобщённый тип
@@ -4454,16 +4454,16 @@ public record Container(IPrototype Prototype);
 
 static void NonGeneric()
 {
-    var container = new Container(new Prototype());
-    
-    // ПРОБЛЕМА: как клонировать?
-    // container.Prototype.Clone();  // ОШИБКА! Нет Clone() в IPrototype
-    
-    // Приходится делать cast:
-    if (container.Prototype is IPrototype<Prototype> proto)
-    {
-        var clone = proto.Clone();  // Работает
-    }
+ var container = new Container(new Prototype());
+ 
+ // ПРОБЛЕМА: как клонировать?
+ // container.Prototype.Clone(); // ОШИБКА! Нет Clone() в IPrototype
+ 
+ // Приходится делать cast:
+ if (container.Prototype is IPrototype<Prototype> proto)
+ {
+ var clone = proto.Clone(); // Работает
+ }
 }
 ```
 
@@ -4475,51 +4475,51 @@ static void NonGeneric()
 // Необобщённый интерфейс с Clone()
 public interface IPrototype
 {
-    IPrototype Clone();  // Возвращает необобщённый тип
-    void DoSomeStuff();
+ IPrototype Clone(); // Возвращает необобщённый тип
+ void DoSomeStuff();
 }
 
 // Обобщённый интерфейс
 public interface IPrototype<T> : IPrototype where T : IPrototype<T>
 {
-    new T Clone();  // Переопределяем с обобщённым типом
+ new T Clone(); // Переопределяем с обобщённым типом
 }
 
 public class Prototype : IPrototype<Prototype>
 {
-    // Явная реализация необобщённого
-    IPrototype IPrototype.Clone()
-    {
-        return Clone();
-    }
+ // Явная реализация необобщённого
+ IPrototype IPrototype.Clone()
+ {
+ return Clone();
+ }
 
-    // Обобщённая реализация
-    public Prototype Clone()
-    {
-        return new Prototype();
-    }
+ // Обобщённая реализация
+ public Prototype Clone()
+ {
+ return new Prototype();
+ }
 
-    public void DoSomeStuff()
-    {
-        Console.WriteLine("Doing stuff");
-    }
+ public void DoSomeStuff()
+ {
+ Console.WriteLine("Doing stuff");
+ }
 }
 
 public record Container(IPrototype Prototype);
 
 static void NonGeneric()
 {
-    var container = new Container(new Prototype());
-    
-    // Теперь работает
-    IPrototype clone = container.Prototype.Clone();
-    clone.DoSomeStuff();
-    
-    // Если нужен конкретный тип:
-    if (clone is Prototype protoClone)
-    {
-        // Работаем с конкретным типом
-    }
+ var container = new Container(new Prototype());
+ 
+ // Теперь работает
+ IPrototype clone = container.Prototype.Clone();
+ clone.DoSomeStuff();
+ 
+ // Если нужен конкретный тип:
+ if (clone is Prototype protoClone)
+ {
+ // Работаем с конкретным типом
+ }
 }
 ```
 
@@ -4535,353 +4535,353 @@ using System.Linq;
 // Необобщённый (для коллекций)
 public interface IDocument
 {
-    IDocument Clone();
-    void Print();
-    string GetTitle();
+ IDocument Clone();
+ void Print();
+ string GetTitle();
 }
 
 // Обобщённый (для типобезопасности)
 public interface IDocument<T> : IDocument where T : IDocument<T>
 {
-    new T Clone();
+ new T Clone();
 }
 
 // === Базовый класс ===
 
 public abstract class Document<T> : IDocument<T> where T : Document<T>
 {
-    protected string _title;
-    protected DateTimeOffset _createdAt;
-    protected int _version;
+ protected string _title;
+ protected DateTimeOffset _createdAt;
+ protected int _version;
 
-    protected Document(string title, DateTimeOffset createdAt, int version)
-    {
-        _title = title;
-        _createdAt = createdAt;
-        _version = version;
-    }
+ protected Document(string title, DateTimeOffset createdAt, int version)
+ {
+ _title = title;
+ _createdAt = createdAt;
+ _version = version;
+ }
 
-    // Необобщённый Clone()
-    IDocument IDocument.Clone() => Clone();
+ // Необобщённый Clone()
+ IDocument IDocument.Clone() => Clone();
 
-    // Обобщённый Clone()
-    public abstract T Clone();
+ // Обобщённый Clone()
+ public abstract T Clone();
 
-    public virtual void Print()
-    {
-        Console.WriteLine($"[{GetType().Name}] {_title}");
-        Console.WriteLine($"Created: {_createdAt:dd.MM.yyyy HH:mm:ss}");
-        Console.WriteLine($"Version: {_version}");
-    }
+ public virtual void Print()
+ {
+ Console.WriteLine($"[{GetType().Name}] {_title}");
+ Console.WriteLine($"Created: {_createdAt:dd.MM.yyyy HH:mm:ss}");
+ Console.WriteLine($"Version: {_version}");
+ }
 
-    public string GetTitle() => _title;
+ public string GetTitle() => _title;
 
-    public void IncrementVersion()
-    {
-        _version++;
-        Console.WriteLine($"Version incremented to {_version}");
-    }
+ public void IncrementVersion()
+ {
+ _version++;
+ Console.WriteLine($"Version incremented to {_version}");
+ }
 }
 
 // === Конкретные типы ===
 
 public class TextDocument : Document<TextDocument>
 {
-    private string _content;
-    private List<string> _tags;
+ private string _content;
+ private List<string> _tags;
 
-    public TextDocument(string title, DateTimeOffset createdAt, int version, 
-                       string content, List<string> tags)
-        : base(title, createdAt, version)
-    {
-        _content = content;
-        _tags = tags;
-    }
+ public TextDocument(string title, DateTimeOffset createdAt, int version, 
+ string content, List<string> tags)
+ : base(title, createdAt, version)
+ {
+ _content = content;
+ _tags = tags;
+ }
 
-    public override TextDocument Clone()
-    {
-        // Deep copy
-        var clonedTags = _tags.Select(t => t).ToList();
-        return new TextDocument(_title, _createdAt, _version, _content, clonedTags);
-    }
+ public override TextDocument Clone()
+ {
+ // Deep copy
+ var clonedTags = _tags.Select(t => t).ToList();
+ return new TextDocument(_title, _createdAt, _version, _content, clonedTags);
+ }
 
-    public override void Print()
-    {
-        base.Print();
-        Console.WriteLine($"Content: {_content}");
-        Console.WriteLine($"Tags: {string.Join(", ", _tags)}");
-    }
+ public override void Print()
+ {
+ base.Print();
+ Console.WriteLine($"Content: {_content}");
+ Console.WriteLine($"Tags: {string.Join(", ", _tags)}");
+ }
 
-    public void EditContent(string newContent)
-    {
-        _content = newContent;
-        IncrementVersion();
-        Console.WriteLine($"Content updated to: {_content}");
-    }
+ public void EditContent(string newContent)
+ {
+ _content = newContent;
+ IncrementVersion();
+ Console.WriteLine($"Content updated to: {_content}");
+ }
 
-    public void AddTag(string tag)
-    {
-        _tags.Add(tag);
-        Console.WriteLine($"Tag '{tag}' added");
-    }
+ public void AddTag(string tag)
+ {
+ _tags.Add(tag);
+ Console.WriteLine($"Tag '{tag}' added");
+ }
 }
 
 public class SpreadsheetDocument : Document<SpreadsheetDocument>
 {
-    private int _rows;
-    private int _columns;
-    private Dictionary<string, double> _cells;
+ private int _rows;
+ private int _columns;
+ private Dictionary<string, double> _cells;
 
-    public SpreadsheetDocument(string title, DateTimeOffset createdAt, int version,
-                              int rows, int columns)
-        : base(title, createdAt, version)
-    {
-        _rows = rows;
-        _columns = columns;
-        _cells = new Dictionary<string, double>();
-    }
+ public SpreadsheetDocument(string title, DateTimeOffset createdAt, int version,
+ int rows, int columns)
+ : base(title, createdAt, version)
+ {
+ _rows = rows;
+ _columns = columns;
+ _cells = new Dictionary<string, double>();
+ }
 
-    public override SpreadsheetDocument Clone()
-    {
-        var clone = new SpreadsheetDocument(_title, _createdAt, _version, _rows, _columns);
-        
-        // Deep copy cells
-        foreach (var kvp in _cells)
-        {
-            clone._cells[kvp.Key] = kvp.Value;
-        }
+ public override SpreadsheetDocument Clone()
+ {
+ var clone = new SpreadsheetDocument(_title, _createdAt, _version, _rows, _columns);
+ 
+ // Deep copy cells
+ foreach (var kvp in _cells)
+ {
+ clone._cells[kvp.Key] = kvp.Value;
+ }
 
-        return clone;
-    }
+ return clone;
+ }
 
-    public override void Print()
-    {
-        base.Print();
-        Console.WriteLine($"Dimensions: {_rows}x{_columns}");
-        Console.WriteLine($"Filled cells: {_cells.Count}");
-    }
+ public override void Print()
+ {
+ base.Print();
+ Console.WriteLine($"Dimensions: {_rows}x{_columns}");
+ Console.WriteLine($"Filled cells: {_cells.Count}");
+ }
 
-    public void SetCell(string address, double value)
-    {
-        _cells[address] = value;
-        IncrementVersion();
-        Console.WriteLine($"Cell {address} = {value}");
-    }
+ public void SetCell(string address, double value)
+ {
+ _cells[address] = value;
+ IncrementVersion();
+ Console.WriteLine($"Cell {address} = {value}");
+ }
 
-    public double GetCell(string address)
-    {
-        return _cells.TryGetValue(address, out var value) ? value : 0;
-    }
+ public double GetCell(string address)
+ {
+ return _cells.TryGetValue(address, out var value) ? value : 0;
+ }
 }
 
 // === Менеджер документов (работает с необобщённым интерфейсом) ===
 
 public class DocumentManager
 {
-    private readonly List<IDocument> _documents = [];
+ private readonly List<IDocument> _documents = [];
 
-    public void AddDocument(IDocument doc)
-    {
-        _documents.Add(doc);
-        Console.WriteLine($"Added document: {doc.GetTitle()}");
-    }
+ public void AddDocument(IDocument doc)
+ {
+ _documents.Add(doc);
+ Console.WriteLine($"Added document: {doc.GetTitle()}");
+ }
 
-    public void CloneAll()
-    {
-        Console.WriteLine("\n=== Cloning all documents ===");
-        var clones = _documents.Select(d => d.Clone()).ToList();
-        
-        foreach (var clone in clones)
-        {
-            Console.WriteLine($"Cloned: {clone.GetTitle()}");
-        }
-    }
+ public void CloneAll()
+ {
+ Console.WriteLine("\n=== Cloning all documents ===");
+ var clones = _documents.Select(d => d.Clone()).ToList();
+ 
+ foreach (var clone in clones)
+ {
+ Console.WriteLine($"Cloned: {clone.GetTitle()}");
+ }
+ }
 
-    public void PrintAll()
-    {
-        Console.WriteLine("\n=== All documents ===");
-        foreach (var doc in _documents)
-        {
-            doc.Print();
-            Console.WriteLine();
-        }
-    }
+ public void PrintAll()
+ {
+ Console.WriteLine("\n=== All documents ===");
+ foreach (var doc in _documents)
+ {
+ doc.Print();
+ Console.WriteLine();
+ }
+ }
 
-    public IDocument? GetDocument(string title)
-    {
-        return _documents.FirstOrDefault(d => d.GetTitle() == title);
-    }
+ public IDocument? GetDocument(string title)
+ {
+ return _documents.FirstOrDefault(d => d.GetTitle() == title);
+ }
 }
 
 // === Типобезопасные операции (работают с обобщённым интерфейсом) ===
 
 public class DocumentProcessor
 {
-    // Типобезопасное клонирование с модификацией
-    public static T CloneAndModify<T>(T document, Action<T> modifier) 
-        where T : IDocument<T>
-    {
-        var clone = document.Clone();
-        modifier(clone);
-        return clone;
-    }
+ // Типобезопасное клонирование с модификацией
+ public static T CloneAndModify<T>(T document, Action<T> modifier) 
+ where T : IDocument<T>
+ {
+ var clone = document.Clone();
+ modifier(clone);
+ return clone;
+ }
 
-    // Создание версии документа
-    public static T CreateVersion<T>(T document) 
-        where T : IDocument<T>
-    {
-        var version = document.Clone();
-        Console.WriteLine($"Created new version of: {version.GetTitle()}");
-        return version;
-    }
+ // Создание версии документа
+ public static T CreateVersion<T>(T document) 
+ where T : IDocument<T>
+ {
+ var version = document.Clone();
+ Console.WriteLine($"Created new version of: {version.GetTitle()}");
+ return version;
+ }
 }
 
 // === Visitor для типобезопасной работы с коллекциями ===
 
 public interface IDocumentVisitor
 {
-    void Visit(TextDocument doc);
-    void Visit(SpreadsheetDocument doc);
+ void Visit(TextDocument doc);
+ void Visit(SpreadsheetDocument doc);
 }
 
 public class DocumentStatisticsVisitor : IDocumentVisitor
 {
-    public int TextDocumentCount { get; private set; }
-    public int SpreadsheetCount { get; private set; }
+ public int TextDocumentCount { get; private set; }
+ public int SpreadsheetCount { get; private set; }
 
-    public void Visit(TextDocument doc)
-    {
-        TextDocumentCount++;
-        Console.WriteLine($"Visited text document: {doc.GetTitle()}");
-    }
+ public void Visit(TextDocument doc)
+ {
+ TextDocumentCount++;
+ Console.WriteLine($"Visited text document: {doc.GetTitle()}");
+ }
 
-    public void Visit(SpreadsheetDocument doc)
-    {
-        SpreadsheetCount++;
-        Console.WriteLine($"Visited spreadsheet: {doc.GetTitle()}");
-    }
+ public void Visit(SpreadsheetDocument doc)
+ {
+ SpreadsheetCount++;
+ Console.WriteLine($"Visited spreadsheet: {doc.GetTitle()}");
+ }
 }
 
 // Добавляем Accept в интерфейс
 public interface IDocumentVisitable
 {
-    void Accept(IDocumentVisitor visitor);
+ void Accept(IDocumentVisitor visitor);
 }
 
 // Обновляем классы документов
 public partial class TextDocument : IDocumentVisitable
 {
-    public void Accept(IDocumentVisitor visitor)
-    {
-        visitor.Visit(this);
-    }
+ public void Accept(IDocumentVisitor visitor)
+ {
+ visitor.Visit(this);
+ }
 }
 
 public partial class SpreadsheetDocument : IDocumentVisitable
 {
-    public void Accept(IDocumentVisitor visitor)
-    {
-        visitor.Visit(this);
-    }
+ public void Accept(IDocumentVisitor visitor)
+ {
+ visitor.Visit(this);
+ }
 }
 
 // === Главная программа ===
 
 public class Program
 {
-    public static void Main()
-    {
-        Console.WriteLine("╔═══════════════════════════════════════════════════════╗");
-        Console.WriteLine("║  Демонстрация Prototype с рекурсивными дженериками  ║");
-        Console.WriteLine("╚═══════════════════════════════════════════════════════╝\n");
+ public static void Main()
+ {
+ Console.WriteLine("╔═══════════════════════════════════════════════════════╗");
+ Console.WriteLine("║ Демонстрация Prototype с рекурсивными дженериками ║");
+ Console.WriteLine("╚═══════════════════════════════════════════════════════╝\n");
 
-        // === Пример 1: Типобезопасное клонирование ===
-        Console.WriteLine("▶ Пример 1: Типобезопасное клонирование\n");
+ // === Пример 1: Типобезопасное клонирование ===
+ Console.WriteLine("▶ Пример 1: Типобезопасное клонирование\n");
 
-        var textDoc = new TextDocument(
-            "Report",
-            DateTimeOffset.Now,
-            1,
-            "Initial content",
-            new List<string> { "urgent", "finance" }
-        );
+ var textDoc = new TextDocument(
+ "Report",
+ DateTimeOffset.Now,
+ 1,
+ "Initial content",
+ new List<string> { "urgent", "finance" }
+ );
 
-        // Типобезопасное клонирование — тип сохраняется!
-        TextDocument clonedText = DocumentProcessor.CloneAndModify(
-            textDoc,
-            doc => doc.EditContent("Modified content")
-        );
+ // Типобезопасное клонирование — тип сохраняется!
+ TextDocument clonedText = DocumentProcessor.CloneAndModify(
+ textDoc,
+ doc => doc.EditContent("Modified content")
+ );
 
-        Console.WriteLine("\nOriginal:");
-        textDoc.Print();
+ Console.WriteLine("\nOriginal:");
+ textDoc.Print();
 
-        Console.WriteLine("\nClone:");
-        clonedText.Print();
+ Console.WriteLine("\nClone:");
+ clonedText.Print();
 
-        // === Пример 2: Работа через необобщённый интерфейс ===
-        Console.WriteLine("\n▶ Пример 2: Коллекция разнородных документов\n");
+ // === Пример 2: Работа через необобщённый интерфейс ===
+ Console.WriteLine("\n▶ Пример 2: Коллекция разнородных документов\n");
 
-        var manager = new DocumentManager();
-        
-        manager.AddDocument(textDoc);
-        manager.AddDocument(new SpreadsheetDocument("Budget", DateTimeOffset.Now, 1, 10, 10));
-        manager.AddDocument(new TextDocument("Notes", DateTimeOffset.Now, 1, "Some notes", new List<string>()));
+ var manager = new DocumentManager();
+ 
+ manager.AddDocument(textDoc);
+ manager.AddDocument(new SpreadsheetDocument("Budget", DateTimeOffset.Now, 1, 10, 10));
+ manager.AddDocument(new TextDocument("Notes", DateTimeOffset.Now, 1, "Some notes", new List<string>()));
 
-        manager.PrintAll();
-        manager.CloneAll();
+ manager.PrintAll();
+ manager.CloneAll();
 
-        // === Пример 3: Получение конкретного типа из коллекции ===
-        Console.WriteLine("\n▶ Пример 3: Работа с конкретным типом из коллекции\n");
+ // === Пример 3: Получение конкретного типа из коллекции ===
+ Console.WriteLine("\n▶ Пример 3: Работа с конкретным типом из коллекции\n");
 
-        var doc = manager.GetDocument("Budget");
-        if (doc is SpreadsheetDocument spreadsheet)
-        {
-            spreadsheet.SetCell("A1", 1000);
-            spreadsheet.SetCell("B1", 2000);
-            spreadsheet.Print();
-        }
+ var doc = manager.GetDocument("Budget");
+ if (doc is SpreadsheetDocument spreadsheet)
+ {
+ spreadsheet.SetCell("A1", 1000);
+ spreadsheet.SetCell("B1", 2000);
+ spreadsheet.Print();
+ }
 
-        // === Пример 4: Visitor для избежания cast'ов ===
-        Console.WriteLine("\n▶ Пример 4: Visitor Pattern для типобезопасности\n");
+ // === Пример 4: Visitor для избежания cast'ов ===
+ Console.WriteLine("\n▶ Пример 4: Visitor Pattern для типобезопасности\n");
 
-        var statsVisitor = new DocumentStatisticsVisitor();
-        
-        foreach (var document in new IDocument[] { textDoc, clonedText })
-        {
-            if (document is IDocumentVisitable visitable)
-            {
-                visitable.Accept(statsVisitor);
-            }
-        }
+ var statsVisitor = new DocumentStatisticsVisitor();
+ 
+ foreach (var document in new IDocument[] { textDoc, clonedText })
+ {
+ if (document is IDocumentVisitable visitable)
+ {
+ visitable.Accept(statsVisitor);
+ }
+ }
 
-        Console.WriteLine($"\nСтатистика:");
-        Console.WriteLine($"  Текстовых документов: {statsVisitor.TextDocumentCount}");
-        Console.WriteLine($"  Таблиц: {statsVisitor.SpreadsheetCount}");
+ Console.WriteLine($"\nСтатистика:");
+ Console.WriteLine($" Текстовых документов: {statsVisitor.TextDocumentCount}");
+ Console.WriteLine($" Таблиц: {statsVisitor.SpreadsheetCount}");
 
-        // === Пример 5: Создание версий ===
-        Console.WriteLine("\n▶ Пример 5: Версионирование документов\n");
+ // === Пример 5: Создание версий ===
+ Console.WriteLine("\n▶ Пример 5: Версионирование документов\n");
 
-        var version1 = textDoc;
-        var version2 = DocumentProcessor.CreateVersion(version1);
-        version2.EditContent("Version 2 content");
+ var version1 = textDoc;
+ var version2 = DocumentProcessor.CreateVersion(version1);
+ version2.EditContent("Version 2 content");
 
-        var version3 = DocumentProcessor.CreateVersion(version2);
-        version3.AddTag("reviewed");
-        version3.EditContent("Version 3 content");
+ var version3 = DocumentProcessor.CreateVersion(version2);
+ version3.AddTag("reviewed");
+ version3.EditContent("Version 3 content");
 
-        Console.WriteLine("\nВерсия 1:");
-        version1.Print();
+ Console.WriteLine("\nВерсия 1:");
+ version1.Print();
 
-        Console.WriteLine("\nВерсия 2:");
-        version2.Print();
+ Console.WriteLine("\nВерсия 2:");
+ version2.Print();
 
-        Console.WriteLine("\nВерсия 3:");
-        version3.Print();
+ Console.WriteLine("\nВерсия 3:");
+ version3.Print();
 
-        Console.WriteLine("\n╔═══════════════════════════════════════════════════════╗");
-        Console.WriteLine("║                 Демонстрация завершена                ║");
-        Console.WriteLine("╚═══════════════════════════════════════════════════════╝");
-    }
+ Console.WriteLine("\n╔═══════════════════════════════════════════════════════╗");
+ Console.WriteLine("║ Демонстрация завершена ║");
+ Console.WriteLine("╚═══════════════════════════════════════════════════════╝");
+ }
 }
 ```
 
@@ -4948,32 +4948,32 @@ public class Program
 
 > **Суть паттерна**: Гарантия существования единственного экземпляра класса с глобальной точкой доступа
 
-###  Определение
+### Определение
 
 **Singleton (Одиночка (Singleton))** — это порождающий паттерн проектирования, который гарантирует, что у класса есть только один экземпляр, и предоставляет к нему глобальную точку доступа.
 
 
 
-###  Концепция Singleton
+### Концепция Singleton
 
 ```mermaid
 flowchart TD
-    A[Клиент 1] --> C{Singleton<br/>Instance}
-    B[Клиент 2] --> C
-    D[Клиент 3] --> C
-    
-    C --> E[Единственный<br/>экземпляр]
-    
-    style C fill:#e1f5fe
-    style E fill:#c8e6c9
-    style A fill:#fff3e0
-    style B fill:#fff3e0
-    style D fill:#fff3e0
+ A[Клиент 1] --> C{Singleton<br/>Instance}
+ B[Клиент 2] --> C
+ D[Клиент 3] --> C
+ 
+ C --> E[Единственный<br/>экземпляр]
+ 
+ style C fill:#e1f5fe
+ style E fill:#c8e6c9
+ style A fill:#fff3e0
+ style B fill:#fff3e0
+ style D fill:#fff3e0
 ```
 
 Все клиенты получают доступ к **одному и тому же** экземпляру.
 
-###  Проблема
+### Проблема
 
 Давайте представим реальную ситуацию. Вы разрабатываете приложение, которое должно работать с единственным подключением к базе данных, конфигурацией приложения или логером. Такие объекты по своей природе должны существовать в одном экземпляре — создание нескольких копий приведёт к несогласованности данных, дублированию подключений и ошибкам.
 
@@ -5004,7 +5004,7 @@ var config2 = new DatabaseConfig();
 
 
 
-###  Практические применения Singleton
+### Практические применения Singleton
 
 Singleton особенно полезен для:
 
@@ -5021,31 +5021,31 @@ Singleton особенно полезен для:
 ```csharp
 public class Singleton 
 { 
-    private static readonly object _lock = new(); 
-    private static Singleton? _instance; 
-    
-    private Singleton() { }  // Конструктор приватный!
-    
-    public static Singleton Instance 
-    { 
-        get 
-        { 
-            // Первая проверка (без блокировки)
-            if (_instance is not null) 
-                return _instance; 
-            
-            // Блокируем доступ для других потоков
-            lock (_lock) 
-            { 
-                // Вторая проверка (внутри блокировки)
-                if (_instance is not null) 
-                    return _instance; 
-                
-                // Создаём объект ровно один раз
-                return _instance = new Singleton(); 
-            } 
-        } 
-    } 
+ private static readonly object _lock = new(); 
+ private static Singleton? _instance; 
+ 
+ private Singleton() { } // Конструктор приватный!
+ 
+ public static Singleton Instance 
+ { 
+ get 
+ { 
+ // Первая проверка (без блокировки)
+ if (_instance is not null) 
+ return _instance; 
+ 
+ // Блокируем доступ для других потоков
+ lock (_lock) 
+ { 
+ // Вторая проверка (внутри блокировки)
+ if (_instance is not null) 
+ return _instance; 
+ 
+ // Создаём объект ровно один раз
+ return _instance = new Singleton(); 
+ } 
+ } 
+ } 
 }
 ```
 
@@ -5073,28 +5073,28 @@ public class Singleton
 Double-Checked Locking (двойная проверка с блокировкой) решает проблему производительности при многопоточном доступе:
 
 1. **Первая проверка** (без блокировки):
-   - Быстрая проверка: если объект уже создан, сразу возвращаем его
-   - Избегаем ненужной блокировки в 99% случаев
+ - Быстрая проверка: если объект уже создан, сразу возвращаем его
+ - Избегаем ненужной блокировки в 99% случаев
 
 2. **Lock (блокировка)**:
-   - Если объекта нет, блокируем доступ для других потоков
-   - Только один поток может войти в этот блок одновременно
+ - Если объекта нет, блокируем доступ для других потоков
+ - Только один поток может войти в этот блок одновременно
 
 3. **Вторая проверка** (внутри блокировки):
-   - Пока мы ждали блокировку, другой поток мог создать объект
-   - Проверяем ещё раз, чтобы не создать дубликат
+ - Пока мы ждали блокировку, другой поток мог создать объект
+ - Проверяем ещё раз, чтобы не создать дубликат
 
 ```csharp
 // Поток 1 и Поток 2 одновременно вызывают Instance
-if (_instance is null)        // Оба видят null
+if (_instance is null) // Оба видят null
 {
-    lock (_lock)               // Только один входит
-    {
-        if (_instance is null) // Первый создаёт, второй видит уже созданный
-        {
-            _instance = new Singleton();
-        }
-    }
+ lock (_lock) // Только один входит
+ {
+ if (_instance is null) // Первый создаёт, второй видит уже созданный
+ {
+ _instance = new Singleton();
+ }
+ }
 }
 ```
 
@@ -5112,19 +5112,19 @@ Console.WriteLine(ReferenceEquals(singleton1, singleton2)); // true — один
 ```csharp
 public class Singleton 
 { 
-    private static readonly Lazy<Singleton> _instance;
-    
-    static Singleton() 
-    { 
-        _instance = new Lazy<Singleton>(
-            () => new Singleton(), 
-            LazyThreadSafetyMode.ExecutionAndPublication
-        ); 
-    } 
-    
-    private Singleton() { } 
-    
-    public static Singleton Instance => _instance.Value; 
+ private static readonly Lazy<Singleton> _instance;
+ 
+ static Singleton() 
+ { 
+ _instance = new Lazy<Singleton>(
+ () => new Singleton(), 
+ LazyThreadSafetyMode.ExecutionAndPublication
+ ); 
+ } 
+ 
+ private Singleton() { } 
+ 
+ public static Singleton Instance => _instance.Value; 
 }
 ```
 
@@ -5219,10 +5219,10 @@ Console.WriteLine(ReferenceEquals(s1, s2) && ReferenceEquals(s2, s3)); // true
 
 ```csharp
 // Современный подход: Dependency Injection
-services.AddSingleton<ILogger, Logger>();  // В ASP.NET Core
+services.AddSingleton<ILogger, Logger>(); // В ASP.NET Core
 
 // Вместо:
-var logger = Logger.Instance;  // Старый подход с Singleton
+var logger = Logger.Instance; // Старый подход с Singleton
 ```
 
 
@@ -5234,30 +5234,30 @@ Examples:
 ```csharp
 public class DatabaseLogger 
 { 
-    public static DatabaseLogger Instance { /* ... */ }
-    private DatabaseLogger() { }
+ public static DatabaseLogger Instance { /* ... */ }
+ private DatabaseLogger() { }
 }
 
 // Вы хотите протестировать класс, использующий логер:
 public class UserService 
 { 
-    public void CreateUser(string name) 
-    { 
-        // UserService закодирована на конкретный Singleton!
-        DatabaseLogger.Instance.Log($"Creating user: {name}"); 
-    } 
+ public void CreateUser(string name) 
+ { 
+ // UserService закодирована на конкретный Singleton!
+ DatabaseLogger.Instance.Log($"Creating user: {name}"); 
+ } 
 }
 
 // Тест:
 [Test]
 public void CreateUser_ShouldLogEvent()
 {
-    var service = new UserService();
-    service.CreateUser("John");
-    
-    // Как проверить, что логировалось? 
-    // Нельзя "подменить" DatabaseLogger на фейковый логер!
-    // Приватный конструктор не позволит нам создать mock объект.
+ var service = new UserService();
+ service.CreateUser("John");
+ 
+ // Как проверить, что логировалось? 
+ // Нельзя "подменить" DatabaseLogger на фейковый логер!
+ // Приватный конструктор не позволит нам создать mock объект.
 }
 ```
 
@@ -5270,14 +5270,14 @@ public void CreateUser_ShouldLogEvent()
 ```csharp
 public class AppConfig 
 { 
-    private string _connectionString;
-    
-    private AppConfig() 
-    { 
-        _connectionString = "hardcoded_string"; // Жёстко кодируем значение
-    }
-    
-    public static AppConfig Instance { /* ... */ }
+ private string _connectionString;
+ 
+ private AppConfig() 
+ { 
+ _connectionString = "hardcoded_string"; // Жёстко кодируем значение
+ }
+ 
+ public static AppConfig Instance { /* ... */ }
 }
 ```
 
@@ -5292,13 +5292,13 @@ public class AppConfig
 ```csharp
 public class AppConfig 
 { 
-    private readonly string _connectionString;
-    
-    // Зависимость передаётся снаружи
-    public AppConfig(string connectionString) 
-    { 
-        _connectionString = connectionString;
-    }
+ private readonly string _connectionString;
+ 
+ // Зависимость передаётся снаружи
+ public AppConfig(string connectionString) 
+ { 
+ _connectionString = connectionString;
+ }
 }
 ```
 
@@ -5307,23 +5307,23 @@ public class AppConfig
 ```csharp
 public class ResourceManager 
 { 
-    private List<NativeResource> _resources = new();
-    
-    private ResourceManager() 
-    { 
-        // Инициализация...
-    }
-    
-    public static ResourceManager Instance { /* ... */ }
-    
-    public void Cleanup() 
-    { 
-        // Освобождаем ресурсы
-        foreach (var res in _resources) 
-        { 
-            res.Dispose(); 
-        }
-    }
+ private List<NativeResource> _resources = new();
+ 
+ private ResourceManager() 
+ { 
+ // Инициализация...
+ }
+ 
+ public static ResourceManager Instance { /* ... */ }
+ 
+ public void Cleanup() 
+ { 
+ // Освобождаем ресурсы
+ foreach (var res in _resources) 
+ { 
+ res.Dispose(); 
+ }
+ }
 }
 
 // Когда вызвать Cleanup()? 
@@ -5376,74 +5376,74 @@ SessionManager.Instance.Reset();
 // Singleton для логирования
 public class Logger 
 { 
-    private static readonly Lazy<Logger> _instance = 
-        new(() => new Logger(), LazyThreadSafetyMode.ExecutionAndPublication);
-    
-    private Logger() 
-    { 
-        Console.WriteLine("Logger initialized"); 
-    }
-    
-    public static Logger Instance => _instance.Value;
-    
-    public void Log(string message) 
-    { 
-        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {message}"); 
-    }
+ private static readonly Lazy<Logger> _instance = 
+ new(() => new Logger(), LazyThreadSafetyMode.ExecutionAndPublication);
+ 
+ private Logger() 
+ { 
+ Console.WriteLine("Logger initialized"); 
+ }
+ 
+ public static Logger Instance => _instance.Value;
+ 
+ public void Log(string message) 
+ { 
+ Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {message}"); 
+ }
 }
 
 // Singleton для конфигурации
 public class AppSettings 
 { 
-    private static readonly Lazy<AppSettings> _instance = 
-        new(() => new AppSettings(), LazyThreadSafetyMode.ExecutionAndPublication);
-    
-    private readonly Dictionary<string, string> _settings;
-    
-    private AppSettings() 
-    { 
-        _settings = new Dictionary<string, string>
-        { 
-            { "DatabaseUrl", "Server=localhost;Database=MyApp" },
-            { "ApiKey", "secret123" }
-        };
-    }
-    
-    public static AppSettings Instance => _instance.Value;
-    
-    public string GetSetting(string key) => _settings[key];
+ private static readonly Lazy<AppSettings> _instance = 
+ new(() => new AppSettings(), LazyThreadSafetyMode.ExecutionAndPublication);
+ 
+ private readonly Dictionary<string, string> _settings;
+ 
+ private AppSettings() 
+ { 
+ _settings = new Dictionary<string, string>
+ { 
+ { "DatabaseUrl", "Server=localhost;Database=MyApp" },
+ { "ApiKey", "secret123" }
+ };
+ }
+ 
+ public static AppSettings Instance => _instance.Value;
+ 
+ public string GetSetting(string key) => _settings[key];
 }
 
 // Использование в main:
 static void Main()
 {
-    // Первый поток
-    var task1 = Task.Run(() =>
-    {
-        Logger.Instance.Log("Task 1: Starting");
-        var dbUrl = AppSettings.Instance.GetSetting("DatabaseUrl");
-        Logger.Instance.Log($"Task 1: Got DB URL = {dbUrl}");
-    });
+ // Первый поток
+ var task1 = Task.Run(() =>
+ {
+ Logger.Instance.Log("Task 1: Starting");
+ var dbUrl = AppSettings.Instance.GetSetting("DatabaseUrl");
+ Logger.Instance.Log($"Task 1: Got DB URL = {dbUrl}");
+ });
 
-    // Второй поток
-    var task2 = Task.Run(() =>
-    {
-        Logger.Instance.Log("Task 2: Starting");
-        var apiKey = AppSettings.Instance.GetSetting("ApiKey");
-        Logger.Instance.Log($"Task 2: Got API Key = {apiKey}");
-    });
+ // Второй поток
+ var task2 = Task.Run(() =>
+ {
+ Logger.Instance.Log("Task 2: Starting");
+ var apiKey = AppSettings.Instance.GetSetting("ApiKey");
+ Logger.Instance.Log($"Task 2: Got API Key = {apiKey}");
+ });
 
-    Task.WaitAll(task1, task2);
+ Task.WaitAll(task1, task2);
 
-    // Проверяем, что это один и тот же объект
-    Logger.Instance.Log("Main: Verification");
-    var logger1 = Logger.Instance;
-    var logger2 = Logger.Instance;
-    Logger.Instance.Log($"Same logger? {ReferenceEquals(logger1, logger2)}"); // true
+ // Проверяем, что это один и тот же объект
+ Logger.Instance.Log("Main: Verification");
+ var logger1 = Logger.Instance;
+ var logger2 = Logger.Instance;
+ Logger.Instance.Log($"Same logger? {ReferenceEquals(logger1, logger2)}"); // true
 
-    var settings1 = AppSettings.Instance;
-    var settings2 = AppSettings.Instance;
-    Logger.Instance.Log($"Same settings? {ReferenceEquals(settings1, settings2)}"); // true
+ var settings1 = AppSettings.Instance;
+ var settings2 = AppSettings.Instance;
+ Logger.Instance.Log($"Same settings? {ReferenceEquals(settings1, settings2)}"); // true
 }
 
 /* Вывод
@@ -5458,9 +5458,9 @@ Logger initialized
 */
 ```
 
-###  Когда использовать?
-1.  **Когда в программе должен быть единственный экземпляр какого-то класса, доступный всем клиентам (например, общий доступ к базе данных из разных частей программы).**
-Одиночка (Singleton) скрывает от клиентов все способы создания нового объекта, кроме специального метода. Этот метод либо создаёт объект, либо отдаёт существующий объект, если он уже был созда
-2. Когда вам хочется иметь больше контроля над глобальными пер**еменными.**
+### Когда использовать?
+1. **Когда в программе должен быть единственный экземпляр какого-то класса, доступный всем клиентам (например, общий доступ к базе данных из разных частей программы).**
+Одиночка (Singleton) скрывает от клиентов все способы создания нового объекта, кроме специального метода. Этот метод либо создаёт объект, либо отдаёт существующий объект, если он уже был создан.
+2. Когда вам хочется иметь больше контроля над глобальными переменными.
 В отличие от глобальных переменных, Одиночка гарантирует, что никакой другой код не заменит созданный экземпляр класса, поэтому вы всегда уверены в наличии лишь одного объекта-одиночки.
 Тем не менее, в любой момент вы можете расширить это ограничение и позволить любое количество объектов-одиночек, поменяв код в одном месте (метод getInstance).
