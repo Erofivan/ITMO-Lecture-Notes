@@ -1,28 +1,54 @@
 
-### Строитель (билдер)
+# Строитель (Builder Pattern)
 
-> выделение отдельного типа, инкапсулирующего логику сбора данных и создания объекта
+## Определение паттерна
 
-Параметр - набор тип+имя находящийся в сигнатуре метода 
-Ex.: `public void A(int a, char b); // int a и char b — это параметры`
+**Builder** (Строитель) — это порождающий паттерн проектирования, который инкапсулирует логику пошагового создания сложных объектов. Паттерн отделяет конструирование объекта от его представления, позволяя использовать один и тот же процесс создания для получения различных конфигураций объектов.
 
-Аргумент - конкретное значение передающееся в метод
-Ex.: `obj.A(1, '2'); // 1 и '2' - аргументы метода A()`
+### Основные термины
+
+Прежде чем углубиться в паттерн, важно различать два понятия:
+
+**Parameter** (Параметр) — это переменная в сигнатуре метода, которая определяет тип и имя ожидаемого значения:
 
 ```csharp
-void M(int x, string s)   // int x и string s — параметры
+// int x и string s — параметры метода M
+public void M(int x, string s)
 {
+    // Тело метода
 }
-M(10, "hi");               // 10 и "hi" — аргументы
 ```
 
-Строитель — это порождающий паттерн проектирования, который позволяет создавать сложные объекты пошагово. Строитель даёт возможность использовать один и тот же код строительства для получения разных представлений объектов.
+**Argument** (Аргумент) — это конкретное значение, передаваемое в метод при его вызове:
 
-![](src/builder/intro.png)
+```csharp
+// 10 и "hi" — аргументы, передаваемые в метод M
+M(10, "hi");
+```
 
-Представьте объект (например, дом) у которого может быть очень много разных конфигураций. Два варианта: либо передавать каким-то образом всё через огромный конструктор:
-![](src/builder/constructor.png)
-Далеко не все аргументы всегда используются и приходится делать их null. Либо создаётся проблема "телескопических конструкторов", то есть матрёшки из конструкторов:
+## Проблема: сложность создания объектов
+
+Представьте класс, описывающий дом. У дома может быть множество различных характеристик: адрес, количество этажей, наличие гаража, сада, бассейна и других элементов. При создании такого объекта мы сталкиваемся с несколькими проблемами.
+
+### Проблема 1: Конструктор с большим числом параметров
+
+Если передавать все параметры через конструктор, получается громоздкая конструкция, где многие аргументы приходится заполнять значениями по умолчанию или `null`:
+```csharp
+// Конструктор с множеством параметров - неудобен в использовании
+var house = new House(
+    address: "ул. Пушкина, д. 10",
+    floors: 2,
+    hasGarage: false,
+    hasGarden: true,
+    hasPool: true,
+    hasFancyStatues: false
+);
+```
+
+### Проблема 2: Телескопические конструкторы
+
+Чтобы упростить создание объекта, разработчики создают множество перегруженных конструкторов — так называемый **Telescoping Constructor** (Телескопический конструктор). Это приводит к матрёшке из конструкторов:
+
 ```csharp
 public class House
 {
@@ -33,7 +59,7 @@ public class House
     public bool HasPool { get; }
     public bool HasFancyStatues { get; }
 
-    // Базовый конструктор, куда сводятся все остальные
+    // Базовый конструктор с полным набором параметров
     public House(string address, int floors, bool hasGarage, bool hasGarden, bool hasPool, bool hasFancyStatues)
     {
         Address = address;
@@ -44,189 +70,257 @@ public class House
         HasFancyStatues = hasFancyStatues;
     }
 
-    // Только адрес → минимальный дом
+    // Минимальный дом - только адрес
     public House(string address)
         : this(address, 1, false, false, false, false) { }
 
-    // Адрес + этажность
+    // Дом с указанием этажности
     public House(string address, int floors)
         : this(address, floors, false, false, false, false) { }
 
-    // Дом с гаражом
+    // Фабричные методы для различных конфигураций
     public static House WithGarage(string address, int floors = 1)
         => new House(address, floors, hasGarage: true, hasGarden: false, hasPool: false, hasFancyStatues: false);
 
-    // Дом с садом
     public static House WithGarden(string address, int floors = 1)
         => new House(address, floors, false, hasGarden: true, false, false);
 
-    // Дом с бассейном
     public static House WithPool(string address, int floors = 1)
         => new House(address, floors, false, false, hasPool: true, false);
 
-    // Дом со статуями
-    public static House WithFancyStatues(string address, int floors = 1)
-        => new House(address, floors, false, false, false, hasFancyStatues: true);
- 
-    // И так далее...
+    // ...и ещё множество вариантов для каждой комбинации
 } 
 ```
-Либо же, что возможно ещё хуже, придется наследовать кучу разных подклассов для всех возможных комбинаций параметров
 
-![](src/builder/inheritance.png)
+Этот подход создаёт экспоненциальный рост числа конструкторов при добавлении новых параметров.
 
-Паттерн Строитель предлагает разбить весь этот процесс на отдельные шаги. Пришём, чтобы создать объект, вам нужно лишь поочерёдно вызывать методы строителя. И теперь не нужно запускать все шаги, а только те, что нужны для производства объекта определённой конфигурации.
+### Проблема 3: Иерархия подклассов
 
-![](src/builder/usage.png)
+Ещё один неудачный подход — создание отдельного подкласса для каждой конфигурации объекта. Это приводит к взрыву количества классов и жёсткой привязке к конкретным комбинациям параметров.
 
-И в нашем коде получится что-то вроде:
+```mermaid
+graph TD
+    A[House] --> B[HouseWithGarage]
+    A --> C[HouseWithGarden]
+    A --> D[HouseWithPool]
+    B --> E[HouseWithGarageAndGarden]
+    B --> F[HouseWithGarageAndPool]
+    C --> G[HouseWithGardenAndPool]
+    E --> H[HouseWithGarageGardenAndPool]
+```
+
+Эта структура становится неуправляемой при увеличении числа опций.
+
+## Решение: паттерн Builder
+
+Паттерн Builder предлагает вынести логику создания объекта в отдельный класс-строитель. Вместо вызова конструктора с множеством параметров, клиентский код пошагово конфигурирует объект через понятные методы.
+
+```mermaid
+graph LR
+    A[Клиент] --> B[Builder]
+    B --> C[WithAddress]
+    C --> D[WithFloors]
+    D --> E[WithPool]
+    E --> F[Build]
+    F --> G[House]
+```
+
+### Основной принцип
+
+Builder разбивает процесс создания на отдельные шаги. Каждый метод строителя устанавливает один аспект будущего объекта и возвращает сам строитель, позволяя выстроить цепочку вызовов. Это называется **Fluent Interface** (Текучий интерфейс).
+
+Сравните код до и после применения паттерна:
 ```csharp
-
-// Раньше: создавали дом в явном виде
-var house = House(
-    adress: "ulitsa- pushkina-dom-kalatush",
+// ДО: Громоздкий конструктор с множеством параметров
+var house = new House(
+    address: "ул. Пушкина, д. 10",
     floors: 2,
-    HasGarage = false,
-    HasGarden = true,
-    HasPool = true,
-    HasFancyStatues = true
-    )
+    hasGarage: false,
+    hasGarden: true,
+    hasPool: true,
+    hasFancyStatues: true
+);
 
-// Либо: создавали конкретный дом
-var house = houseWithPoolAndGardenAndFancyStatues(
-    adress: "ulitsa- pushkina-dom-kalatush",
+// ДО: Фабричные методы для каждой комбинации
+var house = House.WithPoolAndGardenAndFancyStatues(
+    address: "ул. Пушкина, д. 10",
     floors: 2
-    )
-// И если бы мы хотели добавить что-то новое,
-// то пришлось бы либо 
-// менять конструктор, либо вызывать новый дом
+);
+// Проблема: при добавлении новых опций нужно создавать
+// новые фабричные методы или менять конструктор
 
-// Теперь можем собрать дом "по кусочкам":
-var house = HouseBuilder()
-    .WithAddress("ulitsa-pushkina-dom-kalatush")
+// ПОСЛЕ: Пошаговое создание через Builder
+var house = new HouseBuilder()
+    .WithAddress("ул. Пушкина, д. 10")
     .WithFloors(2)
     .WithPool()
     .WithGarden()
     .WithStatues()
-    .Build()
+    .Build();
 
-// Если бы мы захотели добавить что-то ещё
-// , то достаточно было бы просто прописать ещё 
-// один метод, например WithFountain() и WithPlayground()
+// Преимущество: для добавления новых опций достаточно
+// добавить новый метод в Builder, например:
+var advancedHouse = new HouseBuilder()
+    .WithAddress("ул. Ленина, д. 5")
+    .WithFloors(3)
+    .WithGarden()
+    .WithFountain()    // Новая опция
+    .WithPlayground()  // Новая опция
+    .Build();
 ```
 
-То есть мы вынесли логику создания из чего-то цельного в "как бы лего конструктор", куда мы при желании можешь в любой момент присоединить что-то новое.
+Логика создания вынесена в отдельный класс, который собирает объект по принципу конструктора, где каждый метод добавляет новую деталь.
 
-Рассмотрим пример того, как применить этот паттерн в реальности:
+## Практический пример: система заказов
 
-У вас есть класс Order, который описывает заказ в интернет-магазине. Изначально это было бы просто:
+Рассмотрим реальный сценарий применения паттерна Builder на примере системы интернет-магазина.
+
+### Эволюция требований
+
+Изначально класс `Order` (Заказ) был простым:
 ```csharp
+// Простая модель заказа: только список товаров
 public record Order(IEnumerable<OrderItem> Items);
+
+public record OrderItem(string Name, decimal Price, int Amount);
 ```
 
-То есть просто список каких-то заказов:
+Создание заказа было простым и понятным:
+
 ```csharp
 var order = new Order(
-    [
-        new OrderItem(Name: "banana", Price: 42, Amount: 20),
-        new OrderItem(Name: "phone", Price: 30000, Amount: 1),
-        new OrderItem(Name: "marker", Price: 201, Amount: 3),
-        new OrderItem(Name: "steak", Price: 1337, Amount: 1)
-    ]
+    new[]
+    {
+        new OrderItem(Name: "Бананы", Price: 42, Amount: 20),
+        new OrderItem(Name: "Телефон", Price: 30000, Amount: 1),
+        new OrderItem(Name: "Маркеры", Price: 201, Amount: 3),
+        new OrderItem(Name: "Стейк", Price: 1337, Amount: 1)
+    }
 );
 ```
 
-Но со временем требования растут. Помимо просто списка заказов становятся нужными комментарий для магазина, комментарий для доставки, номер телефона получателя, время создания и ещё десяток полей:
+### Рост сложности
+
+Со временем требования усложняются. Помимо списка товаров, заказу требуются дополнительные данные: комментарии для магазина и доставки, контактная информация получателя, временные метки и другие поля:
 ```csharp
+// Расширенная модель заказа со множеством полей
 public record Order(
     string CommentForShop,
     string CommentForDelivery,
     IEnumerable<OrderItem> Items,
     DateTimeOffset CreatedAt,
-    string? ReceiverPhoneNumber,
-    // и ещё много...
+    string? ReceiverPhoneNumber
+    // ...и ещё множество других полей
 );
 ```
-Теперь, когда мы захотим создать объект, конструктор потребует множество параметров:
+
+Теперь создание заказа превращается в громоздкую операцию:
+
 ```csharp
 var order = new Order(
-    CommentForShop: "Срочно!",
+    CommentForShop: "Срочная доставка",
     CommentForDelivery: "Оставить у двери",
-    Items: [
-        new OrderItem(Name: "banana", Price: 42, Amount: 20),
-        new OrderItem(Name: "phone", Price: 30000, Amount: 1),
-        new OrderItem(Name: "marker", Price: 201, Amount: 3),
-        new OrderItem(Name: "steak", Price: 1337, Amount: 1)
-    ],
+    Items: new[]
+    {
+        new OrderItem(Name: "Бананы", Price: 42, Amount: 20),
+        new OrderItem(Name: "Телефон", Price: 30000, Amount: 1),
+        new OrderItem(Name: "Маркеры", Price: 201, Amount: 3),
+        new OrderItem(Name: "Стейк", Price: 1337, Amount: 1)
+    },
     CreatedAt: DateTimeOffset.UtcNow,
     ReceiverPhoneNumber: "+7-900-123-45-67"
 );
 ```
 
-Это становится неудобно. Кроме того, создание заказа часто требует логики: иногда товары надо добавлять в строго определённом порядке, например, сначала продукты, а только потом бытовую технику. Где проверять, что в заказе, например, не больше 20 товаров? Некоторые клиеты (например с вип-статусом) могут иметь больше привелегий. Как всё это организовать?     
+### Дополнительные сложности
 
-Вот здесь появляется паттерн Builder. Как мы уже знаем его основная идея выделить отдельный тип, который инкапсулирует логику сбора данных и создания объекта. 
+Помимо неудобства синтаксиса, возникают вопросы бизнес-логики:
 
-Builder — это вспомогательный класс, который:
-- Накапливает состояние — хранит промежуточные значения параметров
-- Предоставляет удобный API — методы вида WithXxx(), которые возвращают сам builder для цепочки вызовов (fluent interface)
-- Выполняет финальное создание — метод Build() создаёт финальный объект
+- Как обеспечить порядок добавления товаров? Например, продукты питания должны добавляться перед бытовой техникой.
+- Где проверять ограничения? Например, в заказе не может быть больше 20 товаров.
+- Как учитывать различные правила для разных типов клиентов? Премиум-клиенты могут иметь расширенные лимиты.
+- Как избежать дублирования логики валидации в разных местах кода?     
+
+### Применение Builder
+
+Паттерн Builder решает все перечисленные проблемы, выделяя логику создания и валидации в отдельный класс.
+
+## Структура паттерна Builder
+
+Builder — это вспомогательный класс, который выполняет три ключевые функции:
+
+1. **Накапливает состояние** — хранит промежуточные значения всех параметров будущего объекта
+2. **Предоставляет текучий интерфейс** — методы вида `WithXxx()` возвращают сам строитель, позволяя выстраивать цепочки вызовов (Fluent Interface)
+3. **Выполняет финальное создание** — метод `Build()` валидирует собранные данные и создаёт неизменяемый объект
+
+### Базовая реализация Builder
 
 ```csharp
-// Строитель
 public class OrderBuilder
 {
-    // 1. Он хранит *внутреннее, изменяемое состояние*
-    private readonly List<OrderItem> _items = [];
+    // 1. Внутреннее изменяемое состояние
+    // Builder хранит промежуточные данные в изменяемых структурах
+    private readonly List<OrderItem> _items = new List<OrderItem>();
 
-    // 2. Он предоставляет "текучий" (fluent) интерфейс
+    // 2. Метод конфигурации с Fluent Interface
+    // Возвращает this, позволяя выстроить цепочку вызовов
     public OrderBuilder WithItem(OrderItem item)
     {
         _items.Add(item);
-        return this; // <- Ключевой момент для "цепочки" вызовов
+        return this; // Ключевой момент для построения цепочки
     }
 
-    // 3. Он имеет финальный метод "Build"
+    // 3. Финальное создание объекта
+    // Метод Build() создаёт неизменяемый (immutable) объект
     public Order Build()
     {
-        // В этот момент он создает иммутабельный продукт
         return new Order(_items.ToArray());
     }
 }
 ```
 
-Теперь можем удобно использовать это билдер:
-```csharp
-var orderBuilder = new OrderBuilder() // Заказ
-    .WithItem(Name: "banana", Price: 42, Amount: 20) // с бананами
-    .WithItem(Name: "phone", Price: 30000, Amount: 1) // и телефоном
-    .WithItem(Name: "marker", Price: 201, Amount: 3) // и тремя маркерами
-    .WithItem(Name: "steak", Price: 1337, Amount: 1); // и одним стейком
+### Использование Builder
 
-// Мы можем *передавать строителя* в другие методы,
-// чтобы они его "до-настроили".
+Теперь код клиента становится выразительным и гибким:
+```csharp
+// Создаём строитель и последовательно конфигурируем заказ
+var orderBuilder = new OrderBuilder()
+    .WithItem(new OrderItem(Name: "Бананы", Price: 42, Amount: 20))
+    .WithItem(new OrderItem(Name: "Телефон", Price: 30000, Amount: 1))
+    .WithItem(new OrderItem(Name: "Маркеры", Price: 201, Amount: 3))
+    .WithItem(new OrderItem(Name: "Стейк", Price: 1337, Amount: 1));
+
+// Builder можно передавать в другие методы для дополнительной конфигурации
+// Это позволяет распределить логику построения между разными компонентами
 AddDefaultItems(orderBuilder);
-AddRequestedItems(orderBuilder); 
+AddRequestedItems(orderBuilder);
 AddForecastedItems(orderBuilder);
 
-Order order = orderBuilder.Build(); // соберём заказ
+// Финальное создание неизменяемого объекта заказа
+Order order = orderBuilder.Build();
 ```
-Видите красоту? Логика добавления товаров разнесена по разным методам, но всё аккуратно собирается в одном builder'е.
 
-Давайте рассмотрим два вида билдеров:
+Преимущество такого подхода — логика создания разделена на отдельные методы, но весь процесс централизован в одном строителе. Это улучшает читаемость и поддерживаемость кода.
 
-#### 1. Convenience builder (Удобный Строитель)
+## Типы строителей
 
-> упрощенное создание объектов с большим конструктором
+Существует несколько подходов к реализации паттерна Builder, каждый из которых решает специфические задачи.
 
-Это тип можно охарактеризовать так:
-- модель никак не связана с билдером
-- несёт в себе вспомогательный функционал
-- используется для упрощения создания объектов
+### 1. Convenience Builder
 
-Вспоним ситуацию с огромным конструктором:
+**Convenience Builder** (Удобный строитель) — это тип строителя, основная задача которого упростить создание объектов с большим числом параметров.
+
+Ключевые характеристики:
+
+- Модель не зависит от строителя — они существуют независимо
+- Предоставляет значения по умолчанию для опциональных параметров
+- Используется для улучшения эргономики API
+
+#### Проблема
+
+Вернёмся к расширенной модели заказа с множеством полей:
 ```csharp
-// в заказе много полей
+// Модель заказа с множеством полей
 public record Order(
     string CommentForShop,
     string CommentForDelivery,
@@ -235,53 +329,60 @@ public record Order(
     string? ReceiverPhoneNumber
 );
 
-// пропуск кода
-
-// Это то, чего мы хотим избежать!
+// Неудобное создание: приходится передавать все параметры,
+// даже если нужен только список товаров
 var order = new Order(
-    CommentForShop: string.Empty, // по умолчанию
-    CommentForDelivery: string.Empty, // по умолчанию
-    Items: [new OrderItem(Price: 1337, Amount: 2)], // < - единственное нужное поле
-    CreatedAt: DateTimeOffset.UtcNow, // по умолчанию
-    ReceiverPhoneNumber: null // по умолчанию
+    CommentForShop: string.Empty,           // значение по умолчанию
+    CommentForDelivery: string.Empty,       // значение по умолчанию
+    Items: new[] { new OrderItem(Price: 1337, Amount: 2) }, // единственное нужное поле
+    CreatedAt: DateTimeOffset.UtcNow,       // значение по умолчанию
+    ReceiverPhoneNumber: null               // значение по умолчанию
 );
 ```
-Convinience builder решает эту проблему. Он сам, внутри себя, хранит эти значения по умолчанию.
+
+#### Решение через Convenience Builder
+
+Convenience Builder инкапсулирует значения по умолчанию внутри себя, избавляя клиентский код от необходимости их указывать:
 
 ```csharp
-// Builder должен хранить значения всех полей со значениями по умолчанию
 public class OrderBuilder
 {
-    private readonly List<OrderItem> _items = [];
+    // Все поля инициализированы значениями по умолчанию
+    private readonly List<OrderItem> _items = new List<OrderItem>();
     private string _commentForShop = string.Empty;
     private string _commentForDelivery = string.Empty;
     private DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
     private string? _receiverPhoneNumber = null;
 
+    // Метод для добавления товара в заказ
     public OrderBuilder WithItem(OrderItem item)
     {
         _items.Add(item);
         return this;
     }
 
+    // Метод для установки комментария магазину
     public OrderBuilder WithCommentForShop(string value)
     {
         _commentForShop = value;
         return this;
     }
 
+    // Метод для установки комментария доставке
     public OrderBuilder WithCommentForDelivery(string value)
     {
         _commentForDelivery = value;
         return this;
     }
 
+    // Метод для установки номера телефона получателя
     public OrderBuilder WithReceiverPhoneNumber(string? value)
     {
         _receiverPhoneNumber = value;
         return this;
     }
 
+    // Создание финального объекта заказа
     public Order Build()
     {
         return new Order(
@@ -294,16 +395,18 @@ public class OrderBuilder
     }
 }
 ```
-Использование:
 
-Теперь код клиента становится чистым. Клиент указывает только то, что отклоняется от нормы.
+#### Использование Convenience Builder
+
+Клиентский код становится лаконичным. Указываются только параметры, отличающиеся от значений по умолчанию:
 
 ```csharp
+// Минимальный заказ - только товары
 var order = new OrderBuilder()
     .WithItem(new OrderItem(Price: 1337, Amount: 2))
     .Build();
 
-// Или с большей кастомизацией:
+// Заказ с дополнительной конфигурацией
 var customOrder = new OrderBuilder()
     .WithItem(new OrderItem(Price: 100, Amount: 5))
     .WithCommentForShop("Упаковать аккуратно!")
@@ -311,29 +414,35 @@ var customOrder = new OrderBuilder()
     .Build();
 ```
 
-То есть с помощью Convenience Builder мы упрощаем создание объектов с гигантским конструктором, предполагая, что некоторые аргумент можем сделать по умолчанию. 
+Convenience Builder избавляет от необходимости передавать множество параметров с одинаковыми значениями, делая код более читаемым и поддерживаемым. 
 
-Следующий уровень: Stateful Constructor 
+### 2. Stateful Constructor
 
-#### 2. Stateful Constructor (Строитель с состоянием и валидацией)
+**Stateful Constructor** (Строитель с состоянием) — это тип строителя, который инкапсулирует логику валидации и бизнес-правила в процессе создания объекта.
 
-> используется как конструктор, имеющий состояние (валидации)
+Ключевые характеристики:
 
-- в билдер выносятся валидации входных данных
-- позволяет выполнять валидации во время сбора данных
-    - fail-fast
-    - упрощение логики валидации
-    - упрощение определения момента добавления некорректных данных
+- **Fail-fast подход** — ошибки обнаруживаются немедленно при добавлении некорректных данных, а не в момент вызова `Build()`
+- **Инкапсуляция валидации** — вся логика проверки сосредоточена в строителе, а не в модели
+- **Упрощение отладки** — точно известно, на каком шаге произошла ошибка
 
-Двигаемся дальше. Вот появляется новое требование: в заказе не может быть больше 20 товаров. Где это проверять?
+#### Проблема: где размещать валидацию
 
-Если добавить проверку в конструктор Order, это нарушит принцип единственной ответственности — модель станет отвечать за валидацию правил бизнеса. Кроме того, если 21-й товар добавлен, мы поймём об этом только при Build().
+Представим новое требование: в заказе не может быть больше 20 товаров. Возникает вопрос — где выполнять эту проверку?
 
-Stateful Constructor решает это так: валидация происходит во время сбора данных (fail-fast).
+Варианты размещения валидации и их недостатки:
+
+1. **В конструкторе модели** — нарушает принцип единственной ответственности (SRP). Модель отвечает за представление данных, а не за бизнес-правила их создания.
+2. **В методе `Build()`** — ошибка обнаруживается поздно, после добавления всех товаров. Сложно определить, какой именно вызов метода `WithItem()` стал проблемным.
+
+#### Решение через Stateful Constructor
+
+Stateful Constructor выполняет валидацию в момент добавления данных:
 
 ```csharp
 public class Order
 {
+    // Приватный конструктор - объект можно создать только через Builder
     private Order(IEnumerable<OrderItem> items)
     {
         Items = items;
@@ -341,22 +450,29 @@ public class Order
 
     public IEnumerable<OrderItem> Items { get; }
 
-    // Builder — вложенный класс
+    // Builder как вложенный класс
+    // Это подчёркивает тесную связь между моделью и её строителем
     public class OrderBuilder
     {
         private const int MaxOrderItemCount = 20;
-        private readonly List<OrderItem> _items = [];
+        private readonly List<OrderItem> _items = new List<OrderItem>();
 
+        // Валидация выполняется сразу при добавлении товара
         public OrderBuilder WithItem(OrderItem item)
         {
+            // Fail-fast: проверка до добавления элемента
             if (_items.Count >= MaxOrderItemCount)
+            {
                 throw new ArgumentException(
-                    $"Cannot add more than {MaxOrderItemCount} items");
+                    $"Невозможно добавить более {MaxOrderItemCount} товаров в заказ");
+            }
             
             _items.Add(item);
             return this;
         }
 
+        // В методе Build() валидация уже не требуется
+        // Все проверки выполнены на этапе добавления данных
         public Order Build()
         {
             return new Order(_items.ToArray());
@@ -364,46 +480,74 @@ public class Order
     }
 }
 ```
-использование:
+
+#### Использование Stateful Constructor
+
 ```csharp
 var orderBuilder = new Order.OrderBuilder();
+
+// Добавляем 20 товаров - всё работает корректно
 for (int i = 0; i < 20; i++)
 {
-    orderBuilder.WithItem(new OrderItem(Price: i, Amount: 1));
+    orderBuilder.WithItem(new OrderItem(Price: i * 10, Amount: 1));
 }
 
-// Это выбросит исключение сразу же!
-orderBuilder.WithItem(new OrderItem(Price: 1000, Amount: 1));
+// Попытка добавить 21-й товар немедленно вызовет исключение
+// Мы точно знаем, где произошла ошибка
+orderBuilder.WithItem(new OrderItem(Price: 1000, Amount: 1)); // ArgumentException!
 ```
-Ключевые преимущества:
-- Fail-fast: ошибка обнаруживается немедленно, а не при Build()
-- Упрощение валидации: логика валидации находится в одном месте (в builder'е)
-- Ясная причина ошибки: вы точно знаете, какой именно WithItem() вызов вызвал проблему
-Почему конструктор приватный? Потому что мы хотим, чтобы все создавали заказ только через builder, в котором есть валидация. Это обеспечивает инвариант: любой Order в системе гарантированно содержит не более 20 товаров.
 
-#### Архитектурное решение: Полиморфизм через интерфейсы
+#### Преимущества Stateful Constructor
 
-Иногда в системе есть разные типы заказов. Например, заказы для обычных пользователей (с лимитом 20 товаров) и премиум-заказы (без лимита).
+1. **Fail-fast** — ошибка обнаруживается немедленно в момент нарушения правила, а не при вызове `Build()`
+2. **Локализация валидации** — вся логика проверок находится в строителе, модель остаётся чистой
+3. **Точность диагностики** — известно, какой именно вызов метода вызвал проблему
+4. **Гарантия инвариантов** — приватный конструктор модели гарантирует, что объект может быть создан только через валидирующий строитель
 
-Неправильный подход: создать UnlimitedOrderBuilder и LimitedOrderBuilder и использовать их отдельно.
+#### Зачем приватный конструктор
 
-Правильный подход: использовать интерфейс:
+Приватный конструктор модели `Order` обеспечивает важный архитектурный инвариант: все объекты `Order` в системе гарантированно проходят валидацию через строитель. Это предотвращает создание некорректных объектов и упрощает рассуждения о корректности системы.
+
+### Полиморфизм строителей через интерфейсы
+
+В реальных системах часто существуют различные типы объектов с разной логикой создания. Например, заказы для обычных пользователей имеют лимит в 20 товаров, а премиум-заказы не ограничены.
+
+#### Антипаттерн: жёсткая привязка к конкретным типам
+
+Неправильный подход — создать два независимых строителя и использовать их напрямую:
+
 ```csharp
+// Плохо: клиентский код зависит от конкретных реализаций
+var regularBuilder = new LimitedOrderBuilder();
+var premiumBuilder = new UnlimitedOrderBuilder();
+```
+
+Это создаёт жёсткую связанность (tight coupling) между клиентским кодом и конкретными реализациями строителей.
+
+#### Правильный подход: программирование через интерфейс
+Определим общий интерфейс для всех типов строителей заказов:
+
+```csharp
+// Общий интерфейс для всех строителей заказов
 public interface IOrderBuilder
 {
     IOrderBuilder WithItem(OrderItem item);
     Order Build();
 }
 
+// Строитель с ограничением на количество товаров
 public class LimitedOrderBuilder : IOrderBuilder
 {
     private const int MaxOrderItemCount = 20;
-    private readonly List<OrderItem> _items = [];
+    private readonly List<OrderItem> _items = new List<OrderItem>();
 
     public IOrderBuilder WithItem(OrderItem item)
     {
         if (_items.Count >= MaxOrderItemCount)
-            throw new ArgumentException("Limit exceeded");
+        {
+            throw new ArgumentException($"Превышен лимит товаров: {MaxOrderItemCount}");
+        }
+        
         _items.Add(item);
         return this;
     }
@@ -414,9 +558,10 @@ public class LimitedOrderBuilder : IOrderBuilder
     }
 }
 
+// Строитель без ограничений для премиум-пользователей
 public class UnlimitedOrderBuilder : IOrderBuilder
 {
-    private readonly List<OrderItem> _items = [];
+    private readonly List<OrderItem> _items = new List<OrderItem>();
 
     public IOrderBuilder WithItem(OrderItem item)
     {
@@ -430,13 +575,18 @@ public class UnlimitedOrderBuilder : IOrderBuilder
     }
 }
 ```
-Использование:
+
+#### Использование полиморфных строителей
+
+Клиентский код работает с интерфейсом, не зная о конкретной реализации:
+
 ```csharp
 public class OrderService
 {
+    // Метод зависит от интерфейса, а не от конкретной реализации
     public Order CreateOrder(User user, IOrderBuilder builder)
     {
-        // Код не знает, ограниченный это builder или нет
+        // Код не знает, какой именно строитель используется
         return builder
             .WithItem(new OrderItem(Price: 100, Amount: 1))
             .WithItem(new OrderItem(Price: 200, Amount: 2))
@@ -444,26 +594,34 @@ public class OrderService
     }
 }
 
-// Для обычного пользователя
+// Использование в клиентском коде
+var orderService = new OrderService();
+
+// Для обычного пользователя - строитель с ограничениями
 var regularBuilder = new LimitedOrderBuilder();
-var regularOrder = orderService.CreateOrder(user, regularBuilder);
+var regularOrder = orderService.CreateOrder(regularUser, regularBuilder);
 
-// Для премиум-пользователя
+// Для премиум-пользователя - строитель без ограничений
 var premiumBuilder = new UnlimitedOrderBuilder();
-var premiumOrder = orderService.CreateOrder(user, premiumBuilder);
+var premiumOrder = orderService.CreateOrder(premiumUser, premiumBuilder);
 ```
-Архитектурный смысл:
-- Code не зависит от конкретных типов builder'ов
-- Выбор типа builder'а происходит на границе системы (где-то выше)
-- Это инвертирует зависимость: высокоуровневый код зависит от интерфейса, а не от реализации
 
-#### Директор
+#### Архитектурные преимущества
 
-Теперь рассмотрим ситуацию, когда процесс построения объекта имеет определённый порядок и логику.
+1. **Dependency Inversion Principle (Принцип инверсии зависимостей)** — высокоуровневый код зависит от абстракции (`IOrderBuilder`), а не от конкретных реализаций
+2. **Open/Closed Principle (Принцип открытости/закрытости)** — можно добавлять новые типы строителей без изменения существующего кода
+3. **Гибкость** — выбор конкретного строителя происходит на границе системы, обеспечивая централизованное управление политиками создания объектов
 
-Например, мы собираем пиццу:
+### 3. Director Pattern
+
+**Director** (Директор) — это компонент паттерна Builder, который инкапсулирует алгоритм построения объекта. Директор знает, в каком порядке вызывать методы строителя для создания конкретной конфигурации объекта.
+
+#### Проблема: повторяющиеся последовательности построения
+
+Рассмотрим систему заказа пиццы. Часто клиенты хотят заказать стандартные рецепты, например, пиццу "Пепперони" или "Маргариту". Каждый рецепт — это определённая последовательность шагов:
 
 ```csharp
+// Модель пиццы
 public record Pizza(
     PizzaSize Size,
     DoughType DoughType,
@@ -471,137 +629,22 @@ public record Pizza(
     IReadOnlyCollection<Topping> Toppings
 );
 
-public class PizzaBuilder
-{
-    private readonly List<Topping> _toppings = [];
-    private PizzaSize _size = PizzaSize.Medium;
-    private DoughType _doughType = DoughType.Standard;
-    private Sauce _sauce = Sauce.Tomato;
-
-    public PizzaBuilder WithTopping(Topping topping) { /* ... */ }
-    public PizzaBuilder WithSize(PizzaSize size) { /* ... */ }
-    public PizzaBuilder WithDoughType(DoughType type) { /* ... */ }
-    public PizzaBuilder WithSause(Sauce sauce) { /* ... */ }
-
-    public Pizza Build() { /* ... */ }
-}
-```
-
-Проблема: часто нужно создать пиццу по рецепту. Например, пепперони пицца — это всегда определённая комбинация:
-
-1. Стандартное тесто
-2. Томатный соус
-3. Средний размер
-4. Сыр и пепперони
-
-Решение: Директор — класс, который знает алгоритм построения и направляет builder:
-
-```csharp
-public interface IPizzaDirector
-{
-    PizzaBuilder Direct(PizzaBuilder builder);
-}
-
-public class PepperoniPizzaDirector : IPizzaDirector
-{
-    public PizzaBuilder Direct(PizzaBuilder builder)
-    {
-        return builder
-            .WithDoughType(DoughType.Standard)
-            .WithSause(Sauce.Tomato)
-            .WithSize(PizzaSize.Medium)
-            .WithTopping(Topping.Cheese)
-            .WithTopping(Topping.Pepperoni);
-    }
-}
-```
-использование:
-```csharp
-var pizzaBuilder = new PizzaBuilder();
-var pepperoniDirector = new PepperoniPizzaDirector();
-
-var myPizza = pepperoniDirector
-    .Direct(pizzaBuilder)
-    .WithTopping(Topping.Jalapeno)      // Кастомизируем после директора
-    .WithSize(PizzaSize.Large)
-    .Build();
-```
-Альтернатива через Extension Methods:
-
-В C# часто используют extension methods вместо отдельного класса директора:
-
-```csharp
-public static class PizzaBuilderExtensions
-{
-    public static PizzaBuilder DirectPepperoni(this PizzaBuilder builder)
-    {
-        return builder
-            .WithDoughType(DoughType.Standard)
-            .WithSause(Sauce.Tomato)
-            .WithSize(PizzaSize.Medium)
-            .WithTopping(Topping.Cheese)
-            .WithTopping(Topping.Pepperoni);
-    }
-}
-```
-Использование:
-```csharp
-var myPizza = new PizzaBuilder()
-    .DirectPepperoni()
-    .WithTopping(Topping.Jalapeno)
-    .WithSize(PizzaSize.Large)
-    .Build();
-```
-Это более простой и изящный способ в C#. Директор как класс нужен, когда нужен полиморфизм (разные реализации директора).
-
-Пример директора с ограничениями (нельзя менять тесто и не больше 5 топпингов):
-```csharp
-using System;
-using System.Collections.Generic;
-
-// === Доменные модели ===
+// Перечисления для параметров
 public enum PizzaSize { Small, Medium, Large }
 public enum DoughType { Standard, Thin, Thick }
 public enum Sauce { Tomato, BBQ, White }
 public enum Topping { Cheese, Pepperoni, Mushrooms, Olives, Jalapeno, Bacon, Pineapple }
 
-public record Pizza(
-    PizzaSize Size,
-    DoughType DoughType,
-    Sauce Sauce,
-    IReadOnlyCollection<Topping> Toppings
-);
-
-// === Builder с ограничениями ===
+// Строитель пиццы
 public class PizzaBuilder
 {
-    private const int MaxAdditionalToppings = 5;
-    
-    private readonly List<Topping> _toppings = [];
+    private readonly List<Topping> _toppings = new List<Topping>();
     private PizzaSize _size = PizzaSize.Medium;
     private DoughType _doughType = DoughType.Standard;
     private Sauce _sauce = Sauce.Tomato;
-    
-    // Флаг, который блокирует изменение теста после работы директора
-    private bool _doughTypeLocked = false;
-    
-    // Счётчик базовых топпингов (которые добавил директор)
-    // Их не учитываем в лимите дополнительных топпингов
-    private int _baseToppingsCount = 0;
 
-    // === Публичные методы для клиента ===
-    
     public PizzaBuilder WithTopping(Topping topping)
     {
-        // Вычисляем сколько дополнительных топпингов уже добавлено
-        int additionalToppingsCount = _toppings.Count - _baseToppingsCount;
-        
-        if (additionalToppingsCount >= MaxAdditionalToppings)
-        {
-            throw new InvalidOperationException(
-                $"Cannot add more than {MaxAdditionalToppings} additional toppings");
-        }
-        
         _toppings.Add(topping);
         return this;
     }
@@ -614,13 +657,6 @@ public class PizzaBuilder
 
     public PizzaBuilder WithDoughType(DoughType type)
     {
-        // Проверяем, не заблокирован ли тип теста директором
-        if (_doughTypeLocked)
-        {
-            throw new InvalidOperationException(
-                "Cannot change dough type - it was locked by the recipe");
-        }
-        
         _doughType = type;
         return this;
     }
@@ -633,9 +669,220 @@ public class PizzaBuilder
 
     public Pizza Build()
     {
+        return new Pizza(
+            Size: _size,
+            DoughType: _doughType,
+            Sauce: _sauce,
+            Toppings: _toppings.AsReadOnly()
+        );
+    }
+}
+```
+
+Без директора клиентский код должен каждый раз повторять последовательность создания стандартной пиццы:
+
+```csharp
+// Повторяющийся код для создания пиццы "Пепперони"
+var pepperoni1 = new PizzaBuilder()
+    .WithDoughType(DoughType.Standard)
+    .WithSauce(Sauce.Tomato)
+    .WithSize(PizzaSize.Medium)
+    .WithTopping(Topping.Cheese)
+    .WithTopping(Topping.Pepperoni)
+    .Build();
+
+// Та же последовательность повторяется снова
+var pepperoni2 = new PizzaBuilder()
+    .WithDoughType(DoughType.Standard)
+    .WithSauce(Sauce.Tomato)
+    .WithSize(PizzaSize.Medium)
+    .WithTopping(Topping.Cheese)
+    .WithTopping(Topping.Pepperoni)
+    .Build();
+```
+
+#### Решение: класс Director
+
+Director инкапсулирует алгоритм построения конкретной конфигурации:
+
+```csharp
+// Интерфейс директора
+public interface IPizzaDirector
+{
+    PizzaBuilder Direct(PizzaBuilder builder);
+}
+
+// Директор для пиццы "Пепперони"
+public class PepperoniPizzaDirector : IPizzaDirector
+{
+    public PizzaBuilder Direct(PizzaBuilder builder)
+    {
+        // Директор знает точный рецепт пиццы "Пепперони"
+        return builder
+            .WithDoughType(DoughType.Standard)
+            .WithSauce(Sauce.Tomato)
+            .WithSize(PizzaSize.Medium)
+            .WithTopping(Topping.Cheese)
+            .WithTopping(Topping.Pepperoni);
+    }
+}
+
+// Директор для вегетарианской пиццы
+public class VegetarianPizzaDirector : IPizzaDirector
+{
+    public PizzaBuilder Direct(PizzaBuilder builder)
+    {
+        return builder
+            .WithDoughType(DoughType.Thin)
+            .WithSauce(Sauce.White)
+            .WithSize(PizzaSize.Medium)
+            .WithTopping(Topping.Cheese)
+            .WithTopping(Topping.Mushrooms)
+            .WithTopping(Topping.Olives);
+    }
+}
+```
+
+#### Использование Director
+
+```csharp
+var pizzaBuilder = new PizzaBuilder();
+var pepperoniDirector = new PepperoniPizzaDirector();
+
+// Создаём стандартную пиццу "Пепперони" с дополнительными топпингами
+var myPizza = pepperoniDirector
+    .Direct(pizzaBuilder)
+    .WithTopping(Topping.Jalapeno)      // Дополнительная кастомизация после директора
+    .WithSize(PizzaSize.Large)          // Изменяем размер
+    .Build();
+```
+
+#### Альтернатива: Extension Methods в C#
+
+В C# часто применяют методы расширения (Extension Methods) вместо отдельных классов директоров. Этот подход более лаконичен:
+
+```csharp
+public static class PizzaBuilderExtensions
+{
+    // Метод расширения для создания базовой пиццы "Пепперони"
+    public static PizzaBuilder AsPepperoni(this PizzaBuilder builder)
+    {
+        return builder
+            .WithDoughType(DoughType.Standard)
+            .WithSauce(Sauce.Tomato)
+            .WithSize(PizzaSize.Medium)
+            .WithTopping(Topping.Cheese)
+            .WithTopping(Topping.Pepperoni);
+    }
+
+    // Метод расширения для вегетарианской пиццы
+    public static PizzaBuilder AsVegetarian(this PizzaBuilder builder)
+    {
+        return builder
+            .WithDoughType(DoughType.Thin)
+            .WithSauce(Sauce.White)
+            .WithSize(PizzaSize.Medium)
+            .WithTopping(Topping.Cheese)
+            .WithTopping(Topping.Mushrooms)
+            .WithTopping(Topping.Olives);
+    }
+}
+```
+
+Использование методов расширения:
+
+```csharp
+// Более естественный синтаксис для C#
+var myPizza = new PizzaBuilder()
+    .AsPepperoni()
+    .WithTopping(Topping.Jalapeno)
+    .WithSize(PizzaSize.Large)
+    .Build();
+```
+
+#### Когда использовать классы Director, а когда Extension Methods
+
+- **Используйте классы Director**, когда:
+  - Нужен полиморфизм — различные реализации директоров должны быть взаимозаменяемы
+  - Директор имеет состояние или зависимости
+  - Требуется внедрение зависимостей (Dependency Injection)
+
+- **Используйте Extension Methods**, когда:
+  - Директор не имеет состояния — это просто последовательность вызовов
+  - Важна простота и лаконичность кода
+  - Достаточно статической конфигурации без полиморфизма
+
+#### Расширенный пример: Director с ограничениями
+
+Рассмотрим более сложный случай, когда Director устанавливает базовую конфигурацию, которую клиент не может изменить. Например, тип теста определяется рецептом и не может быть изменён, а количество дополнительных топпингов ограничено пятью.
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class AdvancedPizzaBuilder
+{
+    private const int MaxAdditionalToppings = 5;
+    
+    private readonly List<Topping> _toppings = new List<Topping>();
+    private PizzaSize _size = PizzaSize.Medium;
+    private DoughType _doughType = DoughType.Standard;
+    private Sauce _sauce = Sauce.Tomato;
+    
+    // Флаг блокировки типа теста после установки директором
+    private bool _doughTypeLocked = false;
+    
+    // Счётчик базовых топпингов, установленных директором
+    // Эти топпинги не входят в лимит дополнительных топпингов
+    private int _baseToppingsCount = 0;
+
+    // Публичные методы для клиента с проверками
+    
+    public AdvancedPizzaBuilder WithTopping(Topping topping)
+    {
+        // Вычисляем количество дополнительных топпингов
+        int additionalToppingsCount = _toppings.Count - _baseToppingsCount;
+        
+        if (additionalToppingsCount >= MaxAdditionalToppings)
+        {
+            throw new InvalidOperationException(
+                $"Невозможно добавить более {MaxAdditionalToppings} дополнительных топпингов");
+        }
+        
+        _toppings.Add(topping);
+        return this;
+    }
+
+    public AdvancedPizzaBuilder WithSize(PizzaSize size)
+    {
+        _size = size;
+        return this;
+    }
+
+    public AdvancedPizzaBuilder WithDoughType(DoughType type)
+    {
+        if (_doughTypeLocked)
+        {
+            throw new InvalidOperationException(
+                "Тип теста заблокирован рецептом и не может быть изменён");
+        }
+        
+        _doughType = type;
+        return this;
+    }
+
+    public AdvancedPizzaBuilder WithSauce(Sauce sauce)
+    {
+        _sauce = sauce;
+        return this;
+    }
+
+    public Pizza Build()
+    {
         if (_toppings.Count == 0)
         {
-            throw new InvalidOperationException("Pizza must have at least one topping");
+            throw new InvalidOperationException("Пицца должна содержать хотя бы один топпинг");
         }
 
         return new Pizza(
@@ -646,163 +893,123 @@ public class PizzaBuilder
         );
     }
 
-    // === Внутренние методы для директора ===
-    // Эти методы используются только директором и игнорируют ограничения
+    // Внутренние методы для использования директором
+    // Эти методы обходят валидацию и используются только при построении базовой конфигурации
     
-    internal PizzaBuilder SetBaseDoughType(DoughType type)
+    internal AdvancedPizzaBuilder SetBaseDoughType(DoughType type)
     {
         _doughType = type;
-        _doughTypeLocked = true;  // Блокируем изменение теста
+        _doughTypeLocked = true;  // Блокируем изменение после установки
         return this;
     }
 
-    internal PizzaBuilder AddBaseTopping(Topping topping)
+    internal AdvancedPizzaBuilder AddBaseTopping(Topping topping)
     {
         _toppings.Add(topping);
         _baseToppingsCount++;  // Увеличиваем счётчик базовых топпингов
         return this;
     }
 
-    internal PizzaBuilder SetBaseSauce(Sauce sauce)
+    internal AdvancedPizzaBuilder SetBaseSauce(Sauce sauce)
     {
         _sauce = sauce;
         return this;
     }
 
-    internal PizzaBuilder SetBaseSize(PizzaSize size)
+    internal AdvancedPizzaBuilder SetBaseSize(PizzaSize size)
     {
         _size = size;
         return this;
     }
 }
 
-// === Директор ===
-public interface IPizzaDirector
+// Директор с использованием внутренних методов
+public class StrictPepperoniDirector
 {
-    PizzaBuilder Direct(PizzaBuilder builder);
-}
-
-public class PepperoniPizzaDirector : IPizzaDirector
-{
-    public PizzaBuilder Direct(PizzaBuilder builder)
+    public AdvancedPizzaBuilder Direct(AdvancedPizzaBuilder builder)
     {
         // Используем внутренние методы для установки базовой конфигурации
-        // Эти методы не подчиняются ограничениям
         return builder
-            .SetBaseDoughType(DoughType.Standard)  // Тесто блокируется!
+            .SetBaseDoughType(DoughType.Standard)  // Устанавливаем и блокируем тип теста
             .SetBaseSauce(Sauce.Tomato)
             .SetBaseSize(PizzaSize.Medium)
-            .AddBaseTopping(Topping.Cheese)        // Базовый топпинг
-            .AddBaseTopping(Topping.Pepperoni);    // Базовый топпинг
+            .AddBaseTopping(Topping.Cheese)        // Базовый топпинг из рецепта
+            .AddBaseTopping(Topping.Pepperoni);    // Базовый топпинг из рецепта
     }
 }
 
-public class VegetarianPizzaDirector : IPizzaDirector
+// Пример использования
+public class DirectorExamples
 {
-    public PizzaBuilder Direct(PizzaBuilder builder)
+    public static void Demo()
     {
-        return builder
-            .SetBaseDoughType(DoughType.Thin)
-            .SetBaseSauce(Sauce.White)
-            .SetBaseSize(PizzaSize.Medium)
-            .AddBaseTopping(Topping.Cheese)
-            .AddBaseTopping(Topping.Mushrooms)
-            .AddBaseTopping(Topping.Olives);
-    }
-}
+        Console.WriteLine("Пример 1: Успешная кастомизация");
+        var builder1 = new AdvancedPizzaBuilder();
+        var director = new StrictPepperoniDirector();
 
-// === Примеры использования ===
-public class Program
-{
-    public static void Main()
-    {
-        Console.WriteLine("=== Пример 1: Успешная кастомизация пепперони ===");
-        var pizzaBuilder1 = new PizzaBuilder();
-        var pepperoniDirector = new PepperoniPizzaDirector();
-
-        var customPepperoni = pepperoniDirector
-            .Direct(pizzaBuilder1)
-            .WithTopping(Topping.Jalapeno)      // +1 доп топпинг (1/5)
-            .WithTopping(Topping.Mushrooms)     // +2 доп топпинг (2/5)
-            .WithSize(PizzaSize.Large)          // Размер можно менять
+        var customPizza = director
+            .Direct(builder1)
+            .WithTopping(Topping.Jalapeno)      // Дополнительный топпинг 1/5
+            .WithTopping(Topping.Mushrooms)     // Дополнительный топпинг 2/5
+            .WithSize(PizzaSize.Large)          // Размер можно изменить
             .Build();
 
-        PrintPizza(customPepperoni);
+        PrintPizza(customPizza);
 
-        Console.WriteLine("\n=== Пример 2: Попытка изменить тесто (ОШИБКА) ===");
+        Console.WriteLine("\nПример 2: Попытка изменить заблокированное тесто");
         try
         {
-            var pizzaBuilder2 = new PizzaBuilder();
-            var failedPizza = pepperoniDirector
-                .Direct(pizzaBuilder2)
-                .WithDoughType(DoughType.Thick)  // Это вызовет исключение!
+            var builder2 = new AdvancedPizzaBuilder();
+            var failedPizza = director
+                .Direct(builder2)
+                .WithDoughType(DoughType.Thick)  // Вызовет исключение
                 .Build();
         }
         catch (InvalidOperationException ex)
         {
-            Console.WriteLine($"❌ Ошибка: {ex.Message}");
+            Console.WriteLine($"Ошибка: {ex.Message}");
         }
 
-        Console.WriteLine("\n=== Пример 3: Превышение лимита топпингов (ОШИБКА) ===");
+        Console.WriteLine("\nПример 3: Превышение лимита дополнительных топпингов");
         try
         {
-            var pizzaBuilder3 = new PizzaBuilder();
-            var overloadedPizza = pepperoniDirector
-                .Direct(pizzaBuilder3)
-                .WithTopping(Topping.Bacon)         // +1 (1/5)
-                .WithTopping(Topping.Mushrooms)     // +2 (2/5)
-                .WithTopping(Topping.Olives)        // +3 (3/5)
-                .WithTopping(Topping.Jalapeno)      // +4 (4/5)
-                .WithTopping(Topping.Pineapple)     // +5 (5/5)
-                .WithTopping(Topping.Bacon)         // +6 - ОШИБКА!
+            var builder3 = new AdvancedPizzaBuilder();
+            var overloadedPizza = director
+                .Direct(builder3)
+                .WithTopping(Topping.Bacon)
+                .WithTopping(Topping.Mushrooms)
+                .WithTopping(Topping.Olives)
+                .WithTopping(Topping.Jalapeno)
+                .WithTopping(Topping.Pineapple)
+                .WithTopping(Topping.Bacon)  // Шестой дополнительный - вызовет исключение
                 .Build();
         }
         catch (InvalidOperationException ex)
         {
-            Console.WriteLine($"❌ Ошибка: {ex.Message}");
+            Console.WriteLine($"Ошибка: {ex.Message}");
         }
-
-        Console.WriteLine("\n=== Пример 4: Максимум дополнительных топпингов ===");
-        var pizzaBuilder4 = new PizzaBuilder();
-        var maxPizza = pepperoniDirector
-            .Direct(pizzaBuilder4)
-            .WithTopping(Topping.Bacon)         // +1
-            .WithTopping(Topping.Mushrooms)     // +2
-            .WithTopping(Topping.Olives)        // +3
-            .WithTopping(Topping.Jalapeno)      // +4
-            .WithTopping(Topping.Pineapple)     // +5 - максимум!
-            .WithSize(PizzaSize.Large)
-            .Build();
-
-        PrintPizza(maxPizza);
-
-        Console.WriteLine("\n=== Пример 5: Вегетарианская пицца с базовыми 3 топпингами ===");
-        var pizzaBuilder5 = new PizzaBuilder();
-        var vegetarianDirector = new VegetarianPizzaDirector();
-        
-        var veggiePizza = vegetarianDirector
-            .Direct(pizzaBuilder5)
-            .WithTopping(Topping.Jalapeno)      // +1 доп топпинг
-            .WithTopping(Topping.Pineapple)     // +2 доп топпинг
-            .Build();
-
-        PrintPizza(veggiePizza);
     }
 
     private static void PrintPizza(Pizza pizza)
     {
-        Console.WriteLine($"🍕 Пицца:");
-        Console.WriteLine($"   Размер: {pizza.Size}");
-        Console.WriteLine($"   Тесто: {pizza.DoughType}");
-        Console.WriteLine($"   Соус: {pizza.Sauce}");
-        Console.WriteLine($"   Топпинги ({pizza.Toppings.Count}): {string.Join(", ", pizza.Toppings)}");
+        Console.WriteLine($"Пицца:");
+        Console.WriteLine($"  Размер: {pizza.Size}");
+        Console.WriteLine($"  Тесто: {pizza.DoughType}");
+        Console.WriteLine($"  Соус: {pizza.Sauce}");
+        Console.WriteLine($"  Топпинги ({pizza.Toppings.Count}): {string.Join(", ", pizza.Toppings)}");
     }
 }
 ```
 
-#### Interface-Driven builder 
+Этот подход демонстрирует, как Director может устанавливать неизменяемые параметры базовой конфигурации, оставляя клиенту возможность кастомизации в установленных рамках.
 
-Вернёмся к простому примеру с Email. У нас есть модель:
+### 4. Interface-Driven Builder
+
+**Interface-Driven Builder** (Строитель с управлением через интерфейсы) — это продвинутый подход, который использует систему типов для обеспечения корректности построения объектов на этапе компиляции.
+
+#### Проблема: отложенная проверка обязательных параметров
+
+Рассмотрим модель электронного письма:
 
 ```csharp
 public record Email(
@@ -811,27 +1018,31 @@ public record Email(
     string Body
 );
 ```
-Требование: Address обязателен, а Subject и Body опциональны. Если написать:
+
+Бизнес-правило: адрес (`Address`) обязателен, а тема (`Subject`) и тело (`Body`) опциональны.
+
+При использовании обычного строителя ошибка обнаружится только в момент вызова `Build()`:
+
 ```csharp
 var email = new EmailBuilder()
-    .WithBody("Hello!")
-    .Build();  // Ошибка! Address не установлен
+    .WithBody("Привет!")
+    .Build();  // InvalidOperationException: адрес не установлен
 ```
 
-То ошибка произойдёт при Build(). Но хотелось бы поймать это на этапе компиляции.
+Проблема в том, что компилятор не может предотвратить создание некорректного объекта. Ошибка обнаруживается во время выполнения (runtime), а не на этапе компиляции (compile-time).
 
-Решение: Interface-Driven Builder.
+#### Решение: Interface-Driven Builder
 
-Идея: каждый интерфейс представляет состояние builder'а, и методы возвращают следующее состояние:
+Идея заключается в использовании интерфейсов для представления различных состояний строителя. Каждый метод возвращает интерфейс, который определяет доступные на следующем шаге операции:
 
 ```csharp
-// Первый шаг: нужно установить адрес
+// Интерфейс начального состояния: только установка адреса доступна
 public interface IEmailAddressBuilder
 {
     IEmailBuilder WithAddress(string address);
 }
 
-// Второй шаг: можно установить Subject, Body или Build
+// Интерфейс после установки адреса: доступны опциональные поля и финализация
 public interface IEmailBuilder
 {
     IEmailBuilder WithSubject(string subject);
@@ -839,23 +1050,28 @@ public interface IEmailBuilder
     Email Build();
 }
 
+// Фабрика и реализация строителя
 public static class Email
 {
+    // Точка входа для создания строителя
     public static IEmailAddressBuilder Builder => new EmailBuilder();
 
+    // Приватная реализация, реализующая оба интерфейса
     private class EmailBuilder : IEmailAddressBuilder, IEmailBuilder
     {
         private string? _address;
         private string _subject = string.Empty;
         private string _body = string.Empty;
 
-        // Первый метод: только один способ начать — установить адрес
+        // Метод из IEmailAddressBuilder
+        // Возвращает IEmailBuilder, разблокируя доступ к остальным методам
         public IEmailBuilder WithAddress(string address)
         {
             _address = address;
-            return this;  // Возвращаем IEmailBuilder, а не IEmailAddressBuilder
+            return this;  // Возвращаем this, но как IEmailBuilder
         }
 
+        // Методы из IEmailBuilder
         public IEmailBuilder WithSubject(string subject)
         {
             _subject = subject;
@@ -870,8 +1086,10 @@ public static class Email
 
         public Email Build()
         {
+            // На этом этапе адрес гарантированно установлен благодаря типам
+            // Но для надёжности оставляем проверку
             if (_address is null)
-                throw new ArgumentNullException(nameof(_address));
+                throw new InvalidOperationException("Адрес должен быть установлен");
 
             return new Email(
                 Address: _address,
@@ -882,118 +1100,213 @@ public static class Email
     }
 }
 ```
-Использование:
-```csharp
-// Это не скомпилируется! WithBody() возвращает IEmailBuilder, но нет метода Build() без WithAddress()
-// var email = Email.Builder
-//     .WithBody("Hello!")
-//     .Build();  // Ошибка компилятора!
 
-// Только так работает:
+#### Использование Interface-Driven Builder
+
+```csharp
+// Это НЕ скомпилируется - компилятор не позволит вызвать Build() без WithAddress()
+// var email = Email.Builder
+//     .WithBody("Привет!")
+//     .Build();  // Ошибка компиляции: у IEmailAddressBuilder нет метода WithBody()
+
+// Правильное использование: сначала обязательный адрес
 var email = Email.Builder
     .WithAddress("user@example.com")
-    .WithBody("Hello!")
-    .Build();  // OK!
+    .WithBody("Привет!")
+    .Build();  // Компилируется успешно
 
-// И порядок методов не важен, важен только первый вызов:
+// Порядок опциональных параметров не важен
 var email2 = Email.Builder
     .WithAddress("user@example.com")
-    .WithSubject("Greeting")
-    .WithBody("Hi there!")
+    .WithSubject("Приветствие")
+    .WithBody("Добрый день")
+    .Build();
+
+// Можно установить только адрес
+var email3 = Email.Builder
+    .WithAddress("admin@example.com")
     .Build();
 ```
-Архитектурный смысл:
-- Типобезопасность: компилятор гарантирует, что обязательные поля установлены
-- Self-documenting code: из сигнатуры интерфейса видно, какие методы доступны на каждом шаге
-- Fail-fast на уровне компиляции, а не времени выполнения
 
-Когда использовать: когда у вас есть строгие требования к порядку или обязательности установки полей. В простых случаях это overkill.
+#### Преимущества Interface-Driven Builder
 
-Важное замечание: Когда НЕ смешивать типы Builder'ов
-- смешивать типы builder’ов можно
-- НО! необходимость смешения скорее всего свидетельствует о необходимости декомпозиции модели
-- стоит помнить что реализация builder’а должна зависеть от модели, а не наоборот
+1. **Compile-time safety (Безопасность на этапе компиляции)** — компилятор гарантирует установку обязательных параметров
+2. **Self-documenting API (Самодокументируемый API)** — из типов интерфейсов ясно, какие операции доступны на каждом этапе
+3. **Невозможность создания некорректных объектов** — система типов предотвращает ошибки до выполнения программы
+4. **IntelliSense support (Поддержка автодополнения)** — IDE показывает только доступные на текущем этапе методы
 
-Например:
+#### Когда использовать Interface-Driven Builder
+
+**Используйте**, когда:
+- Есть строгие требования к порядку установки параметров
+- Критична безопасность типов на этапе компиляции
+- Важно предотвратить создание некорректных объектов
+- API должен явно направлять разработчика
+
+**Не используйте**, когда:
+- Все параметры опциональны
+- Порядок установки параметров не имеет значения
+- Сложность реализации не оправдывает преимущества (overkill для простых случаев)
+
+
+## Важные принципы проектирования
+
+### Правило: избегайте смешивания типов строителей
+
+Технически возможно использовать несколько строителей для одного объекта, но такая необходимость часто указывает на проблемы в дизайне модели.
+
+#### Антипаттерн: множественные строители для одной модели
+
 ```csharp
-// Плохо: один заказ собирается двумя builder'ами
+// Плохо: один заказ собирается разными строителями
 var builder1 = new OrderBuilder();
 var builder2 = new LimitedOrderBuilder();
 
-builder1.WithItem(...);
-builder2.WithItem(...);
+builder1.WithItem(item1);
+builder2.WithItem(item2);
 
-// Как теперь собрать заказ? Который из них использовать?
+// Проблема: как собрать заказ? Какой строитель использовать?
+// Данные распределены между двумя объектами
 ```
-Если вам нужны оба типа builder'ов, это часто означает, что модель слишком сложная и её нужно разложить:
+
+#### Решение: декомпозиция модели
+
+Если требуются различные строители, это сигнал о том, что модель слишком сложна и должна быть разделена:
+
 ```csharp
-// Лучше: разные заказы — разные модели
+// Хорошо: разные модели для разных типов заказов
 public record RegularOrder(IEnumerable<OrderItem> Items);
 public record PremiumOrder(IEnumerable<OrderItem> Items, string VipStatus);
 
-// У каждого свой builder
-public class RegularOrderBuilder { }
-public class PremiumOrderBuilder { }
-```
-**Золотое правило: реализация builder'а зависит от модели, а не наоборот.**
-Практический смысл и применение
-Где Builder используется в реальном коде?
+// Каждая модель имеет свой строитель
+public class RegularOrderBuilder 
+{
+    // Логика для обычного заказа
+}
 
-1. HTTP запросы
+public class PremiumOrderBuilder 
+{
+    // Логика для премиум-заказа
+}
+```
+
+### Золотое правило зависимостей
+
+**Строитель зависит от модели, а не наоборот.**
+
+Модель должна оставаться независимой от способов её создания. Builder — это вспомогательный компонент, который существует для удобства, но не влияет на саму доменную модель.
+
+## Практическое применение Builder
+
+Паттерн Builder широко используется в реальных приложениях. Рассмотрим типичные сценарии.
+
+### 1. HTTP запросы
+
 ```csharp
+// Построение HTTP-запроса через Builder
 var request = new HttpRequestBuilder()
     .WithUrl("https://api.example.com/orders")
     .WithMethod(HttpMethod.Post)
-    .WithHeader("Authorization", "Bearer token")
+    .WithHeader("Authorization", "Bearer eyJhbGciOiJIUzI1NiIs...")
+    .WithHeader("Content-Type", "application/json")
     .WithBody(jsonPayload)
+    .WithTimeout(TimeSpan.FromSeconds(30))
     .Build();
 ```
-2. SQL queries
+
+### 2. SQL запросы
+
 ```csharp
+// Построение SQL-запроса через Builder
 var query = new SqlQueryBuilder()
     .Select("id", "name", "email")
     .From("users")
-    .Where("age > 18")
-    .OrderBy("name")
+    .Where("age > @minAge")
+    .WithParameter("@minAge", 18)
+    .OrderBy("name ASC")
+    .Limit(100)
     .Build();
 ```
-3. UI/Configuration
+
+### 3. Конфигурация UI
+
 ```csharp
+// Построение формы через Builder
 var form = new FormBuilder()
-    .AddField(new TextField("name", required: true))
-    .AddField(new EmailField("email"))
-    .AddButton("Submit")
+    .AddField(new TextField("name", required: true, maxLength: 100))
+    .AddField(new EmailField("email", required: true))
+    .AddField(new PasswordField("password", minLength: 8))
+    .AddButton("Зарегистрироваться", ButtonType.Submit)
+    .WithValidation(new FormValidator())
     .Build();
 ```
 
-Философия паттерна и уроки проектирования
-Что нас учит Builder?
-1. Разделение ответственности
-Builder отделяет логику создания от самого объекта. Model остаётся чистой, а вся сложность находится в builder'е.
+### 4. Конфигурация приложения
 
-2. Гибкость без сложности
-Вместо множества перегруженных конструкторов (конструктор hell) мы получаем чистый, читаемый код.
+```csharp
+// Построение конфигурации приложения
+var config = new AppConfigBuilder()
+    .WithDatabase("Server=localhost;Database=mydb")
+    .WithLogging(LogLevel.Information)
+    .WithCache(CacheType.Redis, "localhost:6379")
+    .WithFeatureFlag("NewCheckout", enabled: true)
+    .Build();
+```
 
-3. Валидация в нужном месте
-Не в конструкторе модели, не в какой-то службе валидации, а в builder'е, где собираются данные.
+## Философия паттерна и уроки проектирования
 
-4. Fluent Interface
-Код читается как предложение: .WithItem(...).WithComment(...).Build() — это естественно.
+Паттерн Builder учит нас важным принципам разработки программного обеспечения.
 
-5. Инверсия зависимостей
-Высокоуровневый код зависит от интерфейса builder'а, а не от конкретной реализации.
+### 1. Разделение ответственности
 
-6. Типобезопасность
-Interface-driven подход позволяет компилятору гарантировать корректность.
+Builder отделяет логику создания объекта от самой модели. Модель остаётся чистой и сфокусированной на представлении данных, а вся сложность процесса создания инкапсулирована в строителе.
 
-Давайте соберём всё вместе в реалистичный пример:
+```mermaid
+graph LR
+    A[Модель] -->|чистая, без логики создания| B[Представление данных]
+    C[Builder] -->|инкапсулирует| D[Логика создания]
+    C -->|создаёт| A
+```
+
+### 2. Гибкость без сложности
+
+Вместо множества перегруженных конструкторов (constructor hell) Builder предоставляет чистый, читаемый интерфейс. Код становится самодокументируемым.
+
+### 3. Валидация в правильном месте
+
+Логика валидации находится там, где происходит сбор данных — в строителе. Это позволяет:
+
+- Обнаруживать ошибки немедленно (fail-fast)
+- Избежать дублирования проверок
+- Сохранить модель свободной от бизнес-логики валидации
+
+### 4. Fluent Interface
+
+Возвращая `this` из каждого метода, Builder создаёт текучий интерфейс. Код читается как предложение естественного языка:
+
+```csharp
+order.WithItem(item1).WithComment("Срочно").WithDelivery(express).Build();
+```
+
+### 5. Инверсия зависимостей
+
+Используя интерфейсы строителей, высокоуровневый код зависит от абстракций, а не от конкретных реализаций. Это упрощает тестирование и расширение системы.
+
+### 6. Типобезопасность
+
+Interface-Driven Builder использует систему типов для гарантии корректности на этапе компиляции. Компилятор становится союзником, предотвращая ошибки до запуска программы.
+
+## Комплексный пример: система заказов
+
+Рассмотрим полный пример, объединяющий все изученные концепции:
+
 ```csharp
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-// === Доменные модели ===
-public record OrderItem(decimal Price, int Amount);
+// Доменные модели
+public record OrderItem(string Name, decimal Price, int Amount);
 
 public record Order(
     string CommentForShop,
@@ -1003,24 +1316,28 @@ public record Order(
     string? ReceiverPhoneNumber
 )
 {
+    // Вычисляемое свойство - общая стоимость заказа
     public decimal TotalPrice => Items.Sum(i => i.Price * i.Amount);
 }
 
-// === Builder с валидацией ===
+// Builder с валидацией
 public class OrderBuilder
 {
     private const int MaxOrderItemCount = 20;
-    private readonly List<OrderItem> _items = [];
+    private readonly List<OrderItem> _items = new List<OrderItem>();
     private string _commentForShop = string.Empty;
     private string _commentForDelivery = string.Empty;
     private DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
     private string? _receiverPhoneNumber = null;
 
+    // Добавление товара с валидацией
     public OrderBuilder WithItem(OrderItem item)
     {
         if (_items.Count >= MaxOrderItemCount)
+        {
             throw new ArgumentException(
-                $"Cannot add more than {MaxOrderItemCount} items to an order");
+                $"Невозможно добавить более {MaxOrderItemCount} товаров в заказ");
+        }
         
         _items.Add(item);
         return this;
@@ -1044,10 +1361,13 @@ public class OrderBuilder
         return this;
     }
 
+    // Финальное создание заказа
     public Order Build()
     {
         if (_items.Count == 0)
-            throw new InvalidOperationException("Order must contain at least one item");
+        {
+            throw new InvalidOperationException("Заказ должен содержать хотя бы один товар");
+        }
 
         return new Order(
             CommentForShop: _commentForShop,
@@ -1059,62 +1379,61 @@ public class OrderBuilder
     }
 }
 
-// === Пример использования в main ===
-public class Program
+// Примеры использования
+public class OrderExamples
 {
-    public static void Main()
+    public static void Demo()
     {
         Console.WriteLine("=== Пример 1: Простой заказ ===");
         var simpleOrder = new OrderBuilder()
-            .WithItem(new OrderItem(Price: 100, Amount: 2))
-            .WithItem(new OrderItem(Price: 50, Amount: 1))
+            .WithItem(new OrderItem(Name: "Ноутбук", Price: 50000, Amount: 1))
+            .WithItem(new OrderItem(Name: "Мышь", Price: 1500, Amount: 2))
             .Build();
 
         PrintOrder(simpleOrder);
 
         Console.WriteLine("\n=== Пример 2: Заказ с комментариями ===");
-        var complexOrder = new OrderBuilder()
-            .WithItem(new OrderItem(Price: 1337, Amount: 2))
-            .WithCommentForShop("Упаковать аккуратно!")
-            .WithCommentForDelivery("Оставить у двери")
+        var detailedOrder = new OrderBuilder()
+            .WithItem(new OrderItem(Name: "Книга", Price: 800, Amount: 3))
+            .WithCommentForShop("Упаковать аккуратно, это подарок")
+            .WithCommentForDelivery("Позвонить за 30 минут")
             .WithReceiverPhoneNumber("+7-900-123-45-67")
             .Build();
 
-        PrintOrder(complexOrder);
+        PrintOrder(detailedOrder);
 
         Console.WriteLine("\n=== Пример 3: Пошаговое построение ===");
         var builder = new OrderBuilder();
         
-        // Добавляем базовые товары
-        AddDefaultItems(builder);
-        
-        // Добавляем товары по запросу
+        // Различные методы могут добавлять товары
+        AddBasicItems(builder);
         AddRequestedItems(builder);
+        AddRecommendedItems(builder);
         
-        // Добавляем прогнозируемые товары
-        AddForecastedItems(builder);
-        
-        var finalOrder = builder.Build();
-        PrintOrder(finalOrder);
+        var complexOrder = builder
+            .WithCommentForShop("Комплексный заказ")
+            .Build();
 
-        Console.WriteLine("\n=== Пример 4: Обработка ошибок ===");
+        PrintOrder(complexOrder);
+
+        Console.WriteLine("\n=== Пример 4: Обработка ошибок - пустой заказ ===");
         try
         {
-            var badOrder = new OrderBuilder()
-                .Build();  // Ошибка: нет товаров
+            var invalidOrder = new OrderBuilder().Build();
         }
         catch (InvalidOperationException ex)
         {
             Console.WriteLine($"Ошибка: {ex.Message}");
         }
 
-        Console.WriteLine("\n=== Пример 5: Превышение лимита ===");
+        Console.WriteLine("\n=== Пример 5: Обработка ошибок - превышение лимита ===");
         try
         {
-            var tooManyItems = new OrderBuilder();
+            var overloadedBuilder = new OrderBuilder();
             for (int i = 0; i < 21; i++)
             {
-                tooManyItems.WithItem(new OrderItem(Price: 10, Amount: 1));
+                overloadedBuilder.WithItem(
+                    new OrderItem(Name: $"Товар {i}", Price: 100, Amount: 1));
             }
         }
         catch (ArgumentException ex)
@@ -1123,91 +1442,129 @@ public class Program
         }
     }
 
-    private static void AddDefaultItems(OrderBuilder builder)
+    // Вспомогательные методы для добавления товаров
+    private static void AddBasicItems(OrderBuilder builder)
     {
-        builder.WithItem(new OrderItem(Price: 100, Amount: 1));
+        builder.WithItem(new OrderItem(Name: "Хлеб", Price: 50, Amount: 2));
     }
 
     private static void AddRequestedItems(OrderBuilder builder)
     {
         builder
-            .WithItem(new OrderItem(Price: 200, Amount: 2))
-            .WithItem(new OrderItem(Price: 150, Amount: 1));
+            .WithItem(new OrderItem(Name: "Молоко", Price: 80, Amount: 1))
+            .WithItem(new OrderItem(Name: "Яйца", Price: 120, Amount: 1));
     }
 
-    private static void AddForecastedItems(OrderBuilder builder)
+    private static void AddRecommendedItems(OrderBuilder builder)
     {
-        builder.WithItem(new OrderItem(Price: 75, Amount: 3));
+        builder.WithItem(new OrderItem(Name: "Сыр", Price: 350, Amount: 1));
     }
 
+    // Вывод информации о заказе
     private static void PrintOrder(Order order)
     {
         Console.WriteLine($"Заказ создан: {order.CreatedAt:dd.MM.yyyy HH:mm:ss}");
         Console.WriteLine($"Товаров в заказе: {order.Items.Count}");
-        Console.WriteLine($"Сумма заказа: {order.TotalPrice}₽");
-        Console.WriteLine($"Комментарий магазину: {order.CommentForShop}");
-        Console.WriteLine($"Комментарий доставке: {order.CommentForDelivery}");
-        Console.WriteLine($"Телефон получателя: {order.ReceiverPhoneNumber ?? "не указан"}");
+        Console.WriteLine($"Общая сумма: {order.TotalPrice:N2} руб.");
+        
+        if (!string.IsNullOrEmpty(order.CommentForShop))
+            Console.WriteLine($"Комментарий магазину: {order.CommentForShop}");
+        
+        if (!string.IsNullOrEmpty(order.CommentForDelivery))
+            Console.WriteLine($"Комментарий доставке: {order.CommentForDelivery}");
+        
+        if (order.ReceiverPhoneNumber != null)
+            Console.WriteLine($"Телефон получателя: {order.ReceiverPhoneNumber}");
     }
 }
-/* Вывод
-=== Пример 1: Простой заказ ===
-Заказ создан: 31.10.2025 15:33:45
-Товаров в заказе: 2
-Сумма заказа: 250₽
-Комментарий магазину: 
-Комментарий доставке: 
-Телефон получателя: не указан
-
-=== Пример 2: Заказ с комментариями ===
-Заказ создан: 31.10.2025 15:33:45
-Товаров в заказе: 1
-Сумма заказа: 2674₽
-Комментарий магазину: Упаковать аккуратно!
-Комментарий доставке: Оставить у двери
-Телефон получателя: +7-900-123-45-67
-
-=== Пример 3: Пошаговое построение ===
-Заказ создан: 31.10.2025 15:33:45
-Товаров в заказе: 6
-Сумма заказа: 875₽
-Комментарий магазину: 
-Комментарий доставке: 
-Телефон получателя: не указан
-
-=== Пример 4: Обработка ошибок ===
-Ошибка: Order must contain at least one item
-
-=== Пример 5: Превышение лимита ===
-Ошибка: Cannot add more than 20 items to an order
-*/
 ```
 
-Применимость:
-1. **Когда вы хотите избавиться от «телескопического конструктора».**
+## Когда применять паттерн Builder
 
- Допустим, у вас есть один конструктор с десятью опциональными параметрами. Его неудобно вызывать, поэтому вы создали ещё десять конструкторов с меньшим количеством параметров. Всё, что они делают — это переадресуют вызов к базовому конструктору, подавая какие-то значения по умолчанию в параметры, которые пропущены в них самих.
+### 1. Избавление от телескопических конструкторов
+
+Используйте Builder, когда конструктор имеет множество опциональных параметров, что приводит к созданию десятков перегруженных версий:
 
 ```csharp
-class Pizza {
-    Pizza(int size) { ... }
-    Pizza(int size, boolean cheese) { ... }
-    Pizza(int size, boolean cheese, boolean pepperoni) { ... }
-    // ...
+// Антипаттерн: телескопические конструкторы
+public class House
+{
+    public House(string address) { }
+    public House(string address, int floors) { }
+    public House(string address, int floors, bool hasGarage) { }
+    public House(string address, int floors, bool hasGarage, bool hasPool) { }
+    // ...ещё десятки вариантов
+}
 ```
 
-Такого монстра можно создать только в языках, имеющих механизм перегрузки методов, например, C# или Java.
+Паттерн Builder позволяет собирать объекты пошагово, вызывая только необходимые шаги.
 
-Паттерн Строитель позволяет собирать объекты пошагово, вызывая только те шаги, которые вам нужны. А значит, больше не нужно пытаться «запихнуть» в конструктор все возможные опции продукта.
+### 2. Создание различных представлений объекта
 
-2. **Когда ваш код должен создавать разные представления какого-то объекта. Например, деревянные и железобетонные дома.**
+Builder полезен, когда нужно создавать различные конфигурации объекта с общими этапами построения. Например, дома из разных материалов (дерево, бетон, кирпич) строятся по одинаковым этапам, но с разными деталями.
 
-Строитель можно применить, если создание нескольких представлений объекта состоит из одинаковых этапов, которые отличаются в деталях.
+```mermaid
+graph TD
+    A[Директор] -->|управляет| B[Builder]
+    B --> C[Деревянный дом]
+    B --> D[Каменный дом]
+    B --> E[Кирпичный дом]
+```
 
-Интерфейс строителей определит все возможные этапы конструирования. Каждому представлению будет соответствовать собственный класс-строитель. А порядок этапов строительства будет задавать класс-директор.
+Интерфейс строителей определяет этапы конструирования. Каждому представлению соответствует своя реализация. Директор задаёт порядок этапов.
 
-3. **Когда вам нужно собирать сложные составные объекты, например, деревья Компоновщика.**
+### 3. Построение сложных составных объектов
 
-Строитель конструирует объекты пошагово, а не за один проход. Более того, шаги строительства можно выполнять рекурсивно. А без этого не построить древовидную структуру, вроде Компоновщика.
+Builder идеален для создания древовидных структур (например, паттерн Composite), где построение происходит рекурсивно. Builder выполняет шаги последовательно, а не за один проход.
 
-Заметьте, что Строитель не позволяет посторонним объектам иметь доступ к конструируемому объекту, пока тот не будет полностью готов. Это предохраняет клиентский код от получения незаконченных «битых» объектов.
+Важное преимущество: Builder не позволяет клиентскому коду получить доступ к объекту до завершения построения. Это защищает от работы с незавершёнными объектами.
+
+## Преимущества и недостатки
+
+### Преимущества
+
+1. **Пошаговое создание** — объект собирается шаг за шагом, что делает процесс понятным и контролируемым
+2. **Повторное использование кода** — один строитель может создавать различные представления объектов
+3. **Изоляция сложной логики** — детали построения скрыты от клиентского кода
+4. **Single Responsibility Principle** — модель не знает о деталях своего создания
+5. **Fluent Interface** — код становится читаемым и выразительным
+
+### Недостатки
+
+1. **Усложнение кода** — для каждого продукта нужен отдельный строитель
+2. **Избыточность для простых случаев** — если объект простой, Builder может быть излишним
+3. **Дублирование полей** — строитель дублирует поля модели
+
+## Связь с другими паттернами
+
+### Builder и Abstract Factory
+
+- **Abstract Factory** создаёт семейства связанных объектов
+- **Builder** фокусируется на пошаговом создании одного сложного объекта
+
+### Builder и Prototype
+
+- **Prototype** копирует существующие объекты
+- **Builder** создаёт новые объекты с нуля по шагам
+
+### Builder и Composite
+
+Builder часто используется для построения структур Composite, так как позволяет рекурсивно создавать вложенные объекты.
+
+### Builder и Director
+
+Director инкапсулирует алгоритм создания, используя Builder для выполнения шагов. Director знает, какие шаги и в каком порядке выполнять.
+
+## Заключение
+
+Паттерн Builder — это мощный инструмент для создания сложных объектов. Он решает проблемы телескопических конструкторов, обеспечивает чистоту кода и следует принципам SOLID.
+
+Ключевые моменты для запоминания:
+
+1. **Builder отделяет создание от представления** — модель остаётся чистой
+2. **Fluent Interface делает код читаемым** — цепочки вызовов естественны
+3. **Валидация в строителе** — ошибки обнаруживаются рано (fail-fast)
+4. **Гибкость через интерфейсы** — полиморфизм строителей расширяет возможности
+5. **Interface-Driven Builder** — типобезопасность на этапе компиляции
+
+Используйте Builder, когда создание объекта требует множества шагов или когда нужно создавать различные представления одного объекта. Избегайте избыточного применения паттерна для простых случаев, где достаточно обычного конструктора.
