@@ -1,22 +1,33 @@
+# Prototype (Прототип)
 
-### Prototype (Прототип)
+## Введение
 
-Прототип — это порождающий паттерн проектирования, который позволяет копировать объекты, не вдаваясь в подробности их реализации.
+**Prototype** (Прототип) — это порождающий паттерн проектирования (creational design pattern), который позволяет копировать объекты без привязки к их конкретным классам и без необходимости знать детали их внутренней реализации.
 
-Представьте себе задачу. У вас есть сложный объект, например `User`, со множеством полей:
+Паттерн делегирует процесс клонирования самим копируемым объектам, предоставляя общий интерфейс для создания копий.
+
+## Мотивация: зачем нужен паттерн
+
+### Проблема копирования объектов
+
+Представьте, что у вас есть сложный объект, например `User`, со множеством полей различных типов:
+
 ```csharp
+// Пример класса пользователя с множеством полей
 public class User
 {
     public string Name { get; set; }
     public int Age { get; set; }
-    public Email Email { get; set; }
-    public List<Permission> Permissions { get; set; }
-    public Dictionary<string, object> Settings { get; set; }
+    public Email Email { get; set; }                          // Ссылочный тип
+    public List<Permission> Permissions { get; set; }         // Коллекция
+    public Dictionary<string, object> Settings { get; set; }  // Словарь
 }
 ```
-И вам нужно создать копию этого пользователя. Самое простое что можно сделать - это просто скопировать все поля через геттеры:
+
+Вам необходимо создать копию этого пользователя. Самый очевидный подход — скопировать все поля вручную:
 
 ```csharp
+// Наивный подход: ручное копирование полей
 var userCopy = new User 
 { 
     Name = originalUser.Name,
@@ -26,406 +37,603 @@ var userCopy = new User
     Settings = originalUser.Settings
 };
 ```
-Однако здесь есть сразу несколько проблем:
-1. **логика копирования может быть необходима в нескольких места**
-Представьте, что у вас есть сложный объект с 20 полями. Чтобы создать его точную копию, вам придется в нескольких местах программы писать код, который извлекает все 20 полей и передает их в конструктор нового объекта. Это дублирование кода и нарушение принципа DRY (Don't Repeat Yourself).
-2. **данные могут быть сокрыты или модифицированны в конструкторе**
-Что, если у объекта есть private поля, которые определяют его состояние, но у вас нет public "геттеров" для них? Вы, как клиентский код, просто не можете прочитать это состояние, чтобы передать его в конструктор. Более того, конструктор может модифицировать входные данные (например преобразовать их в другой формат), а мы хотим точную копию существующего состояния.
-3. **объект находится в иерархии, при копировании конкретный тип не извествен**
-Представьте, у вас есть массив Shape[], в котором лежат объекты Circle и Square. Вы хотите пройти по массиву и создать копию каждого элемента.
+
+### Проблемы наивного подхода
+
+Однако такой способ копирования имеет ряд серьёзных недостатков.
+
+#### Проблема 1: Дублирование кода
+
+Если у класса 20 полей, вам придётся в нескольких местах программы писать код, который извлекает все 20 полей и передаёт их в конструктор нового объекта. Это:
+
+- Нарушает принцип **DRY** (Don't Repeat Yourself — не повторяйся)
+- Усложняет поддержку: при добавлении нового поля нужно обновить все места копирования
+- Увеличивает риск ошибок и несоответствий
+
+#### Проблема 2: Нарушение инкапсуляции
+
+Что если у объекта есть `private` поля, недоступные через публичные свойства? Как клиентский код, вы просто не можете получить доступ к скрытому состоянию.
+
+Более того, конструктор может модифицировать входные данные (валидация, преобразование формата), а нам нужна точная копия существующего состояния объекта без дополнительных преобразований.
+
 ```csharp
-foreach (Shape shape in shapes)
+public class User
 {
-    // Что здесь писать?
-    Shape copy = ???
+    private readonly string _hashedPassword;  // Приватное поле — недоступно извне!
+    
+    public User(string password)
+    {
+        // Конструктор преобразует пароль в хеш
+        _hashedPassword = ComputeHash(password);
+    }
+    
+    // Как скопировать _hashedPassword снаружи? Никак!
 }
 ```
-Вы не можете написать new Circle() или new Square(), потому что вы оперируете только базовым типом Shape. Вам нужен механизм, позволяющий сказать самому объекту: "Пожалуйста, создай еще одного такого же, как ты".
-Или другой пример, у нас есть админы и есть обычные пользователи
+
+#### Проблема 3: Полиморфизм и неизвестный тип
+
+Предположим, у вас есть массив `Shape[]`, в котором хранятся объекты разных типов: `Circle`, `Square`, `Triangle`. Вы хотите пройти по массиву и создать копию каждого элемента:
+
 ```csharp
-public class User { }
+// Коллекция фигур разных типов
+Shape[] shapes = new Shape[]
+{
+    new Circle(5.0),
+    new Square(10.0),
+    new Triangle(3.0, 4.0, 5.0)
+};
+
+// Проблема: как создать копию каждой фигуры?
+foreach (Shape shape in shapes)
+{
+    // Какой конструктор вызвать?
+    // new Circle()? new Square()? new Triangle()?
+    // Мы не знаем конкретный тип на этапе компиляции!
+    Shape copy = ??? // Не можем определить, что писать
+}
+```
+
+Вы не можете написать `new Circle()` или `new Square()`, потому что на этапе компиляции переменная `shape` имеет тип `Shape`, и конкретный класс неизвестен.
+
+Аналогичная проблема с иерархией пользователей:
+
+```csharp
+// Иерархия пользователей
+public abstract class User { }
 public class AdminUser : User { }
 public class GuestUser : User { }
 
 public void DuplicateUser(User original)
 {
-    // Какой конструктор вызвать? Мы не знаем, это Admin или Guest!
-    User copy = ??? // Тоже непонятно какой именно это у нас пользователь
+    // Какой конструктор вызвать?
+    // Мы не знаем, это AdminUser или GuestUser!
+    User copy = ??? // Конкретный тип неизвестен
 }
 ```
 
-Все такие попытки скопировать объект будут похожи на попытки воссоздать самолёт со всей его функциональностью, опираясь только на внешний вид:
-![](src/prototype/plane.png)
-Нам нужен какой-то *чертёж*. Это и есть суть паттерна Прототип. Prototype — это паттерн, когда объект сам знает, как себя копировать. Он переносит ответственность за создание копии с клиентского кода на сам объект-прототип.
+### Метафора: чертёж самолёта
 
-Мы добавляем некий общий интерфейс, например метод Clone():
+Все подобные попытки скопировать объект извне похожи на попытку воссоздать самолёт, опираясь только на внешний вид. Вы видите крылья, фюзеляж, двигатели, но не знаете:
+
+- Как они устроены внутри
+- Как соединяются между собой
+- Какие материалы использованы
+- Какая электроника спрятана внутри
+
+Нам нужен **чертёж** — документ, содержащий всю информацию для создания точной копии. В программировании этим чертежом становится сам объект, который знает, как себя скопировать.
+
+## Решение: паттерн Prototype
+
+**Идея паттерна:** объект сам знает, как создать свою копию. Ответственность за копирование переносится с клиентского кода на сам объект-прототип.
+
+### Базовая реализация
+
+Добавляем общий интерфейс с методом `Clone()`:
+
 ```csharp
+// Интерфейс прототипа
 public interface IPrototype
 {
+    // Метод для создания копии объекта
     IPrototype Clone();
 }
 
+// Реализация в классе пользователя
 public class User : IPrototype
 {
     public string Name { get; set; }
     public int Age { get; set; }
     
+    // Каждый объект знает, как создать свою копию
     public IPrototype Clone()
     {
+        // Создаём новый объект и копируем значения полей
         return new User 
         { 
-            Name = this.Name,
-            Age = this.Age 
+            Name = this.Name,  // Копируем имя
+            Age = this.Age     // Копируем возраст
         };
     }
 }
 ```
-Теперь, где бы вам ни нужна была копия, мы просто вызываем:
+
+Теперь создание копии становится простым:
+
 ```csharp
+// Создаём оригинальный объект
+var original = new User { Name = "Alice", Age = 30 };
+
+// Клонируем его — не нужно знать внутреннюю структуру!
 var copy = original.Clone();
+
+// copy — это новый объект с теми же значениями полей
+Console.WriteLine(copy.Name);  // Вывод: Alice
+Console.WriteLine(copy.Age);   // Вывод: 30
 ```
 
-Главное преимущество: вы не знаете и не обязаны знать, как внутри устроена копия. Объект сам берёт на себя эту ответственность.
+**Ключевое преимущество:** клиентский код не знает и не обязан знать, как внутри устроено копирование. Объект сам берёт на себя эту ответственность.
 
-Тем не менее идею с прототипами можно развить куда сильнее. Давайте рассмотрим несколько разных подходов:
+### Структура паттерна
 
-#### Shallow copy (поверхностное копирование)
+```mermaid
+classDiagram
+    class IPrototype {
+        <<interface>>
+        +Clone() IPrototype
+    }
+    
+    class ConcretePrototype1 {
+        -field1
+        -field2
+        +Clone() IPrototype
+    }
+    
+    class ConcretePrototype2 {
+        -fieldA
+        -fieldB
+        +Clone() IPrototype
+    }
+    
+    class Client {
+        -prototype: IPrototype
+        +Operation()
+    }
+    
+    IPrototype <|.. ConcretePrototype1 : implements
+    IPrototype <|.. ConcretePrototype2 : implements
+    Client --> IPrototype : uses
+    
+    note for ConcretePrototype1 "Создаёт копию самого себя,\nзная все детали реализации"
+    note for Client "Работает с объектами через\nинтерфейс, не зная их тип"
+```
 
-Представим, что у нас есть объект с примитивными полями и ссылками на другие объекты:
+**Участники паттерна:**
+
+- **IPrototype** — интерфейс, объявляющий метод клонирования
+- **ConcretePrototype** — конкретный класс, реализующий клонирование самого себя
+- **Client** — код, который использует прототипы для создания копий объектов
+
+## Типы копирования
+
+Паттерн Prototype может быть реализован по-разному в зависимости от того, насколько глубоко нужно копировать объект.
+
+### Shallow Copy (Поверхностное копирование)
+
+**Shallow Copy** (поверхностное копирование) — это копирование, при котором создаётся новый объект, но ссылочные поля просто копируются как ссылки, а не клонируются.
 
 ```csharp
-public class Prototype
+// Класс с ссылочным полем
+public class ShallowPrototype
 {
-    private readonly IReadOnlyCollection<int> _relatedEntityIds;
+    private readonly string _name;
+    private readonly List<int> _relatedIds;  // Ссылочный тип
 
-    public Prototype(IReadOnlyCollection<int> relatedEntityIds)
+    public ShallowPrototype(string name, List<int> relatedIds)
     {
-        _relatedEntityIds = relatedEntityIds;
+        _name = name;
+        _relatedIds = relatedIds;
     }
 
-    public Prototype Clone()
+    public ShallowPrototype Clone()
     {
-        // Просто копируем ссылку на коллекцию
-        return new Prototype(_relatedEntityIds);
+        // Создаём новый объект
+        // Но копируем только ссылку на список — сам список НЕ клонируется!
+        return new ShallowPrototype(_name, _relatedIds);
+    }
+    
+    public void AddId(int id)
+    {
+        _relatedIds.Add(id);
+    }
+    
+    public void Print()
+    {
+        Console.WriteLine($"Name: {_name}, IDs: [{string.Join(", ", _relatedIds)}]");
     }
 }
 ```
 
-Что здесь происходит:
+#### Демонстрация проблемы
 
-- Мы создаём новый объект `Prototype`
-- Но `_relatedEntityIds` — это одна и та же ссылка в оригинале и копии
-
-То есть есть проблема: мы получили два разных объекта Prototype, но они оба ссылаются на одну и ту же коллекцию в памяти. Если мы изменим эту коллекцию в оригинале (предположим, она не IReadOnlyCollection), изменения увидит и копия.
-
-Это поверхностное (shallow) копирование. Оно быстрое, но может привести к неожиданным побочным эффектам.
-
-```
-Original:    Clone:
-┌─────────┐  ┌─────────┐
-│Name: "A"│  │Name: "A"│
-└─────────┘  └─────────┘
-      │            │
-      └────┬───────┘
-           ↓
-      [1, 2, 3, 4] (общая коллекция)
-```
-
-Это нормально, если:
-- Коллекция неизменяемая (IReadOnlyCollection)
-- Вы не планируете её модифицировать
-
-Однако если коллекция может изменяться, это уже проблема.
-
-#### Deep copy (глубокое копирование)
-
-Если в объекте есть изменяемые вложенные структуры. Нам нужно скопировать не только сам объект, но и все вложенные объекты:
 ```csharp
-// Обёрнутое значение (изменяемое)
+// Создаём оригинальный объект
+var ids = new List<int> { 1, 2, 3 };
+var original = new ShallowPrototype("Original", ids);
+
+// Делаем поверхностную копию
+var copy = original.Clone();
+
+// Изменяем список через оригинал
+original.AddId(4);
+
+// ПРОБЛЕМА: изменение видно и в копии!
+original.Print();  // Вывод: Name: Original, IDs: [1, 2, 3, 4]
+copy.Print();      // Вывод: Name: Original, IDs: [1, 2, 3, 4] — одинаково!
+```
+
+#### Визуализация в памяти
+
+```mermaid
+graph LR
+    subgraph "После Shallow Copy"
+        Original["original<br/>ShallowPrototype<br/>name: 'Original'"]
+        Clone["copy<br/>ShallowPrototype<br/>name: 'Original'"]
+        SharedList["List&lt;int&gt;<br/>[1, 2, 3, 4]<br/><b>Одна коллекция!</b>"]
+        
+        Original -->|ссылается| SharedList
+        Clone -->|ссылается| SharedList
+    end
+    
+    style SharedList fill:#ffcccc
+```
+
+Оба объекта ссылаются на **одну и ту же коллекцию** в памяти. Изменение через любую ссылку влияет на оба объекта.
+
+#### Когда безопасно использовать Shallow Copy
+
+Поверхностное копирование **безопасно**, если:
+- Ссылочные поля указывают на **неизменяемые** (immutable) объекты
+- Используются типы вроде `string`, `IReadOnlyCollection<T>`, record struct
+- Вы точно знаете, что разделяемые объекты не будут модифицированы
+
+Поверхностное копирование **опасно**, если:
+- Ссылочные поля указывают на изменяемые объекты
+- Коллекции могут быть модифицированы (например, `List<T>`, `Dictionary<K,V>`)
+- Изменение через одну ссылку повлияет на другие объекты
+
+**Преимущества:** быстрое выполнение, экономия памяти  
+**Недостатки:** риск непредвиденных побочных эффектов
+
+### Deep Copy (Глубокое копирование)
+
+**Deep Copy** (глубокое копирование) — это копирование, при котором создаётся не только новый объект, но и новые копии всех вложенных объектов.
+
+```csharp
+// Изменяемый класс-обёртка
 public class WrappedValue
 {
     public int Value { get; set; }
 
+    // Метод клонирования для вложенного объекта
     public WrappedValue Clone()
     {
         return new WrappedValue { Value = this.Value };
     }
 }
 
-// Прототив, содержащий список обёрнутых значений
+// Прототип с глубоким копированием
 public class DeepCopyPrototype
 {
+    private readonly string _name;
     private readonly List<WrappedValue> _values;
 
-    public DeepCopyPrototype(List<WrappedValue> values)
+    public DeepCopyPrototype(string name, List<WrappedValue> values)
     {
+        _name = name;
         _values = values;
     }
 
     public DeepCopyPrototype Clone()
     {
-        // Ключ: мы клонируем и сам список, и каждый элемент в нём
+        // КЛЮЧЕВОЙ МОМЕНТ: клонируем каждый элемент списка
         List<WrappedValue> clonedValues = _values
-            .Select(x => x.Clone())  // Каждое значение копируется!
-            .ToList();
-        /*
-        1. Создаем новый список (.ToList()).
-
-        2. Проходим по каждому элементу x в старом списке.
-
-        3. Вызываем x.Clone() для каждого элемента, создавая новые объекты WrappedValue.
-        */
-
-        return new DeepCopyPrototype(clonedValues);
+            .Select(v => v.Clone())  // Каждый элемент копируется отдельно!
+            .ToList();               // Создаём новый список
+        
+        // Теперь у нас полностью независимая копия
+        return new DeepCopyPrototype(_name, clonedValues);
+    }
+    
+    public void ModifyValue(int index, int newValue)
+    {
+        _values[index].Value = newValue;
+    }
+    
+    public void Print()
+    {
+        var values = string.Join(", ", _values.Select(v => v.Value));
+        Console.WriteLine($"Name: {_name}, Values: [{values}]");
     }
 }
 ```
 
-Использовать это можно как-то так:
+#### Демонстрация решения
+
 ```csharp
-var original = new DeepCopyPrototype(new List<WrappedValue>
+// Создаём оригинальный объект
+var original = new DeepCopyPrototype("Original", new List<WrappedValue>
 {
     new WrappedValue { Value = 10 },
     new WrappedValue { Value = 20 }
 });
 
+// Делаем глубокую копию
 var copy = original.Clone();
 
-// Если изменить значение в копии, оригинал не пострадает
-// Потому что это разные объекты WrappedValue
+// Изменяем значение в копии
+copy.ModifyValue(0, 999);
+
+// Оригинал НЕ изменился — это разные объекты!
+original.Print();  // Вывод: Name: Original, Values: [10, 20]
+copy.Print();      // Вывод: Name: Original, Values: [999, 20]
 ```
-Когда нужен deep copy:
-- Объект содержит списки, словари, другие коллекции
-- Эти коллекции содержат изменяемые объекты
-- Вы планируете модифицировать копию независимо от оригинала
 
-#### Иерархии типов 
+#### Визуализация в памяти
 
-Теперь вернёмся к главной проблеме - иерархиям. 
+```mermaid
+graph TD
+    subgraph "После Deep Copy"
+        Original["original<br/>DeepCopyPrototype"]
+        Clone["copy<br/>DeepCopyPrototype"]
+        
+        OrigList["List 1"]
+        OrigVal1["WrappedValue<br/>Value: 10"]
+        OrigVal2["WrappedValue<br/>Value: 20"]
+        
+        CloneList["List 2"]
+        CloneVal1["WrappedValue<br/>Value: 999"]
+        CloneVal2["WrappedValue<br/>Value: 20"]
+        
+        Original --> OrigList
+        OrigList --> OrigVal1
+        OrigList --> OrigVal2
+        
+        Clone --> CloneList
+        CloneList --> CloneVal1
+        CloneList --> CloneVal2
+    end
+    
+    style OrigList fill:#ccffcc
+    style CloneList fill:#ccffcc
+    style OrigVal1 fill:#ffffcc
+    style OrigVal2 fill:#ffffcc
+    style CloneVal1 fill:#ffcccc
+    style CloneVal2 fill:#ffffcc
+```
 
-Решить её можно так:
+Каждый объект имеет свою собственную коллекцию и свои собственные элементы. Изменения полностью независимы.
+
+#### Когда необходимо Deep Copy
+
+Глубокое копирование **необходимо**, если:
+- Объект содержит изменяемые коллекции (списки, словари, массивы)
+- Коллекции содержат изменяемые объекты
+- Требуется полная независимость оригинала и копии
+- Нужна полная изоляция для безопасного параллельного изменения
+
+**Преимущества:** полная независимость объектов, безопасность  
+**Недостатки:** медленнее выполнение, больший расход памяти
+
+### Сравнение подходов
+
+| Критерий | Shallow Copy | Deep Copy |
+|----------|--------------|-----------|
+| Скорость | ✅ Быстро | ⚠️ Медленнее |
+| Память | ✅ Экономно | ⚠️ Больше расход |
+| Безопасность | ⚠️ Риск побочных эффектов | ✅ Полная изоляция |
+| Сложность реализации | ✅ Просто | ⚠️ Сложнее |
+| Когда использовать | Immutable объекты | Mutable объекты |
+
+## Prototype в иерархиях наследования
+
+Вернёмся к одной из ключевых проблем — работа с иерархиями типов, когда конкретный класс объекта неизвестен на этапе компиляции.
+
+### Решение через полиморфизм
+
+Каждый класс в иерархии реализует метод `Clone()`, создавая копию своего конкретного типа:
+
 ```csharp
+// Общий интерфейс для всех прототипов
 public interface IHierarchyPrototype
 {
     IHierarchyPrototype Clone();
 }
 
-// Тип A
-public class FirstDerivedPrototype : IHierarchyPrototype
+// Первый конкретный класс
+public class Document : IHierarchyPrototype
 {
-    private readonly string _name;
-    private readonly int _age;
+    private readonly string _title;
+    private readonly string _content;
 
-    public FirstDerivedPrototype(string name, int age)
+    public Document(string title, string content)
     {
-        _name = name;
-        _age = age;
+        _title = title;
+        _content = content;
     }
 
+    // Реализация клонирования — создаём копию Document
     public IHierarchyPrototype Clone()
     {
-        return new FirstDerivedPrototype(_name, _age);
+        return new Document(_title, _content);
+    }
+    
+    public void Print()
+    {
+        Console.WriteLine($"Document: {_title}");
     }
 }
 
-// Тип B
-public class SecondDerivedPrototype : IHierarchyPrototype
+// Второй конкретный класс с другой структурой
+public class Spreadsheet : IHierarchyPrototype
 {
-    private readonly long _iterationCount;
+    private readonly int _rows;
+    private readonly int _columns;
 
-    public SecondDerivedPrototype(long iterationCount)
+    public Spreadsheet(int rows, int columns)
     {
-        _iterationCount = iterationCount;
+        _rows = rows;
+        _columns = columns;
     }
 
+    // Реализация клонирования — создаём копию Spreadsheet
     public IHierarchyPrototype Clone()
     {
-        return new SecondDerivedPrototype(_iterationCount);
+        return new Spreadsheet(_rows, _columns);
+    }
+    
+    public void Print()
+    {
+        Console.WriteLine($"Spreadsheet: {_rows}x{_columns}");
     }
 }
 ```
-Теперь можно использовать так:
+
+Теперь можно работать с объектами полиморфно:
+
 ```csharp
+// Метод принимает любой объект, реализующий интерфейс
 public void ProcessPrototype(IHierarchyPrototype proto)
 {
-    // ...
+    Console.WriteLine("Обрабатываем прототип...");
 
-    // Мы НЕ знаем, FirstDerivedPrototype это или SecondDerivedPrototype
-    // Но мы можем создать копию!
+    // Мы НЕ знаем конкретный тип (Document или Spreadsheet)
+    // Но можем создать копию — объект сам знает, как себя копировать!
     var clone = proto.Clone();
     
-    // clone будет правильного типа автоматически
-    // потому что каждый класс знает, как себя копировать
-
-    // ...
+    // clone будет иметь правильный конкретный тип автоматически,
+    // благодаря виртуальному вызову метода Clone()
+    
+    Console.WriteLine($"Создана копия типа: {clone.GetType().Name}");
 }
 
-// Использование:
-var first = new FirstDerivedPrototype("Alice", 30);
-var second = new SecondDerivedPrototype(1000);
+// Использование с разными типами
+var document = new Document("Report", "Content here");
+var spreadsheet = new Spreadsheet(100, 20);
 
-ProcessPrototype(first);   // Создаст копию FirstDerivedPrototype
-ProcessPrototype(second);  // Создаст копию SecondDerivedPrototype
+ProcessPrototype(document);      // Вывод: Создана копия типа: Document
+ProcessPrototype(spreadsheet);   // Вывод: Создана копия типа: Spreadsheet
 ```
-Это решает проблему: теперь нам не нужно использовать typeof, is, as или switch для копирования. Каждый класс сам знает, как себя копировать.
 
-Есть два способа организовать Prototype. Первый — через абстрактный класс:
+**Ключевое преимущество:** не нужно использовать `typeof`, `is`, `as` или `switch` для определения типа. Каждый класс сам знает, как себя копировать, благодаря полиморфизму.
+
+## Выбор способа реализации
+
+### Вариант 1: Абстрактный класс
+
 ```csharp
+// Базовый абстрактный класс
 public abstract class Prototype
 {
+    // Абстрактный метод клонирования
     public abstract Prototype Clone();
+    
+    // Общая логика для всех прототипов
+    public void CommonMethod()
+    {
+        Console.WriteLine("Общая логика");
+    }
 }
 
+// Конкретная реализация
 public class ClassPrototype : Prototype
 {
+    private int _value;
+
+    public ClassPrototype(int value)
+    {
+        _value = value;
+    }
+
+    // Ковариантный возвращаемый тип (covariant return type)
+    // Можем вернуть более конкретный тип ClassPrototype
     public override ClassPrototype Clone()
     {
-        return new ClassPrototype();
+        return new ClassPrototype(_value);
     }
 }
 ```
-Второй — через интерфейсы:
+
+### Вариант 2: Интерфейс
+
 ```csharp
+// Интерфейс прототипа
 public interface IPrototype
 {
     IPrototype Clone();
 }
 
+// Конкретная реализация с двойной реализацией метода Clone()
 public class InterfacePrototype : IPrototype
 {
-    // Явная реализация через интерфейс
+    private int _value;
+
+    public InterfacePrototype(int value)
+    {
+        _value = value;
+    }
+
+    // Явная реализация интерфейса — вызывается при работе через IPrototype
     IPrototype IPrototype.Clone()
     {
-        return Clone();
+        return Clone();  // Делегируем публичному методу
     }
 
-    // А сам метод возвращает конкретный тип
+    // Публичный метод — возвращает конкретный тип
     public InterfacePrototype Clone()
     {
-        return new InterfacePrototype();
+        return new InterfacePrototype(_value);
     }
 }
 ```
-Обратите внимание, что во втором примере (реализации через интферйсы) два метода Clone(). Зачем нужна эта двойная реализация? Когда работаете с интерфейсом, Clone() возвращает IPrototype. Но часто нужно конкретный тип:
+
+#### Зачем нужна двойная реализация?
+
+Двойная реализация позволяет сохранить конкретный тип при работе с объектом напрямую:
+
 ```csharp
-IPrototype proto = new InterfacePrototype();
-var clone = proto.Clone();  // Тип: IPrototype, теряем информацию!
+// Работа через интерфейс — получаем базовый тип
+IPrototype proto1 = new InterfacePrototype(42);
+var clone1 = proto1.Clone();  // Тип: IPrototype
 
-// С двойной реализацией:
-InterfacePrototype proto2 = new InterfacePrototype();
-var clone2 = proto2.Clone();  // Тип: InterfacePrototype, сохранили!
+// Работа с конкретным классом — сохраняем конкретный тип
+InterfacePrototype proto2 = new InterfacePrototype(42);
+var clone2 = proto2.Clone();  // Тип: InterfacePrototype (без приведения!)
 ```
-Какой выбрать?
-- Интерфейс — более гибкий, позволяет множественное наследование, лучше для разнородных типов
-- Абстрактный класс — лучше, если есть общая логика для всех прототипов
 
-В современном C# предпочитают интерфейсы.
+### Сравнение подходов
 
-#### Проблема переиспользования (наследование vs интерфейсы)
+| Критерий | Абстрактный класс | Интерфейс |
+|----------|-------------------|-----------|
+| Множественное наследование | ❌ Нет | ✅ Да |
+| Общая логика | ✅ Легко добавить | ⚠️ Через default методы (C# 8.0+) |
+| Гибкость | Средняя | Высокая |
+| Подходит для разнородных типов | Средне | ✅ Отлично |
+| Рекомендация | Если нужна общая логика | **Предпочтительно** |
 
-Тем не менее у обоих этих подходов (что через абстрактные классы, что через интерфейсы) есть общая проблема
+**Рекомендация:** В современном C# **предпочитают интерфейсы**, так как они обеспечивают большую гибкость и позволяют классу реализовывать несколько контрактов одновременно.
 
-Допустим, у нас есть логика, которую нужно выполнить для всех прототипов:
-```csharp 
-public abstract class Prototype
-{
-    public void DoSomeStuff()
-    {
-        // Общая логика для всех прототипов
-        Console.WriteLine("Doing common work...");
-    }
 
-    public abstract Prototype Clone();
-}
+## Проблема потери типа
 
-public class ClassPrototype : Prototype
-{
-    public void DoOtherStuff()
-    {
-        Console.WriteLine("Doing specific work...");
-    }
+И абстрактный класс, и интерфейс имеют общую проблему: **потерю конкретного типа** при возврате из методов, работающих с базовым типом.
 
-    public override Prototype Clone()
-    {
-        return new ClassPrototype();
-    }
-}
-```
-Теперь рассмотрим сценарий, где нужно клонировать и выполнить общую логику:
+### Пример проблемы
+
+Представьте систему для работы с геометрическими фигурами:
+
 ```csharp
-public class Scenario
-{
-    public static Prototype CloneAndDoSomeStuff(Prototype prototype)
-    {
-        var clone = prototype.Clone();
-        clone.DoSomeStuff();  // Это работает, потому что это есть в базовом классе
-        return clone;
-    }
-
-    public static void TopLevelScenario()
-    {
-        var prototype = new ClassPrototype();
-        Prototype clone = CloneAndDoSomeStuff(prototype);
-        
-        // ПРОБЛЕМА: теперь clone — это Prototype, а не ClassPrototype
-        // Мы потеряли информацию о конкретном типе!
-        
-        clone.DoOtherStuff();  // ОШИБКА компилятора! DoOtherStuff нет в Prototype
-    }
-}
-```
-
-Столкнёмся ли мы с той же проблемой если будем использовать интерфейсы?
-```csharp
-public interface IPrototype
-{
-    IPrototype Clone();
-    void DoSomeStuff();
-}
-
-public class InterfacePrototype : IPrototype
-{
-    public IPrototype Clone()
-    {
-        return new InterfacePrototype();
-    }
-
-    public void DoSomeStuff()
-    {
-        Console.WriteLine("Doing common work...");
-    }
-
-    public void DoOtherStuff()
-    {
-        Console.WriteLine("Doing specific work...");
-    }
-}
-
-public class Scenario
-{
-    public static IPrototype CloneAndDoSomeStuff(IPrototype prototype)
-    {
-        var clone = prototype.Clone();
-        clone.DoSomeStuff();
-        return clone;
-    }
-
-    public static void TopLevelScenario()
-    {
-        var prototype = new InterfacePrototype();
-        IPrototype clone = CloneAndDoSomeStuff(prototype);
-        
-        // Мы можем привести к конкретному типу, но прихрдится делать cast
-        InterfacePrototype specificClone = (InterfacePrototype)clone;
-        specificClone.DoOtherStuff();  // OK!
-    }
-}
-```
-Тут уже лучше, но всё равно делать явные кастые кажется не очень красивым решением. 
-
-Давайте рассмотрим ещё несколько примеров этой проблемы:
-Представьте ситуацию: у нас есть система работы с геометрическими фигурами. Все фигуры можно копировать и рисовать:
-```csharp
+// Базовый класс для всех фигур
 public abstract class Shape
 {
     public string Color { get; set; }
@@ -439,10 +647,10 @@ public abstract class Shape
         Y = y;
     }
 
-    // Общая логика для всех фигур
+    // Общие методы для всех фигур
     public void Draw()
     {
-        Console.WriteLine($"Drawing {GetType().Name} at ({X}, {Y}) with color {Color}");
+        Console.WriteLine($"Drawing {GetType().Name} at ({X}, {Y})");
     }
 
     public void MoveTo(double newX, double newY)
@@ -455,9 +663,7 @@ public abstract class Shape
     public abstract Shape Clone();
 }
 
-```
-Теперь добавляем конкретные фигуры:
-```csharp
+// Конкретная фигура — круг
 public class Circle : Shape
 {
     public double Radius { get; set; }
@@ -481,6 +687,7 @@ public class Circle : Shape
     }
 }
 
+// Конкретная фигура — прямоугольник
 public class Rectangle : Shape
 {
     public double Width { get; set; }
@@ -507,774 +714,192 @@ public class Rectangle : Shape
     }
 }
 ```
-Теперь проблема: хотим написать метод, который клонирует фигуру, перемещает её и возвращает:
+
+Теперь напишем метод, который клонирует фигуру и перемещает её:
+
 ```csharp
 public class ShapeProcessor
 {
-    // Этот метод принимает любую фигуру
+    // Метод принимает базовый тип Shape
     public static Shape CloneAndMove(Shape shape, double newX, double newY)
     {
-        var clone = shape.Clone();  // Клонируем
-        clone.MoveTo(newX, newY);    // Перемещаем
-        return clone;                // Возвращаем
+        var clone = shape.Clone();  // Клонируем фигуру
+        clone.MoveTo(newX, newY);    // Перемещаем копию
+        return clone;                // Возвращаем... Shape!
     }
 }
 ```
-Использование:
+
+**Проблема в использовании:**
+
 ```csharp
-public static void Main()
+var circle = new Circle("Red", 10, 10, 5);
+
+// Вызываем метод обработки
+Shape clonedShape = ShapeProcessor.CloneAndMove(circle, 50, 50);
+
+// ПРОБЛЕМА: clonedShape имеет тип Shape, а не Circle!
+// Мы потеряли информацию о конкретном типе
+
+// clonedShape.Scale(2.0);  // ❌ Ошибка компиляции! Scale() нет в Shape
+
+// Приходится делать приведение типа (type cast):
+if (clonedShape is Circle clonedCircle)
 {
-    var circle = new Circle("Red", 10, 10, 5);
+    clonedCircle.Scale(2.0);  // Теперь работает, но некрасиво
+}
+```
+
+### Визуализация проблемы
+
+```mermaid
+graph LR
+    A["Circle<br/>конкретный тип"] -->|CloneAndMove| B["Shape<br/>базовый тип"]
+    B -->|нужен cast| C["Circle<br/>конкретный тип"]
     
-    // Вызываем наш метод
-    Shape clonedShape = ShapeProcessor.CloneAndMove(circle, 50, 50);
+    style A fill:#ccffcc
+    style B fill:#ffcccc
+    style C fill:#ccffcc
     
-    // clonedShape имеет тип Shape, а не Circle!
-    // Мы не можем вызвать специфичный метод Scale()
+    A2["Что мы хотим:<br/>Circle → Circle"] 
+    B2["Что мы получаем:<br/>Circle → Shape → Circle"]
     
-    // clonedShape.Scale(2.0);  // Ошибка компиляции!
-    
-    // Приходится делать cast:
-    if (clonedShape is Circle clonedCircle)
-    {
-        clonedCircle.Scale(2.0);  // Теперь работает
-    }
-}
+    style A2 fill:#ccffcc
+    style B2 fill:#ffcccc
 ```
-То есть у нас всё равно неправильная сигнатура
+
+### Почему это плохо?
+
+- **Нарушается type safety** — компилятор не может проверить корректность типов
+- **Нужны runtime проверки** — `is`, `as`, `switch`
+- **Возможны ошибки** — неправильное приведение типа приведёт к `InvalidCastException` или `null`
+- **Код становится хрупким** — легко ошибиться при рефакторинге
+
+## Решение: Рекурсивные дженерики (CRTP)
+
+**CRTP** (Curiously Recurring Template Pattern — любопытно рекуррентный шаблон) — это паттерн, при котором класс использует сам себя в качестве аргумента типа для своего базового класса или интерфейса.
+
+### Что такое рекурсивный параметр-тип?
+
+**Рекурсивный параметр-тип** — это параметр-тип, который ссылается на самого себя в ограничениях (constraints).
+
 ```csharp
-public static Shape CloneAndMove(Shape shape, ...)
-                   ↑
-            возвращаем Shape, а не конкретный тип!
-```
-Даже несмотря на то, что метод `Clone()` в `Circle` возвращает `Circle`, компилятор видит возвращаемый тип базового класса (`Shape`), потому что мы работаем через базовый класс.
-```text
-Что мы хотим:
-Circle → CloneAndMove → Circle (сохранили тип!)
-                         ↓
-                    можем вызвать Scale()
-
-Что мы получаем:
-Circle → CloneAndMove → Shape (потеряли тип!)
-                         ↓
-                    не можем вызвать Scale() без cast
-```
-Та же самая проблема будет с интерфейсами:
-```csharp
-public interface IPrototype
-{
-    IPrototype Clone();
-    void Draw();
-}
-
-public class Circle : IPrototype
-{
-    public double Radius { get; set; }
-
-    public Circle(double radius)
-    {
-        Radius = radius;
-    }
-
-    // Явная реализация интерфейса
-    IPrototype IPrototype.Clone()
-    {
-        return Clone();
-    }
-
-    // Конкретная реализация возвращает Circle
-    public Circle Clone()
-    {
-        return new Circle(Radius);
-    }
-
-    public void Draw()
-    {
-        Console.WriteLine($"Drawing circle with radius {Radius}");
-    }
-
-    public void Scale(double factor)
-    {
-        Radius *= factor;
-    }
-}
-
-public class Rectangle : IPrototype
-{
-    public double Width { get; set; }
-    public double Height { get; set; }
-
-    public Rectangle(double width, double height)
-    {
-        Width = width;
-        Height = height;
-    }
-
-    IPrototype IPrototype.Clone()
-    {
-        return Clone();
-    }
-
-    public Rectangle Clone()
-    {
-        return new Rectangle(Width, Height);
-    }
-
-    public void Draw()
-    {
-        Console.WriteLine($"Drawing rectangle {Width}x{Height}");
-    }
-
-    public void Resize(double w, double h)
-    {
-        Width = w;
-        Height = h;
-    }
-}
-```
-Использование:
-```csharp
-public class Scenario
-{
-    public static IPrototype CloneAndDraw(IPrototype prototype)
-    {
-        var clone = prototype.Clone();
-        clone.Draw();
-        return clone;
-    }
-
-    public static void Main()
-    {
-        var circle = new Circle(5.0);
-        
-        // Вызываем метод
-        IPrototype clonedProto = CloneAndDraw(circle);
-        
-        // тип IPrototype, а не Circle!
-        // clonedProto.Scale(2.0);  // Ошибка!
-        
-        // Снова нужен cast:
-        if (clonedProto is Circle clonedCircle)
-        {
-            clonedCircle.Scale(2.0);  // Работает, но некрасиво
-        }
-    }
-}
-```
-Та же проблема! Тип возвращаемого значения — IPrototype, а не конкретный класс.
-
-Почему это плохо?
-- Нарушается type safety — компилятор не может вам помочь
-- Нужны runtime проверки — is, as, switch
-- Возможны ошибки — если вы сделаете неправильный cast, получите null или InvalidCastException
-- Код становится хрупким — легко ошибиться
-
-Решение: использовать рекурсивные дженерики
-
-#### Рекурсивные дженерики 
-
-Рекурсивные параметр-тип - параметр-тип, ссылающийся на себя в ограничениях наложенных на допустимые агрументы-типы
-
-Встречайте решение через CRTP (Curiously Recurring Template Pattern) — рекурсивный параметр-тип:
-```csharp
+// T должен реализовывать IPrototype<T>
 public interface IPrototype<T> where T : IPrototype<T>
 {
     T Clone();
-    void DoSomeStuff();
+}
+```
+
+Что это означает:
+- Параметр типа `T` ограничен условием `where T : IPrototype<T>`
+- Это значит, что `T` должен быть классом, который реализует `IPrototype<T>`
+- Это гарантирует, что `Clone()` вернёт правильный конкретный тип
+
+### Базовая реализация с дженериками
+
+```csharp
+// Обобщённый интерфейс с рекурсивным ограничением
+public interface IPrototype<T> where T : IPrototype<T>
+{
+    T Clone();           // Возвращает конкретный тип T
+    void DoSomeStuff();  // Общая логика
 }
 
+// Конкретная реализация
 public class Prototype : IPrototype<Prototype>
 {
+    private int _value;
+
+    public Prototype(int value)
+    {
+        _value = value;
+    }
+
+    // Возвращает именно Prototype, а не IPrototype
     public Prototype Clone()
     {
-        return new Prototype();
+        return new Prototype(_value);
     }
 
     public void DoSomeStuff()
     {
-        Console.WriteLine("Doing common work...");
+        Console.WriteLine("Общая логика");
     }
 
+    // Специфичный метод для Prototype
     public void DoOtherStuff()
     {
-        Console.WriteLine("Doing specific work...");
+        Console.WriteLine("Специфичная логика");
     }
 }
 ```
-Что здесь происходит?
 
-- Параметр типа T в IPrototype<T> ограничен самим собой: where T : IPrototype<T>. Это означает:
-- Если вы реализуете IPrototype<T>, то T должен быть классом, который реализует IPrototype<T>
-- Это гарантирует, что Clone() вернёт правильный тип
+### Типобезопасное использование
 
-```csharp
-public interface IPrototype<T> where T : IPrototype<T>
-                     ↑                         ↑
-                     └─────────────────────────┘
-                     Тип T должен реализовывать IPrototype<T>
-```
-Очень хорошо, что вы все помните CRTP ещё из плюсов и не нужно лишний раз объяснять что это и как это работает
+Теперь можно написать обобщённый метод, который **сохраняет тип**:
 
-То есть теперь можно использовать так:
 ```csharp
 public class Scenario
 {
+    // Обобщённый метод с ограничением на тип
     public static T CloneAndDoSomeStuff<T>(T prototype)
         where T : IPrototype<T>
     {
-        var clone = prototype.Clone();  // Тип: T (правильный!)
+        var clone = prototype.Clone();  // Тип clone: T (правильный тип!)
         clone.DoSomeStuff();
-        return clone;
+        return clone;  // Возвращаем T, а не базовый тип
     }
 
-    public static void TopLevelScenario()
-    {
-        var prototype = new Prototype();
-        Prototype clone = CloneAndDoSomeStuff(prototype);  // Тип сохранён!
-        
-        clone.DoOtherStuff();  // Никаких cast'ов!
-    }
-}
-```
-
-А что, если у вас есть иерархия? Например, SecondPrototype наследует Prototype:
-
-```csharp
-public class SecondPrototype : Prototype, IPrototype<SecondPrototype>
-{
-    public override SecondPrototype Clone()
-    {
-        return new SecondPrototype();
-    }
-}
-```
-Как это работает?
-- SecondPrototype наследует от Prototype, который реализует IPrototype<Prototype>
-- Но SecondPrototype явно говорит, что реализует IPrototype<SecondPrototype>
-- Это означает, что Clone() в SecondPrototype возвращает именно SecondPrototype
-
-```csharp
-public static void Hierarchy()
-{
-    var second = new SecondPrototype();
-    SecondPrototype clonedSecond = CloneAndDoSomeStuff(second);
-    
-    // Правильный тип!
-}
-```
-Но тут появляется проблема со смешиванием обобщённых и необобщённых интерфейсов:
-```csharp
-// Это необобщённый интерфейс (без типизации)
-public interface IPrototype
-{
-    void DoSomeStuff() { }
-}
-
-// Это обобщённый интерфейс (с типизацией)
-public interface IPrototype<T> : IPrototype where T : IPrototype<T>
-{
-    T Clone();
-}
-
-public record Container(IPrototype Prototype);
-
-static void NonGeneric()
-{
-    // Проблема: Container хранит IPrototype
-    // Но IPrototype не имеет метода Clone()!
-    var container = new Container(new Prototype());
-    
-    // Как теперь клонировать?
-    // container.Prototype.Clone();  // Ошибка! Нет Clone() в IPrototype
-}
-```
-Когда работаете через необобщённый интерфейс IPrototype, вы теряете информацию о типе и не можете вызвать обобщённый Clone().
-
-Решение: если вам нужно работать с коллекциями разнородных типов, добавьте Clone() в необобщённый интерфейс:
-
-```csharp
-public interface IPrototype
-{
-    IPrototype Clone();  // Необобщённая версия
-    void DoSomeStuff() { }
-}
-
-public interface IPrototype<T> : IPrototype where T : IPrototype<T>
-{
-    new T Clone();  // Переопределяем с обобщённой версией
-}
-
-// Теперь оба работают:
-var proto = new Prototype();
-IPrototype clone1 = proto.Clone();        // Из необобщённого интерфейса
-Prototype clone2 = proto.Clone();         // Из обобщённого интерфейса
-```
-
-Давайте рассмотрим какой-нибудь пример, который объединяет это всё вместе:
-```csharp
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-// === Интерфейсы ===
-public interface IDocument
-{
-    IDocument Clone();
-    void Print();
-}
-
-public interface IDocument<T> : IDocument where T : IDocument<T>
-{
-    new T Clone();
-}
-
-// === Базовый класс документа ===
-public abstract class Document : IDocument<Document>
-{
-    protected string _title;
-    protected DateTimeOffset _createdAt;
-
-    protected Document(string title, DateTimeOffset createdAt)
-    {
-        _title = title;
-        _createdAt = createdAt;
-    }
-
-    // Необобщённая версия для коллекций
-    public IDocument Clone() => Clone();
-
-    // Обобщённая версия, которую переопределяют дети
-    public abstract Document Clone();
-
-    public virtual void Print()
-    {
-        Console.WriteLine($"[{GetType().Name}] Title: {_title}");
-        Console.WriteLine($"Created: {_createdAt:dd.MM.yyyy HH:mm:ss}");
-    }
-}
-
-// === Конкретные типы документов ===
-public class TextDocument : Document, IDocument<TextDocument>
-{
-    private readonly string _content;
-    private readonly List<string> _tags;
-
-    public TextDocument(string title, DateTimeOffset createdAt, string content, List<string> tags)
-        : base(title, createdAt)
-    {
-        _content = content;
-        _tags = tags;
-    }
-
-    public override TextDocument Clone()
-    {
-        // Deep copy списка тегов
-        var clonedTags = _tags.Select(t => t).ToList();
-        return new TextDocument(_title, _createdAt, _content, clonedTags);
-    }
-
-    public override void Print()
-    {
-        base.Print();
-        Console.WriteLine($"Content: {_content}");
-        Console.WriteLine($"Tags: {string.Join(", ", _tags)}");
-    }
-
-    public void EditContent(string newContent)
-    {
-        // Имитируем редактирование
-        Console.WriteLine($"Edited: {_content} -> {newContent}");
-    }
-}
-
-public class PresentationDocument : Document, IDocument<PresentationDocument>
-{
-    private readonly int _slideCount;
-    private readonly List<string> _presenters;
-
-    public PresentationDocument(string title, DateTimeOffset createdAt, int slideCount, List<string> presenters)
-        : base(title, createdAt)
-    {
-        _slideCount = slideCount;
-        _presenters = presenters;
-    }
-
-    public override PresentationDocument Clone()
-    {
-        // Deep copy списка ораторов
-        var clonedPresenters = _presenters.Select(p => p).ToList();
-        return new PresentationDocument(_title, _createdAt, _slideCount, clonedPresenters);
-    }
-
-    public override void Print()
-    {
-        base.Print();
-        Console.WriteLine($"Slides: {_slideCount}");
-        Console.WriteLine($"Presenters: {string.Join(", ", _presenters)}");
-    }
-
-    public void AddPresenter(string name)
-    {
-        Console.WriteLine($"Added presenter: {name}");
-    }
-}
-
-public class SpreadsheetDocument : Document, IDocument<SpreadsheetDocument>
-{
-    private readonly int _rows;
-    private readonly int _columns;
-    private readonly Dictionary<string, object> _data;
-
-    public SpreadsheetDocument(string title, DateTimeOffset createdAt, int rows, int columns)
-        : base(title, createdAt)
-    {
-        _rows = rows;
-        _columns = columns;
-        _data = new Dictionary<string, object>();
-    }
-
-    public override SpreadsheetDocument Clone()
-    {
-        var clone = new SpreadsheetDocument(_title, _createdAt, _rows, _columns);
-        
-        // Deep copy данных
-        foreach (var kvp in _data)
-        {
-            clone._data[kvp.Key] = kvp.Value;
-        }
-
-        return clone;
-    }
-
-    public override void Print()
-    {
-        base.Print();
-        Console.WriteLine($"Dimensions: {_rows}x{_columns}");
-        Console.WriteLine($"Data entries: {_data.Count}");
-    }
-
-    public void SetCellValue(string key, object value)
-    {
-        _data[key] = value;
-        Console.WriteLine($"Set {key} = {value}");
-    }
-}
-
-// === Хранилище документов ===
-public class DocumentRepository
-{
-    private readonly List<IDocument> _documents = [];
-
-    // Работаем с необобщённым интерфейсом — можем хранить любые документы
-    public void AddDocument(IDocument doc)
-    {
-        _documents.Add(doc);
-    }
-
-    // Клонируем документ, не зная его конкретного типа
-    public IDocument CloneDocument(int index)
-    {
-        if (index < 0 || index >= _documents.Count)
-            throw new IndexOutOfRangeException();
-
-        return _documents[index].Clone();
-    }
-
-    public void PrintAll()
-    {
-        foreach (var doc in _documents)
-        {
-            doc.Print();
-            Console.WriteLine();
-        }
-    }
-}
-
-// === Сценарий использования ===
-public class Program
-{
     public static void Main()
     {
-        Console.WriteLine("=== Пример 1: Клонирование разнородных документов ===\n");
-
-        var textDoc = new TextDocument(
-            title: "Report",
-            createdAt: DateTimeOffset.Now,
-            content: "This is a report",
-            tags: new List<string> { "urgent", "finance" }
-        );
-
-        var presentation = new PresentationDocument(
-            title: "Q4 Review",
-            createdAt: DateTimeOffset.Now,
-            slideCount: 20,
-            presenters: new List<string> { "Alice", "Bob" }
-        );
-
-        var spreadsheet = new SpreadsheetDocument(
-            title: "Budget",
-            createdAt: DateTimeOffset.Now,
-            rows: 100,
-            columns: 10
-        );
-
-        // Добавляем данные в таблицу
-        spreadsheet.SetCellValue("A1", 1000);
-        spreadsheet.SetCellValue("B1", 2000);
-
-        // Складываем в хранилище
-        var repo = new DocumentRepository();
-        repo.AddDocument(textDoc);
-        repo.AddDocument(presentation);
-        repo.AddDocument(spreadsheet);
-
-        Console.WriteLine("--- Оригинальные документы ---");
-        repo.PrintAll();
-
-        Console.WriteLine("\n=== Пример 2: Клонирование через необобщённый интерфейс ===\n");
-
-        var clonedText = repo.CloneDocument(0) as TextDocument;
-        var clonedPresentation = repo.CloneDocument(1) as PresentationDocument;
-        var clonedSpreadsheet = repo.CloneDocument(2) as SpreadsheetDocument;
-
-        Console.WriteLine("--- Клонированные документы ---");
-        clonedText?.Print();
-        Console.WriteLine();
-        clonedPresentation?.Print();
-        Console.WriteLine();
-        clonedSpreadsheet?.Print();
-
-        Console.WriteLine("\n=== Пример 3: Типобезопасное клонирование ===\n");
-
-        // Используем обобщённый интерфейс для типобезопасности
-        ProcessTextDocument(textDoc);
-        ProcessPresentation(presentation);
-
-        Console.WriteLine("\n=== Пример 4: Независимое редактирование копий ===\n");
-
-        Console.WriteLine("Редактируем копию текстового документа:");
-        clonedText?.EditContent("Updated content");
-
-        Console.WriteLine("\nДобавляем оратора к копии презентации:");
-        clonedPresentation?.AddPresenter("Charlie");
-
-        Console.WriteLine("\nДобавляем значение в копию таблицы:");
-        clonedSpreadsheet?.SetCellValue("C1", 3000);
-
-        Console.WriteLine("\n--- Оригинальные документы остались без изменений ---");
-        repo.PrintAll();
-    }
-
-    // Типобезопасный метод работает с обобщённым интерфейсом
-    private static T CloneAndModify<T>(T document) where T : IDocument<T>
-    {
-        var clone = document.Clone();
-        Console.WriteLine($"Cloned {typeof(T).Name}");
-        return clone;
-    }
-
-    private static void ProcessTextDocument(TextDocument doc)
-    {
-        var clone = CloneAndModify(doc);
-        Console.WriteLine($"Cloned text doc: {typeof(TextDocument).Name}");
-    }
-
-    private static void ProcessPresentation(PresentationDocument doc)
-    {
-        var clone = CloneAndModify(doc);
-        Console.WriteLine($"Cloned presentation: {typeof(PresentationDocument).Name}");
+        var prototype = new Prototype(42);
+        
+        // Тип сохраняется!
+        Prototype clone = CloneAndDoSomeStuff(prototype);
+        
+        // Можем вызвать специфичные методы без приведения типа!
+        clone.DoOtherStuff();  // ✅ Работает без cast!
     }
 }
-/* Вывод
-=== Пример 1: Клонирование разнородных документов ===
-
---- Оригинальные документы ---
-[TextDocument] Title: Report
-Created: 02.11.2025 22:36:45
-Content: This is a report
-Tags: urgent, finance
-
-[PresentationDocument] Title: Q4 Review
-Created: 02.11.2025 22:36:45
-Slides: 20
-Presenters: Alice, Bob
-
-[SpreadsheetDocument] Title: Budget
-Created: 02.11.2025 22:36:45
-Dimensions: 100x10
-Data entries: 2
-
-=== Пример 2: Клонирование через необобщённый интерфейс ===
-
---- Клонированные документы ---
-[TextDocument] Title: Report
-Created: 02.11.2025 22:36:45
-Content: This is a report
-Tags: urgent, finance
-
-[PresentationDocument] Title: Q4 Review
-Created: 02.11.2025 22:36:45
-Slides: 20
-Presenters: Alice, Bob
-
-[SpreadsheetDocument] Title: Budget
-Created: 02.11.2025 22:36:45
-Dimensions: 100x10
-Data entries: 2
-
-=== Пример 3: Типобезопасное клонирование ===
-
-Cloned TextDocument
-Cloned PresentationDocument
-
-=== Пример 4: Независимое редактирование копий ===
-
-Редактируем копию текстового документа:
-Edited: This is a report -> Updated content
-
-Добавляем оратора к копии презентации:
-Added presenter: Charlie
-
-Добавляем значение в копию таблицы:
-Set C1 = 3000
-
---- Оригинальные документы остались без изменений ---
-[TextDocument] Title: Report
-Created: 02.11.2025 22:36:45
-Content: This is a report
-Tags: urgent, finance
-
-[PresentationDocument] Title: Q4 Review
-Created: 02.11.2025 22:36:45
-Slides: 20
-Presenters: Alice, Bob
-
-[SpreadsheetDocument] Title: Budget
-Created: 02.11.2025 22:36:45
-Dimensions: 100x10
-Data entries: 2
-*/
 ```
 
-Давайте рассмотрим ещё несколько примеров с рекурсивными дженериками и их проблемами. Для этого вернёмся к примеру с фигурами:
+### Как это работает?
+
+Когда вы вызываете `CloneAndDoSomeStuff(prototype)`, компилятор:
+
+1. Видит, что `prototype` имеет тип `Prototype`
+2. Проверяет, что `Prototype : IPrototype<Prototype>` — ✅ выполняется
+3. Подставляет `T = Prototype` везде в методе
+
+В результате компилятор видит метод как:
+
 ```csharp
+// Компилятор подставляет конкретный тип
+public static Prototype CloneAndDoSomeStuff(Prototype prototype)
+    where Prototype : IPrototype<Prototype>
+{
+    var clone = prototype.Clone();  // Тип: Prototype
+    clone.DoSomeStuff();
+    return clone;  // Тип: Prototype
+}
+```
+
+**Вывод:** тип сохраняется на уровне компиляции, никаких приведений типов не требуется!
+
+### Пример с иерархией фигур
+
+Применим рекурсивные дженерики к нашему примеру с фигурами:
+
+```csharp
+// Обобщённый интерфейс
 public interface IPrototype<T> where T : IPrototype<T>
 {
     T Clone();
     void Draw();
 }
 
-public class Circle : IPrototype<Circle>
-{
-    public double Radius { get; set; }
-
-    public Circle(double radius)
-    {
-        Radius = radius;
-    }
-
-    // Метод Clone() возвращает именно Circle!
-    public Circle Clone()
-    {
-        return new Circle(Radius);
-    }
-
-    public void Draw()
-    {
-        Console.WriteLine($"Drawing circle with radius {Radius}");
-    }
-
-    public void Scale(double factor)
-    {
-        Radius *= factor;
-    }
-}
-
-public class Rectangle : IPrototype<Rectangle>
-{
-    public double Width { get; set; }
-    public double Height { get; set; }
-
-    public Rectangle(double width, double height)
-    {
-        Width = width;
-        Height = height;
-    }
-
-    public Rectangle Clone()
-    {
-        return new Rectangle(Width, Height);
-    }
-
-    public void Draw()
-    {
-        Console.WriteLine($"Drawing rectangle {Width}x{Height}");
-    }
-
-    public void Resize(double w, double h)
-    {
-        Width = w;
-        Height = h;
-    }
-}
-```
-Использование:
-```csharp 
-public class Scenario
-{
-    // Этот метод обобщённый и сохраняет тип!
-    public static T CloneAndDraw<T>(T prototype) where T : IPrototype<T>
-    {
-        var clone = prototype.Clone();  // Тип: T (правильный!)
-        clone.Draw();
-        return clone;  // Возвращаем T, а не IPrototype
-    }
-
-    public static void Main()
-    {
-        var circle = new Circle(5.0);
-        
-        // Вызываем метод — тип сохранён!
-        Circle clonedCircle = CloneAndDraw(circle);
-        
-        // Можем вызвать Scale() без cast
-        clonedCircle.Scale(2.0);
-        
-        // Аналогично для прямоугольника:
-        var rect = new Rectangle(10, 20);
-        Rectangle clonedRect = CloneAndDraw(rect);
-        
-        // Можем вызвать Resize() без cast
-        clonedRect.Resize(30, 40);
-    }
-}
-```
-
-Когда вы вызываете CloneAndDraw(circle), компилятор:
-
-1. Видит, что circle имеет тип Circle
-
-2. Проверяет, что Circle : IPrototype<Circle> — ✅ true
-
-3. Подставляет T = Circle везде в методе
-
-Получается:
-
-```csharp 
-// Так компилятор видит ваш вызов:
-public static Circle CloneAndDraw(Circle prototype)
-    where Circle : IPrototype<Circle>
-{
-    var clone = prototype.Clone();  // Тип: Circle
-    clone.Draw();
-    return clone;  // Тип: Circle
-}
-```
-Вывод: тип сохраняется на уровне компиляции
-
-Теперь усложним. Что если у нас есть иерархия?
-```csharp
-// Базовый класс для всех фигур
+// Базовый абстрактный класс с дженериками
 public abstract class Shape<T> : IPrototype<T> where T : Shape<T>
 {
     public string Color { get; set; }
@@ -1288,11 +913,12 @@ public abstract class Shape<T> : IPrototype<T> where T : Shape<T>
         Y = y;
     }
 
+    // Абстрактный метод клонирования
     public abstract T Clone();
 
     public void Draw()
     {
-        Console.WriteLine($"Drawing {GetType().Name} at ({X}, {Y}) with color {Color}");
+        Console.WriteLine($"Drawing {GetType().Name} at ({X}, {Y})");
     }
 
     public void MoveTo(double newX, double newY)
@@ -1302,7 +928,7 @@ public abstract class Shape<T> : IPrototype<T> where T : Shape<T>
     }
 }
 
-// Конкретные фигуры
+// Конкретная фигура — круг
 public class Circle : Shape<Circle>
 {
     public double Radius { get; set; }
@@ -1313,17 +939,21 @@ public class Circle : Shape<Circle>
         Radius = radius;
     }
 
+    // Возвращает именно Circle
     public override Circle Clone()
     {
         return new Circle(Color, X, Y, Radius);
     }
 
+    // Специфичный метод для круга
     public void Scale(double factor)
     {
         Radius *= factor;
+        Console.WriteLine($"Circle scaled to radius {Radius}");
     }
 }
 
+// Конкретная фигура — прямоугольник
 public class Rectangle : Shape<Rectangle>
 {
     public double Width { get; set; }
@@ -1336,123 +966,73 @@ public class Rectangle : Shape<Rectangle>
         Height = height;
     }
 
+    // Возвращает именно Rectangle
     public override Rectangle Clone()
     {
         return new Rectangle(Color, X, Y, Width, Height);
     }
 
-    public void Resize(double w, double h)
+    // Специфичный метод для прямоугольника
+    public void Resize(double newWidth, double newHeight)
     {
-        Width = w;
-        Height = h;
+        Width = newWidth;
+        Height = newHeight;
+        Console.WriteLine($"Rectangle resized to {Width}x{Height}");
     }
 }
 ```
-Использование:
+
+### Типобезопасное использование с фигурами
+
 ```csharp
+public class ShapeProcessor
+{
+    // Обобщённый метод с сохранением типа!
+    public static T CloneAndMove<T>(T shape, double x, double y) 
+        where T : Shape<T>
+    {
+        var clone = shape.Clone();  // Тип: T (конкретный тип!)
+        clone.MoveTo(x, y);
+        return clone;  // Возвращаем T, а не Shape
+    }
+}
+
+// Использование:
 public static void Main()
 {
     var circle = new Circle("Red", 10, 10, 5);
     var rect = new Rectangle("Blue", 20, 20, 10, 15);
 
-    // Типобезопасное клонирование
-    Circle clonedCircle = CloneAndMove(circle, 50, 50);
-    Rectangle clonedRect = CloneAndMove(rect, 100, 100);
+    // Типы сохраняются!
+    Circle clonedCircle = ShapeProcessor.CloneAndMove(circle, 50, 50);
+    Rectangle clonedRect = ShapeProcessor.CloneAndMove(rect, 100, 100);
 
-    // Можем вызывать специфичные методы без cast!
-    clonedCircle.Scale(2.0);
-    clonedRect.Resize(20, 30);
-}
-
-public static T CloneAndMove<T>(T shape, double x, double y) 
-    where T : Shape<T>
-{
-    var clone = shape.Clone();
-    clone.MoveTo(x, y);
-    return clone;
+    // Можем вызывать специфичные методы без приведения типов!
+    clonedCircle.Scale(2.0);      // ✅ Работает!
+    clonedRect.Resize(20, 30);    // ✅ Работает!
 }
 ```
-Более сложный случай: многоуровневая иерархия
-Что если есть наследование между конкретными классами?
+
+## Работа с разнородными коллекциями
+
+Рекурсивные дженерики прекрасно работают, когда тип известен на этапе компиляции. Но что делать, если нужно хранить разные типы в одной коллекции?
+
+### Проблема с коллекциями
+
 ```csharp
-// Базовая фигура
-public class Circle : Shape<Circle>
-{
-    public double Radius { get; set; }
+// Как создать коллекцию разных фигур?
+var shapes = new List<???>();  // Что тут писать?
 
-    public Circle(string color, double x, double y, double radius)
-        : base(color, x, y)
-    {
-        Radius = radius;
-    }
-
-    public override Circle Clone()
-    {
-        return new Circle(Color, X, Y, Radius);
-    }
-
-    public virtual void Scale(double factor)
-    {
-        Radius *= factor;
-    }
-}
-
-// Наследуемся от Circle
-public class FilledCircle : Circle, IPrototype<FilledCircle>
-{
-    public string FillPattern { get; set; }
-
-    public FilledCircle(string color, double x, double y, double radius, string fillPattern)
-        : base(color, x, y, radius)
-    {
-        FillPattern = fillPattern;
-    }
-
-    // Переопределяем Clone() для возврата FilledCircle
-    public new FilledCircle Clone()
-    {
-        return new FilledCircle(Color, X, Y, Radius, FillPattern);
-    }
-
-    public override void Scale(double factor)
-    {
-        base.Scale(factor);
-        Console.WriteLine($"Filled with pattern: {FillPattern}");
-    }
-}
+// List<IPrototype<???>> не работает!
+// Circle реализует IPrototype<Circle>
+// Rectangle реализует IPrototype<Rectangle>
+// Это разные типы!
 ```
-Использование:
-```csharp
-public static void Main()
-{
-    var filledCircle = new FilledCircle("Red", 10, 10, 5, "Stripes");
-    
-    // Типобезопасное клонирование
-    FilledCircle cloned = CloneAndMove(filledCircle, 50, 50);
-    
-    cloned.Scale(2.0);
-    Console.WriteLine($"Pattern: {cloned.FillPattern}");
-}
-```
-Теперь самое сложное. Что если вам нужно хранить разные типы в одной коллекции?
-```csharp
-public interface IPrototype<T> where T : IPrototype<T>
-{
-    T Clone();
-}
 
-public class Circle : IPrototype<Circle> { ... }
-public class Rectangle : IPrototype<Rectangle> { ... }
+### Решение 1: Необобщённый базовый интерфейс
 
-// Как создать коллекцию?
-var shapes = new List<???>();  // Что тут написать?
+Добавляем необобщённый (non-generic) интерфейс как базу:
 
-// List<IPrototype<???>> не работает, потому что у каждого свой тип!
-```
-Circle реализует IPrototype<Circle>, а Rectangle реализует IPrototype<Rectangle>. Это разные типы, и нет общего предка!
-
-Решение 1: Необобщённый базовый интерфейс
-Добавляем общий необобщённый интерфейс:
 ```csharp
 // Необобщённый интерфейс (для коллекций)
 public interface IPrototype
@@ -1467,6 +1047,7 @@ public interface IPrototype<T> : IPrototype where T : IPrototype<T>
     new T Clone();  // Переопределяем с обобщённым типом
 }
 
+// Конкретная реализация
 public class Circle : IPrototype<Circle>
 {
     public double Radius { get; set; }
@@ -1479,10 +1060,10 @@ public class Circle : IPrototype<Circle>
     // Явная реализация необобщённого интерфейса
     IPrototype IPrototype.Clone()
     {
-        return Clone();
+        return Clone();  // Делегируем обобщённому методу
     }
 
-    // Обобщённая версия
+    // Обобщённая версия — возвращает конкретный тип
     public Circle Clone()
     {
         return new Circle(Radius);
@@ -1493,6 +1074,7 @@ public class Circle : IPrototype<Circle>
         Console.WriteLine($"Circle with radius {Radius}");
     }
 
+    // Специфичный метод
     public void Scale(double factor)
     {
         Radius *= factor;
@@ -1510,11 +1092,13 @@ public class Rectangle : IPrototype<Rectangle>
         Height = height;
     }
 
+    // Явная реализация необобщённого интерфейса
     IPrototype IPrototype.Clone()
     {
         return Clone();
     }
 
+    // Обобщённая версия
     public Rectangle Clone()
     {
         return new Rectangle(Width, Height);
@@ -1525,6 +1109,7 @@ public class Rectangle : IPrototype<Rectangle>
         Console.WriteLine($"Rectangle {Width}x{Height}");
     }
 
+    // Специфичный метод
     public void Resize(double w, double h)
     {
         Width = w;
@@ -1532,17 +1117,23 @@ public class Rectangle : IPrototype<Rectangle>
     }
 }
 ```
-Теперь можно создать коллекцию:
+
+### Использование с коллекциями
+
+Теперь можно хранить разные типы в одной коллекции:
+
 ```csharp
 public class ShapeManager
 {
-    private readonly List<IPrototype> _shapes = [];
+    // Храним разнородные объекты через необобщённый интерфейс
+    private readonly List<IPrototype> _shapes = new();
 
     public void AddShape(IPrototype shape)
     {
         _shapes.Add(shape);
     }
 
+    // Клонируем все фигуры, не зная их конкретных типов
     public void CloneAll()
     {
         var clones = _shapes.Select(s => s.Clone()).ToList();
@@ -1553,19 +1144,19 @@ public class ShapeManager
         }
     }
 
-    // Но если нужен конкретный тип, приходится делать cast:
+    // Если нужен конкретный тип, делаем приведение
     public Circle? GetCircle(int index)
     {
         return _shapes[index] as Circle;
     }
 }
-```
-Использование:
-```csharp
+
+// Использование:
 public static void Main()
 {
     var manager = new ShapeManager();
     
+    // Добавляем фигуры разных типов
     manager.AddShape(new Circle(5.0));
     manager.AddShape(new Rectangle(10, 20));
     manager.AddShape(new Circle(7.5));
@@ -1583,40 +1174,39 @@ public static void Main()
 }
 ```
 
-Решение 2: Visitor Pattern
-Если нужно избежать cast'ов, можно использовать Visitor:
+### Решение 2: Visitor Pattern
+
+Для избежания приведения типов можно использовать паттерн **Visitor**:
+
 ```csharp
+// Интерфейс посетителя
 public interface IShapeVisitor
 {
     void Visit(Circle circle);
     void Visit(Rectangle rectangle);
 }
 
+// Добавляем метод Accept в интерфейс
 public interface IPrototype
 {
     IPrototype Clone();
     void Accept(IShapeVisitor visitor);
 }
 
+// Реализация в Circle
 public class Circle : IPrototype<Circle>
 {
-    public double Radius { get; set; }
-
-    public Circle(double radius)
-    {
-        Radius = radius;
-    }
-
-    IPrototype IPrototype.Clone() => Clone();
-    
-    public Circle Clone() => new Circle(Radius);
+    // ... поля и конструктор ...
 
     public void Accept(IShapeVisitor visitor)
     {
         visitor.Visit(this);  // Передаём конкретный тип!
     }
+    
+    // ... остальные методы ...
 }
 
+// Конкретный посетитель для масштабирования
 public class ScaleVisitor : IShapeVisitor
 {
     private readonly double _factor;
@@ -1639,9 +1229,8 @@ public class ScaleVisitor : IShapeVisitor
         Console.WriteLine($"Scaled rectangle to {rectangle.Width}x{rectangle.Height}");
     }
 }
-```
-Использование:
-```csharp
+
+// Использование без приведения типов:
 public static void Main()
 {
     List<IPrototype> shapes = new()
@@ -1653,6 +1242,7 @@ public static void Main()
 
     var scaleVisitor = new ScaleVisitor(2.0);
 
+    // Обрабатываем все фигуры типобезопасно
     foreach (var shape in shapes)
     {
         shape.Accept(scaleVisitor);
@@ -1660,108 +1250,11 @@ public static void Main()
 }
 ```
 
-То есть ещё раз проблема с необобщённым интерфейсом:
-```csharp
-// Необобщённый интерфейс
-public interface IPrototype
-{
-    void DoSomeStuff();
-    // Нет метода Clone()!
-}
 
-// Обобщённый интерфейс
-public interface IPrototype<T> : IPrototype where T : IPrototype<T>
-{
-    T Clone();
-}
+## Комплексный пример: Система управления документами
 
-public class Prototype : IPrototype<Prototype>
-{
-    public Prototype Clone()
-    {
-        return new Prototype();
-    }
+Рассмотрим полноценный пример, объединяющий все изученные концепции.
 
-    public void DoSomeStuff()
-    {
-        Console.WriteLine("Doing stuff");
-    }
-}
-
-// Контейнер хранит необобщённый тип
-public record Container(IPrototype Prototype);
-
-static void NonGeneric()
-{
-    var container = new Container(new Prototype());
-    
-    // ПРОБЛЕМА: как клонировать?
-    // container.Prototype.Clone();  // ОШИБКА! Нет Clone() в IPrototype
-    
-    // Приходится делать cast:
-    if (container.Prototype is IPrototype<Prototype> proto)
-    {
-        var clone = proto.Clone();  // Работает
-    }
-}
-```
-
-Когда вы храните объект как IPrototype (необобщённый), вы теряете доступ к обобщённым методам. Метод Clone() есть только в IPrototype<T>, а не в IPrototype.
-
-Решение: Добавить Clone() в необобщённый интерфейс
-
-```csharp
-// Необобщённый интерфейс с Clone()
-public interface IPrototype
-{
-    IPrototype Clone();  // Возвращает необобщённый тип
-    void DoSomeStuff();
-}
-
-// Обобщённый интерфейс
-public interface IPrototype<T> : IPrototype where T : IPrototype<T>
-{
-    new T Clone();  // Переопределяем с обобщённым типом
-}
-
-public class Prototype : IPrototype<Prototype>
-{
-    // Явная реализация необобщённого
-    IPrototype IPrototype.Clone()
-    {
-        return Clone();
-    }
-
-    // Обобщённая реализация
-    public Prototype Clone()
-    {
-        return new Prototype();
-    }
-
-    public void DoSomeStuff()
-    {
-        Console.WriteLine("Doing stuff");
-    }
-}
-
-public record Container(IPrototype Prototype);
-
-static void NonGeneric()
-{
-    var container = new Container(new Prototype());
-    
-    // Теперь работает
-    IPrototype clone = container.Prototype.Clone();
-    clone.DoSomeStuff();
-    
-    // Если нужен конкретный тип:
-    if (clone is Prototype protoClone)
-    {
-        // Работаем с конкретным типом
-    }
-}
-```
-Соберём всё вместе в реалистичный пример:
 ```csharp
 using System;
 using System.Collections.Generic;
@@ -1769,7 +1262,7 @@ using System.Linq;
 
 // === Интерфейсы ===
 
-// Необобщённый (для коллекций)
+// Необобщённый интерфейс (для работы с коллекциями разнородных типов)
 public interface IDocument
 {
     IDocument Clone();
@@ -1777,13 +1270,13 @@ public interface IDocument
     string GetTitle();
 }
 
-// Обобщённый (для типобезопасности)
+// Обобщённый интерфейс (для типобезопасных операций)
 public interface IDocument<T> : IDocument where T : IDocument<T>
 {
-    new T Clone();
+    new T Clone();  // Переопределяем с конкретным типом
 }
 
-// === Базовый класс ===
+// === Базовый класс документа ===
 
 public abstract class Document<T> : IDocument<T> where T : Document<T>
 {
@@ -1798,10 +1291,10 @@ public abstract class Document<T> : IDocument<T> where T : Document<T>
         _version = version;
     }
 
-    // Необобщённый Clone()
+    // Явная реализация необобщённого интерфейса
     IDocument IDocument.Clone() => Clone();
 
-    // Обобщённый Clone()
+    // Абстрактный обобщённый метод — переопределяют наследники
     public abstract T Clone();
 
     public virtual void Print()
@@ -1820,8 +1313,9 @@ public abstract class Document<T> : IDocument<T> where T : Document<T>
     }
 }
 
-// === Конкретные типы ===
+// === Конкретные типы документов ===
 
+// Текстовый документ
 public class TextDocument : Document<TextDocument>
 {
     private string _content;
@@ -1835,9 +1329,9 @@ public class TextDocument : Document<TextDocument>
         _tags = tags;
     }
 
+    // Глубокое копирование — создаём новый список тегов
     public override TextDocument Clone()
     {
-        // Deep copy
         var clonedTags = _tags.Select(t => t).ToList();
         return new TextDocument(_title, _createdAt, _version, _content, clonedTags);
     }
@@ -1849,6 +1343,7 @@ public class TextDocument : Document<TextDocument>
         Console.WriteLine($"Tags: {string.Join(", ", _tags)}");
     }
 
+    // Специфичные методы для текстового документа
     public void EditContent(string newContent)
     {
         _content = newContent;
@@ -1863,6 +1358,7 @@ public class TextDocument : Document<TextDocument>
     }
 }
 
+// Таблица
 public class SpreadsheetDocument : Document<SpreadsheetDocument>
 {
     private int _rows;
@@ -1878,11 +1374,12 @@ public class SpreadsheetDocument : Document<SpreadsheetDocument>
         _cells = new Dictionary<string, double>();
     }
 
+    // Глубокое копирование — создаём новый словарь
     public override SpreadsheetDocument Clone()
     {
         var clone = new SpreadsheetDocument(_title, _createdAt, _version, _rows, _columns);
         
-        // Deep copy cells
+        // Копируем все ячейки
         foreach (var kvp in _cells)
         {
             clone._cells[kvp.Key] = kvp.Value;
@@ -1898,6 +1395,7 @@ public class SpreadsheetDocument : Document<SpreadsheetDocument>
         Console.WriteLine($"Filled cells: {_cells.Count}");
     }
 
+    // Специфичные методы для таблицы
     public void SetCell(string address, double value)
     {
         _cells[address] = value;
@@ -1911,11 +1409,49 @@ public class SpreadsheetDocument : Document<SpreadsheetDocument>
     }
 }
 
+// Презентация
+public class PresentationDocument : Document<PresentationDocument>
+{
+    private int _slideCount;
+    private List<string> _presenters;
+
+    public PresentationDocument(string title, DateTimeOffset createdAt, int version, 
+                               int slideCount, List<string> presenters)
+        : base(title, createdAt, version)
+    {
+        _slideCount = slideCount;
+        _presenters = presenters;
+    }
+
+    // Глубокое копирование — создаём новый список докладчиков
+    public override PresentationDocument Clone()
+    {
+        var clonedPresenters = _presenters.Select(p => p).ToList();
+        return new PresentationDocument(_title, _createdAt, _version, 
+                                       _slideCount, clonedPresenters);
+    }
+
+    public override void Print()
+    {
+        base.Print();
+        Console.WriteLine($"Slides: {_slideCount}");
+        Console.WriteLine($"Presenters: {string.Join(", ", _presenters)}");
+    }
+
+    // Специфичный метод для презентации
+    public void AddPresenter(string name)
+    {
+        _presenters.Add(name);
+        Console.WriteLine($"Added presenter: {name}");
+    }
+}
+
 // === Менеджер документов (работает с необобщённым интерфейсом) ===
 
 public class DocumentManager
 {
-    private readonly List<IDocument> _documents = [];
+    // Храним разнородные документы через базовый интерфейс
+    private readonly List<IDocument> _documents = new();
 
     public void AddDocument(IDocument doc)
     {
@@ -1923,6 +1459,7 @@ public class DocumentManager
         Console.WriteLine($"Added document: {doc.GetTitle()}");
     }
 
+    // Клонируем все документы полиморфно
     public void CloneAll()
     {
         Console.WriteLine("\n=== Cloning all documents ===");
@@ -1955,15 +1492,16 @@ public class DocumentManager
 public class DocumentProcessor
 {
     // Типобезопасное клонирование с модификацией
+    // Тип T сохраняется на всём протяжении выполнения метода
     public static T CloneAndModify<T>(T document, Action<T> modifier) 
         where T : IDocument<T>
     {
-        var clone = document.Clone();
+        var clone = document.Clone();  // Тип: T (конкретный!)
         modifier(clone);
         return clone;
     }
 
-    // Создание версии документа
+    // Создание новой версии документа
     public static T CreateVersion<T>(T document) 
         where T : IDocument<T>
     {
@@ -1973,64 +1511,15 @@ public class DocumentProcessor
     }
 }
 
-// === Visitor для типобезопасной работы с коллекциями ===
-
-public interface IDocumentVisitor
-{
-    void Visit(TextDocument doc);
-    void Visit(SpreadsheetDocument doc);
-}
-
-public class DocumentStatisticsVisitor : IDocumentVisitor
-{
-    public int TextDocumentCount { get; private set; }
-    public int SpreadsheetCount { get; private set; }
-
-    public void Visit(TextDocument doc)
-    {
-        TextDocumentCount++;
-        Console.WriteLine($"Visited text document: {doc.GetTitle()}");
-    }
-
-    public void Visit(SpreadsheetDocument doc)
-    {
-        SpreadsheetCount++;
-        Console.WriteLine($"Visited spreadsheet: {doc.GetTitle()}");
-    }
-}
-
-// Добавляем Accept в интерфейс
-public interface IDocumentVisitable
-{
-    void Accept(IDocumentVisitor visitor);
-}
-
-// Обновляем классы документов
-public partial class TextDocument : IDocumentVisitable
-{
-    public void Accept(IDocumentVisitor visitor)
-    {
-        visitor.Visit(this);
-    }
-}
-
-public partial class SpreadsheetDocument : IDocumentVisitable
-{
-    public void Accept(IDocumentVisitor visitor)
-    {
-        visitor.Visit(this);
-    }
-}
-
 // === Главная программа ===
 
 public class Program
 {
     public static void Main()
     {
-        Console.WriteLine("╔═══════════════════════════════════════════════════════╗");
-        Console.WriteLine("║  Демонстрация Prototype с рекурсивными дженериками  ║");
-        Console.WriteLine("╚═══════════════════════════════════════════════════════╝\n");
+        Console.WriteLine("╔════════════════════════════════════════════╗");
+        Console.WriteLine("║  Демонстрация паттерна Prototype          ║");
+        Console.WriteLine("╚════════════════════════════════════════════╝\n");
 
         // === Пример 1: Типобезопасное клонирование ===
         Console.WriteLine("▶ Пример 1: Типобезопасное клонирование\n");
@@ -2043,7 +1532,8 @@ public class Program
             new List<string> { "urgent", "finance" }
         );
 
-        // Типобезопасное клонирование — тип сохраняется!
+        // Типобезопасно клонируем и модифицируем
+        // Тип TextDocument сохраняется!
         TextDocument clonedText = DocumentProcessor.CloneAndModify(
             textDoc,
             doc => doc.EditContent("Modified content")
@@ -2055,53 +1545,41 @@ public class Program
         Console.WriteLine("\nClone:");
         clonedText.Print();
 
-        // === Пример 2: Работа через необобщённый интерфейс ===
+        // === Пример 2: Работа с коллекцией разнородных документов ===
         Console.WriteLine("\n▶ Пример 2: Коллекция разнородных документов\n");
 
         var manager = new DocumentManager();
         
         manager.AddDocument(textDoc);
         manager.AddDocument(new SpreadsheetDocument("Budget", DateTimeOffset.Now, 1, 10, 10));
-        manager.AddDocument(new TextDocument("Notes", DateTimeOffset.Now, 1, "Some notes", new List<string>()));
+        manager.AddDocument(new PresentationDocument("Q4 Review", DateTimeOffset.Now, 1, 20, 
+                                                     new List<string> { "Alice", "Bob" }));
 
         manager.PrintAll();
         manager.CloneAll();
 
         // === Пример 3: Получение конкретного типа из коллекции ===
-        Console.WriteLine("\n▶ Пример 3: Работа с конкретным типом из коллекции\n");
+        Console.WriteLine("\n▶ Пример 3: Работа с конкретным типом\n");
 
         var doc = manager.GetDocument("Budget");
         if (doc is SpreadsheetDocument spreadsheet)
         {
             spreadsheet.SetCell("A1", 1000);
             spreadsheet.SetCell("B1", 2000);
+            spreadsheet.SetCell("C1", 3000);
             spreadsheet.Print();
         }
 
-        // === Пример 4: Visitor для избежания cast'ов ===
-        Console.WriteLine("\n▶ Пример 4: Visitor Pattern для типобезопасности\n");
-
-        var statsVisitor = new DocumentStatisticsVisitor();
-        
-        foreach (var document in new IDocument[] { textDoc, clonedText })
-        {
-            if (document is IDocumentVisitable visitable)
-            {
-                visitable.Accept(statsVisitor);
-            }
-        }
-
-        Console.WriteLine($"\nСтатистика:");
-        Console.WriteLine($"  Текстовых документов: {statsVisitor.TextDocumentCount}");
-        Console.WriteLine($"  Таблиц: {statsVisitor.SpreadsheetCount}");
-
-        // === Пример 5: Создание версий ===
-        Console.WriteLine("\n▶ Пример 5: Версионирование документов\n");
+        // === Пример 4: Версионирование документов ===
+        Console.WriteLine("\n▶ Пример 4: Версионирование документов\n");
 
         var version1 = textDoc;
+        
+        // Создаём версию 2
         var version2 = DocumentProcessor.CreateVersion(version1);
         version2.EditContent("Version 2 content");
 
+        // Создаём версию 3
         var version3 = DocumentProcessor.CreateVersion(version2);
         version3.AddTag("reviewed");
         version3.EditContent("Version 3 content");
@@ -2115,68 +1593,292 @@ public class Program
         Console.WriteLine("\nВерсия 3:");
         version3.Print();
 
-        Console.WriteLine("\n╔═══════════════════════════════════════════════════════╗");
-        Console.WriteLine("║                 Демонстрация завершена                ║");
-        Console.WriteLine("╚═══════════════════════════════════════════════════════╝");
+        // === Пример 5: Независимость копий ===
+        Console.WriteLine("\n▶ Пример 5: Независимость копий\n");
+
+        var original = new PresentationDocument(
+            "Presentation",
+            DateTimeOffset.Now,
+            1,
+            10,
+            new List<string> { "Alice" }
+        );
+
+        var copy = original.Clone();
+        copy.AddPresenter("Bob");
+        copy.AddPresenter("Charlie");
+
+        Console.WriteLine("Original:");
+        original.Print();
+
+        Console.WriteLine("\nCopy (с добавленными докладчиками):");
+        copy.Print();
+
+        Console.WriteLine("\n╔════════════════════════════════════════════╗");
+        Console.WriteLine("║         Демонстрация завершена             ║");
+        Console.WriteLine("╚════════════════════════════════════════════╝");
     }
 }
 ```
 
-Выводы
-Когда использовать какой подход:
-1. Простое наследование (abstract class Prototype):
+### Вывод программы
 
-✅ Простая иерархия без сложной типизации
+```
+╔════════════════════════════════════════════╗
+║  Демонстрация паттерна Prototype          ║
+╚════════════════════════════════════════════╝
 
-✅ Все методы общие для всех классов
+▶ Пример 1: Типобезопасное клонирование
 
-❌ Теряете конкретный тип при возврате из методов
+Created new version of: Report
+Content updated to: Modified content
+Version incremented to 2
 
-2. Интерфейсы (IPrototype):
+Original:
+[TextDocument] Report
+Created: 12.11.2025 15:15:38
+Version: 1
+Content: Initial content
+Tags: urgent, finance
 
-✅ Множественное наследование
+Clone:
+[TextDocument] Report
+Created: 12.11.2025 15:15:38
+Version: 2
+Content: Modified content
+Tags: urgent, finance
 
-✅ Гибкая композиция
+▶ Пример 2: Коллекция разнородных документов
 
-❌ Всё ещё теряете тип без дженериков
+Added document: Report
+Added document: Budget
+Added document: Q4 Review
 
-3. Рекурсивные дженерики (IPrototype<T> where T : IPrototype<T>):
+=== All documents ===
+[TextDocument] Report
+Created: 12.11.2025 15:15:38
+Version: 1
+Content: Initial content
+Tags: urgent, finance
 
-✅ Типобезопасность на уровне компиляции
+[SpreadsheetDocument] Budget
+Created: 12.11.2025 15:15:38
+Version: 1
+Dimensions: 10x10
+Filled cells: 0
 
-✅ Не нужны cast'ы при работе через обобщённые методы
+[PresentationDocument] Q4 Review
+Created: 12.11.2025 15:15:38
+Version: 1
+Slides: 20
+Presenters: Alice, Bob
 
-✅ Компилятор помогает избежать ошибок
+=== Cloning all documents ===
+Cloned: Report
+Cloned: Budget
+Cloned: Q4 Review
 
-❌ Сложнее понять и реализовать
+▶ Пример 3: Работа с конкретным типом
 
-❌ Проблемы с разнородными коллекциями
+Cell A1 = 1000
+Version incremented to 2
+Cell B1 = 2000
+Version incremented to 3
+Cell C1 = 3000
+Version incremented to 4
+[SpreadsheetDocument] Budget
+Created: 12.11.2025 15:15:38
+Version: 4
+Dimensions: 10x10
+Filled cells: 3
 
-4. Комбинация обобщённых и необобщённых интерфейсов:
+▶ Пример 4: Версионирование документов
 
-✅ Типобезопасность когда нужно
+Created new version of: Report
+Content updated to: Version 2 content
+Version incremented to 2
+Created new version of: Report
+Tag 'reviewed' added
+Content updated to: Version 3 content
+Version incremented to 3
 
-✅ Возможность работать с коллекциями
+Версия 1:
+[TextDocument] Report
+Created: 12.11.2025 15:15:38
+Version: 1
+Content: Initial content
+Tags: urgent, finance
 
-✅ Best of both worlds
+Версия 2:
+[TextDocument] Report
+Created: 12.11.2025 15:15:38
+Version: 2
+Content: Version 2 content
+Tags: urgent, finance
 
-❌ Больше кода
+Версия 3:
+[TextDocument] Report
+Created: 12.11.2025 15:15:38
+Version: 3
+Content: Version 3 content
+Tags: urgent, finance, reviewed
 
-❌ Требует понимания явной реализации интерфейсов
+▶ Пример 5: Независимость копий
 
-Золотое правило:
-Используйте рекурсивные дженерики, когда:
+Added presenter: Bob
+Added presenter: Charlie
 
-- Работаете с типобезопасными операциями
+Original:
+[PresentationDocument] Presentation
+Created: 12.11.2025 15:15:38
+Version: 1
+Slides: 10
+Presenters: Alice
 
-- Нужно сохранять конкретный тип через цепочку вызовов
+Copy (с добавленными докладчиками):
+[PresentationDocument] Presentation
+Created: 12.11.2025 15:15:38
+Version: 1
+Slides: 10
+Presenters: Alice, Bob, Charlie
 
-- Хотите, чтобы компилятор помогал избегать ошибок
+╔════════════════════════════════════════════╗
+║         Демонстрация завершена             ║
+╚════════════════════════════════════════════╝
+```
 
-Добавляйте необобщённый базовый интерфейс, когда:
+## Когда использовать паттерн Prototype
 
-- Нужно хранить разные типы в одной коллекции
+### Подходящие сценарии
 
-- Работаете с плагинами/расширениями
+Паттерн Prototype следует применять, когда:
 
-- Используете Visitor или другие паттерны для типобезопасности
+1. **Создание объекта дорогостоящее**
+   - Сложная инициализация с обращениями к базе данных
+   - Загрузка больших объёмов данных
+   - Вычислительно сложные операции при создании
+
+2. **Нужно избежать параллельной иерархии фабрик**
+   - Вместо создания фабрики для каждого класса, объекты клонируют сами себя
+   - Упрощение архитектуры
+
+3. **Классы создаются динамически во время выполнения**
+   - Тип объекта определяется в runtime
+   - Работа с плагинами или расширениями
+
+4. **Нужно сохранять состояние объектов**
+   - Создание снимков (snapshots)
+   - Реализация отмены операций (undo/redo)
+   - Версионирование данных
+
+5. **Объекты отличаются только состоянием, а не поведением**
+   - Много похожих объектов с разными значениями полей
+   - Конфигурации, настройки, пресеты
+
+### Неподходящие сценарии
+
+Не следует использовать Prototype, когда:
+
+1. **Простые объекты с быстрым созданием**
+   - Накладные расходы на клонирование превысят выгоду
+   - Проще использовать обычный конструктор
+
+2. **Невозможно реализовать глубокое копирование**
+   - Объекты содержат внешние ресурсы (файлы, соединения с БД)
+   - Циклические ссылки между объектами
+
+3. **Иммутабельные объекты**
+   - Если объекты неизменяемы, клонирование не нужно
+   - Можно переиспользовать одни и те же экземпляры
+
+## Преимущества и недостатки
+
+### Преимущества
+
+**1. Скрывает сложность создания**
+- Клиентский код не знает о конструкторах и инициализации
+- Инкапсуляция логики копирования внутри объекта
+
+**2. Уменьшает количество подклассов**
+- Не нужно создавать фабрики для каждого типа объектов
+- Объекты сами знают, как себя копировать
+
+**3. Добавляет и удаляет объекты на лету**
+- Новые типы прототипов можно добавлять динамически
+- Гибкость во время выполнения
+
+**4. Повышает производительность**
+- Клонирование может быть быстрее создания с нуля
+- Особенно для сложных объектов с дорогой инициализацией
+
+**5. Альтернатива наследованию**
+- Композиция вместо наследования
+- Создание вариантов через клонирование и модификацию
+
+### Недостатки
+
+**1. Сложность глубокого копирования**
+- Требуется аккуратно копировать все вложенные объекты
+- Проблемы с циклическими ссылками
+- Сложно копировать объекты с внешними ресурсами
+
+**2. Необходимость реализации Clone() в каждом классе**
+- Дополнительный код в каждом классе иерархии
+- Нужно помнить о добавлении новых полей в метод Clone()
+
+**3. Сложность для начинающих**
+- Рекурсивные дженерики могут быть непонятны
+- Явная реализация интерфейсов требует понимания
+
+## Связь с другими паттернами
+
+### Abstract Factory и Factory Method
+
+- **Abstract Factory** и **Factory Method** создают объекты через наследование
+- **Prototype** создаёт объекты через делегирование — объект клонирует сам себя
+- Prototype может использоваться внутри фабрик для создания объектов
+
+### Memento
+
+- Оба паттерна работают с сохранением состояния
+- **Memento** сохраняет снимок состояния для последующего восстановления
+- **Prototype** создаёт полную копию объекта
+- Memento часто реализуется через Prototype
+
+### Composite
+
+- **Composite** часто комбинируется с **Prototype**
+- Можно клонировать целые деревья объектов
+- Каждый узел дерева реализует Clone()
+
+### Singleton
+
+- **Singleton** и **Prototype** противоположны по философии
+- Singleton гарантирует один экземпляр класса
+- Prototype создаёт множество копий
+- В редких случаях Singleton может содержать методы клонирования для создания временных копий
+
+## Заключение
+
+Паттерн **Prototype** — мощный инструмент для копирования объектов, который:
+
+- Делегирует ответственность за клонирование самим объектам
+- Позволяет создавать копии без привязки к конкретным классам
+- Обеспечивает полиморфное копирование в иерархиях
+- Сохраняет типобезопасность через рекурсивные дженерики
+- Работает с разнородными коллекциями через комбинацию обобщённых и необобщённых интерфейсов
+
+### Основные выводы
+
+1. **Shallow vs Deep Copy** — выбирайте в зависимости от мутабельности вложенных объектов
+2. **Интерфейс vs Абстрактный класс** — в современном C# предпочтительны интерфейсы
+3. **Рекурсивные дженерики** — обеспечивают типобезопасность, но усложняют код
+4. **Комбинация интерфейсов** — используйте обобщённый + необобщённый для максимальной гибкости
+
+Паттерн особенно полезен в системах с:
+- Сложной иерархией типов
+- Дорогостоящим созданием объектов
+- Необходимостью версионирования и снимков состояния
+- Динамическим созданием объектов в runtime
+
+**Правило:** используйте Prototype, когда создание объекта через `new` сложнее, чем копирование существующего экземпляра.
