@@ -1,7 +1,26 @@
+// Файл реализует оператор умножения с логированием.
+// Здесь преподаватель добавил Console.WriteLine для демонстрации того,
+// что операция действительно выполняется. Это важно для демонстрации
+// работы паттерна Proxy с кешированием в CachingBinaryOperatorProxy.
+
 namespace Workshop2.Expressions.BinaryOperators;
 
+// Класс MultiplyOperator реализует операцию умножения.
+// Паттерн Strategy: конкретная стратегия для умножения.
+// Особенность: содержит вывод в консоль для демонстрации момента выполнения операции.
 public sealed class MultiplyOperator : IBinaryOperator
 {
+    // Выполняет умножение двух чисел.
+    // Параметры:
+    //   left — первый множитель
+    //   right — второй множитель
+    // Возвращает: произведение left * right
+    //
+    // Примечание: Console.WriteLine добавлен намеренно для демонстрации,
+    // когда именно выполняется операция умножения. Это особенно полезно
+    // при использовании CachingBinaryOperatorProxy — можно увидеть,
+    // что при повторном вызове с теми же аргументами расчёт не происходит,
+    // а значение берётся из кеша (сообщение не выводится повторно).
     public double Apply(double left, double right)
     {
         Console.WriteLine("Multiplying...");
@@ -9,6 +28,8 @@ public sealed class MultiplyOperator : IBinaryOperator
         return left * right;
     }
 
+    // Возвращает символ операции для отображения в выражениях.
+    // Возвращает: строку "*"
     public string Format()
         => "*";
 }
