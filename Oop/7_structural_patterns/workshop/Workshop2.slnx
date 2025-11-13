@@ -1,9 +1,0 @@
-﻿<Solution>
-  <Folder Name="/common/">
-    <File Path="README.md" />
-  </Folder>
-  <Folder Name="/src/">
-    <Project Path="src\Workshop2.Expressions.Console\Workshop2.Expressions.Console.csproj" Type="Classic C#" />
-    <Project Path="src\Workshop2.Expressions\Workshop2.Expressions.csproj" Type="Classic C#" />
-  </Folder>
-</Solution>
