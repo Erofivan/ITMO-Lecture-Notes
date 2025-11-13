@@ -8,13 +8,15 @@
 
 ## Определение паттерна
 
+> Вариативность создания объектов при помощи наследования и полиморфизма
+
 **Фабричный метод** (Factory Method) — это порождающий паттерн проектирования, который определяет общий интерфейс для создания объектов в базовом классе, делегируя подклассам решение о том, какой конкретный класс инстанцировать.
 
 Ключевая идея паттерна: использование наследования и полиморфизма для вариативного создания объектов без привязки клиентского кода к конкретным классам продуктов.
 
 ## Проблема, которую решает паттерн
 
-### Мотивирующий пример: система управления логистикой
+### Пример: система управления логистикой
 
 Представим, что мы разрабатываем приложение для управления грузовыми перевозками. На начальном этапе бизнес работает только с автомобильными перевозками, поэтому вся система спроектирована вокруг класса `Truck` (грузовик).
 
@@ -50,6 +52,68 @@ public class LogisticsManager
 2. **Нарушение принципа открытости/закрытости** — добавление новых типов требует модификации существующего кода
 3. **Разрастание условной логики** — появляются множественные `if-else` или `switch` для выбора типа создаваемого объекта
 4. **Дублирование кода** — логика создания повторяется в разных частях системы
+
+**Пример:**
+```csharp
+// У нас есть абстракция документа
+public interface IDocument
+{
+    void Open();
+    void Close();
+}
+
+// И конкретные реализации
+public class PdfDocument : IDocument
+{
+    public void Open() { Console.WriteLine("Открываем PDF документ..."); }
+    public void Close() { Console.WriteLine("Закрываем PDF документ."); }
+}
+
+public class WordDocument : IDocument
+{
+    public void Open() { Console.WriteLine("Открываем Word документ..."); }
+    public void Close() { Console.WriteLine("Закрываем Word документ."); }
+}
+
+// Тип документа для выбора
+public enum DocumentType
+{
+    Pdf,
+    Word
+}
+
+// Клиентский код (например, главное окно приложения)
+public class DocumentEditor
+{
+    private IDocument _currentDoc;
+
+    // Этот метод жестко связан с PdfDocument и WordDocument.
+    // Он содержит условную логику (if/else).
+    // Если мы захотим добавить ExcelDocument, нам придется изменить этот метод.
+    public void CreateAndOpenDocument(DocumentType type)
+    {
+        // 1. Жёсткая связанность (с new PdfDocument())
+        // 2. Разрастание условной логики (if/else)
+        // 3. Нарушение OCP (добавление нового типа сломает класс)
+        if (type == DocumentType.Pdf)
+        {
+            _currentDoc = new PdfDocument(); // Прямое создание
+        }
+        else if (type == DocumentType.Word)
+        {
+            _currentDoc = new WordDocument(); //  Прямое создание
+        }
+        else
+        {
+            throw new NotSupportedException("Этот тип документа не поддерживается");
+        }
+
+        // Общая логика работы с документом
+        _currentDoc.Open();
+        Console.WriteLine("Документ открыт и готов к работе.");
+    }
+}
+```
 
 ## Решение через Фабричный метод
 
@@ -91,7 +155,7 @@ public class Ship : ITransport
 
 ### Шаг 2: Создание абстрактного создателя с фабричным методом
 
-Базовый класс создателя объявляет фабричный метод, который возвращает объект типа `ITransport`. Этот метод может быть абстрактным, заставляя подклассы предоставить свою реализацию.
+Базовый класс создателя объявляет фабричный метод, который возвращает объект типа `ITransport`. Этот метод должен быть абстрактным, заставляя подклассы предоставить свою реализацию.
 
 ```csharp
 // Абстрактный класс создателя (Creator)
@@ -143,6 +207,78 @@ public class SeaLogistics : LogisticsManager
 ```
 
 ![](src/factory_method/factory_method_result.png)
+
+А так можно решить проблему с документами из примера выше:
+```csharp
+// Абстракция для создаваемых объектов
+public interface IDocument
+{
+    void Open();
+    void Close();
+}
+
+// Конкретные продукты (Concrete Products)
+public class PdfDocument : IDocument
+{
+    public void Open() { Console.WriteLine("Открываем PDF документ..."); }
+    public void Close() { Console.WriteLine("Закрываем PDF документ."); }
+}
+
+public class WordDocument : IDocument
+{
+    public void Open() { Console.WriteLine("Открываем Word документ..."); }
+    public void Close() { Console.WriteLine("Закрываем Word документ."); }
+}
+
+// Создатель (Creator) - абстрактный класс,
+// который определяет фабричный Метод
+public abstract class DocumentCreator
+{
+    // Фабричный метод CreateDocument
+    // Он абстрактный, поэтому подклассы обязаны его реализовать
+    // и решить, какой конкретный продукт создавать.
+    public abstract IDocument CreateDocument();
+
+    // Также "Создатель" может иметь общую бизнес-логику,
+    // которая использует продукт.
+    // Обратите внимание: эта логика работает с IDocument,
+    // не зная, PDF это или Word.
+    public void NewDocument()
+    {
+        // Получаем продукт через фабричный метод (не new!)
+        IDocument doc = CreateDocument(); 
+        
+        // Работаем с абстракцией
+        doc.Open();
+        Console.WriteLine("Документ открыт и готов к работе.");
+        // ... какая-то логика работы ...
+    }
+}
+
+// Конкретные создатели (Concrete Creators) 
+// Каждый создатель "знает", какой конкретный продукт он должен создавать.
+public class PdfCreator : DocumentCreator
+{
+    // Этот класс реализует фабричный метод...
+    public override IDocument CreateDocument()
+    {
+        // ...и "прячет" вызов 'new' внутри себя.
+        // Здесь может быть сложная логика инициализации PDF.
+        Console.WriteLine("Фабрика PDF: создаю PdfDocument.");
+        return new PdfDocument();
+    }
+}
+
+public class WordCreator : DocumentCreator
+{
+    // Эта реализация возвращает другой продукт.
+    public override IDocument CreateDocument()
+    {
+        Console.WriteLine("Фабрика Word: создаю WordDocument.");
+        return new WordDocument();
+    }
+}
+```
 
 ### Использование паттерна
 
@@ -687,6 +823,8 @@ public class FileLoggerFactory : LoggerFactory
 }
 ```
 
+> Но если честно, то фабричный метод практически никогда не используется, в отличии от абстрактной фабрики... Несмотря на то, как GoF его рекламировала в своей книге... 
+
 ## Шаги реализации паттерна
 
 ### Шаг 1: Определить общий интерфейс продуктов
@@ -874,7 +1012,7 @@ public record Order(IEnumerable<OrderItem> Items, string PromoCode)
 // Конкретный тип платежа - оплата наличными
 public record CashPayment(decimal Amount);
 
-// Калькулятор платежей - ПРОБЛЕМНАЯ реализация
+// Калькулятор платежей - проблемная реализация
 public class PaymentCalculator
 {
     public CashPayment Calculate(Order order)
@@ -892,7 +1030,7 @@ public class PaymentCalculator
             totalCost -= 50; // Скидка 50 за крупную покупку
         }
 
-        // ПРОБЛЕМА: жёстко привязаны к типу CashPayment
+        // проблема: жёстко привязаны к типу CashPayment
         return new CashPayment(totalCost);
     }
 }
@@ -1226,6 +1364,33 @@ graph TD
 Конкретные создатели жёстко связаны с базовым типом через наследование. Переиспользовать логику создания из одного создателя в другом невозможно.
 
 **Пример:**
+
+Пусть у нас есть два "семейства" фабрик:
+ - одно для стандартных платежей,
+ - другое для экспресс платежей.
+```csharp
+public abstract class StandardPaymentCalculator { ... }
+public abstract class ExpressPaymentCalculator { ... }
+```
+
+Теперь нам нужно создать наличный платёж (CashPayment). Но из-за того, что у нас две разные базовые иерархии, нам приходится создавать два отдельных класса:
+```csharp
+// Для CashPayment нужны два отдельных создателя
+public class CashStandardCalculator : StandardPaymentCalculator { ... }
+public class CashExpressCalculator : ExpressPaymentCalculator { ... }
+```
+В обоих классах (CashStandardCalculator и CashExpressCalculator) придётся повторять одну и ту же логику по созданию CashPayment:
+
+```csharp
+public class CashStandardCalculator : StandardPaymentCalculator {
+    public override Payment CreatePayment() => new CashPayment(...);
+}
+
+public class CashExpressCalculator : ExpressPaymentCalculator {
+    public override Payment CreatePayment() => new CashPayment(...); // Дублирование
+}
+```
+Другими словами:
 ```csharp
 // Есть две иерархии создателей
 public abstract class StandardPaymentCalculator { ... }
@@ -1251,6 +1416,72 @@ public class CashExpressCalculator : ExpressPaymentCalculator { ... }
 Это две разные причины для изменения:
 - Изменилась логика расчёта → изменяется базовый класс, затрагивая все подклассы
 - Изменился формат данных `BankPayment` → изменяется конкретный создатель
+
+```csharp
+// --- 1. Продукт (Payment Product) ---
+public interface IPayment
+{
+    // Информация, которую нужно вывести или сохранить
+    void ProcessDetails();
+}
+
+public class SalaryPayment : IPayment
+{
+    public decimal Amount { get; set; }
+    // ...
+    public void ProcessDetails() => Console.WriteLine($"[Зарплата]: Обрабатывается сумма {Amount:C}.");
+}
+
+// Создатель (Creator) с Бизнес-логикой
+public abstract class PaymentCalculator
+{
+    // Бизнес-логика:
+    // Этот метод содержит основную логику расчета, которая не зависит от типа платежа.
+    // При изменении налогового кодекса или формулы расчета, этот метод должен измениться.
+    public decimal Calculate(decimal baseAmount)
+    {
+        // Первая причина для изменений - бизнес-логика
+        decimal tax = baseAmount * 0.13m; // Расчет налогов, ставка может поменяться
+        decimal finalAmount = baseAmount - tax;
+        Console.WriteLine($"Базовый расчет: {baseAmount:C}, Налог: {tax:C}, Итого: {finalAmount:C}");
+        return finalAmount;
+    }
+
+    // Фабричный метод:
+    // Этот метод делегирует создание конкретного продукта подклассам.
+    // При изменении структуры IPayment, этот метод не меняется, но его реализации - да.
+    protected abstract IPayment CreatePayment(decimal finalAmount);
+
+    // Основной процесс (использует оба метода)
+    public IPayment ExecuteCalculation(decimal baseAmount)
+    {
+        decimal finalAmount = Calculate(baseAmount);
+        IPayment payment = CreatePayment(finalAmount);
+        return payment;
+    }
+}
+
+// Конкретный создатель (Concrete Creator) 
+public class SalaryPaymentCreator : PaymentCalculator
+{
+    // Этот класс ответственен за создание конкретного объекта.
+    protected override IPayment CreatePayment(decimal finalAmount)
+    {
+        // Вторая причина для изменения (логика создания/структура продукта)
+        // Если класс SalaryPayment изменит свои конструкторы или свойства,
+        // этот метод должен измениться.
+        return new SalaryPayment { Amount = finalAmount }; 
+    }
+    
+    // Этот класс также наследует и использует Calculate().
+    // Он несет двойную ответственность.
+}
+
+// --- Использование ---
+// PaymentCalculator creator = new SalaryPaymentCreator();
+// IPayment salary = creator.ExecuteCalculation(10000);
+// salary.ProcessDetails();
+```
 
 **Когда это становится проблемой:** Если и бизнес-логика, и логика создания становятся сложными, класс становится трудным для понимания и поддержки.
 
@@ -1302,13 +1533,3 @@ public class CashExpressCalculator : ExpressPaymentCalculator { ... }
 - Необходимо предоставить точки расширения для библиотеки или фреймворка
 - Требуется управление жизненным циклом объектов (пулы, кэширование)
 - Создание объекта требует нетривиальной логики
-
-### Альтернативы
-
-Если паттерн приводит к излишнему разрастанию классов или не соответствует вашей задаче, рассмотрите:
-- **Простую фабрику** (Simple Factory) — для статического создания без наследования
-- **Абстрактную фабрику** — для создания семейств связанных объектов
-- **Строитель** — для пошаговой конфигурации сложных объектов
-- **Прототип** — для создания объектов путём клонирования
-
-Фабричный метод — это фундаментальный паттерн, понимание которого необходимо для освоения более сложных порождающих паттернов и построения гибких, расширяемых систем.

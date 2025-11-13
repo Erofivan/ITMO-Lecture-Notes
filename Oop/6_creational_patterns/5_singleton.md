@@ -1427,14 +1427,8 @@ public class MyService
 
 ---
 
-## Дополнительные материалы
+## Связанные паттерны
 
-**Связанные паттерны**:
 - **Abstract Factory**, **Builder**, **Prototype**: могут быть реализованы как Singleton
 - **Facade**: часто реализуется как Singleton
 - **State**: объекты состояний часто реализуются как Singleton
-
-**Рекомендации по изучению**:
-- Изучите работу DI контейнеров (Microsoft.Extensions.DependencyInjection)
-- Разберитесь с lifetime объектов: Singleton, Scoped, Transient
-- Практикуйтесь в написании тестируемого кода с явными зависимостями
